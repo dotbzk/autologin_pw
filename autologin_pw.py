@@ -6,7 +6,6 @@ import sys
 
 import win32gui
 import win32process
-import psutil
 import win32con
 
 
@@ -143,10 +142,14 @@ class GameLauncher:
         def enum_windows(hwnd, _):
             if win32gui.IsWindowVisible(hwnd) and win32gui.GetWindowText(hwnd):
                 _, pid = win32process.GetWindowThreadProcessId(hwnd)
+
                 try:
-                    proc = psutil.Process(pid)
-                    if proc.name().lower() == "gamecenter.exe":
+                    handle = win32api.OpenProcess(0x1000, False, pid)
+                    exe = win32process.GetModuleFileNameEx(handle, 0)
+
+                    if "GameCenter.exe" in exe:
                         hwnd_list.append(hwnd)
+
                 except:
                     pass
 
