@@ -3,7 +3,7 @@ import time
 import pygetwindow as gw
 import configparser
 import os
-
+import sys
 
 def read_config_with_fallback(path):
     encodings = ["utf-8", "utf-8-sig", "cp1251"]
@@ -18,6 +18,14 @@ def read_config_with_fallback(path):
             continue
 
     raise Exception(f"❌ Cannot read config: {path}")
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 
 class GameLauncher:
@@ -36,7 +44,7 @@ class GameLauncher:
         self.prev_count = 0
 
     def load_config(self):
-        path = os.path.join(self.base_dir, "config.ini")
+        path = resource_path("configs/config.ini")
         config = read_config_with_fallback(path)
 
         self.play_button = (
@@ -82,7 +90,7 @@ class GameLauncher:
         self.launcher_title = config["GENERAL"]["launcher_title"]
 
     def load_accounts(self):
-        path = os.path.join(self.base_dir, "accounts.ini")
+        path = resource_path("accounts/accounts.ini")
         config = read_config_with_fallback(path)
 
         self.accounts = []
