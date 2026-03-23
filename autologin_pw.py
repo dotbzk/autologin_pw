@@ -12,7 +12,6 @@ def read_config_with_fallback(path):
         try:
             config = configparser.ConfigParser()
             config.read(path, encoding=enc)
-            self.log(f"✅ Loaded {path} with {enc}")
             return config
         except Exception:
             continue
@@ -31,7 +30,10 @@ def resource_path(relative_path):
 
 class GameLauncher:
     def __init__(self, selected_accounts=None, selected_group=None, stop_flag=None, log_func=None, progress_func=None):
-        self.base_dir = os.path.dirname(os.path.abspath(__file__))
+        if getattr(sys, 'frozen', False):
+            self.base_dir = os.path.dirname(sys.executable)
+        else:
+            self.base_dir = os.path.dirname(os.path.abspath(__file__))
 
         self.selected_accounts = selected_accounts
         self.selected_group = selected_group
@@ -97,7 +99,7 @@ class GameLauncher:
         self.accounts = []
 
         for name, level in config["ACCOUNTS"].items():
-            image_path = os.path.join(self.base_dir, "Accounts", str(level), f"{name}.png")
+            image_path = resource_path( os.path.join("Accounts", str(level), f"{name}.png"))
 
             if not os.path.exists(image_path):
                 continue
