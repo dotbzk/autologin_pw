@@ -45,10 +45,16 @@ class GameLauncher:
 
         self.scroll_up_attempts = int(config["SEARCH"]["scroll_up_attempts"])
         self.search_attempts = int(config["SEARCH"]["search_attempts"])
+        self.search_scroll = int(config["SEARCH"]["scroll"])
 
         self.click_delay = int(config["DELAYS"]["click_delay"])
         self.launch_delay = int(config["DELAYS"]["launch_delay"])
         self.account_switch_delay = int(config["DELAYS"]["account_switch_delay"])
+        self.scroll_delay = int(config["DELAYS"]["scroll_delay"])
+        self.win_1_delay = int(config["DELAYS"]["win1_delay"])
+        self.wait_after_dropdown_delay = int(config["DELAYS"]["wait_after_dropdown_delay"])
+        self.scroll_up_attempts_delay = int(config["DELAYS"]["scroll_up_attempts_delay"])
+        self.perv_count_delay = int(config["DELAYS"]["perv_count_delay"])
 
         self.launcher_title = config["GENERAL"]["launcher_title"]
 
@@ -88,7 +94,7 @@ class GameLauncher:
     def scroll_down(self):
         pyautogui.moveTo(*self.scroll_position)
         pyautogui.scroll(-400)
-        time.sleep(0.5)
+        time.sleep(self.scroll_delay)
 
     def find_account(self, image):
         for attempt in range(self.search_attempts):
@@ -121,7 +127,7 @@ class GameLauncher:
             level = acc["level"]
 
             pyautogui.hotkey("win", "1")
-            time.sleep(10)
+            time.sleep(self.win_1_delay)
 
             print(f"\n🔎 {name} (lvl {level})")
 
@@ -129,11 +135,11 @@ class GameLauncher:
                 break
 
             pyautogui.click(self.dropdown)
-            time.sleep(1)
+            time.sleep(self.wait_after_dropdown_delay)
 
             for _ in range(self.scroll_up_attempts):
-                pyautogui.scroll(500)
-                time.sleep(0.3)
+                pyautogui.scroll(self.scroll)
+                time.sleep(self.scroll_up_attempts_delay)
 
             found = self.find_account(image)
 
@@ -147,7 +153,7 @@ class GameLauncher:
             pyautogui.click(self.play_button)
 
             if self.prev_count > 0:
-                time.sleep(1)
+                time.sleep(self.perv_count_delay)
                 pyautogui.click(self.open_new_client)
 
             print(f"▶️ Launching {name}")
