@@ -26,9 +26,11 @@ def read_config_with_fallback(path):
 
 
 def resource_path(relative_path):
-    try:
-        base_path = sys._MEIPASS
-    except Exception:
+    if getattr(sys, 'frozen', False):
+        # exe
+        base_path = os.path.dirname(sys.executable)
+    else:
+        # dev
         base_path = os.path.abspath(".")
 
     return os.path.join(base_path, relative_path)

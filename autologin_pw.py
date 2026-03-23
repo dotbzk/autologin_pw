@@ -20,13 +20,14 @@ def read_config_with_fallback(path):
     raise Exception(f"❌ Cannot read config: {path}")
 
 def resource_path(relative_path):
-    try:
-        base_path = sys._MEIPASS
-    except Exception:
+    if getattr(sys, 'frozen', False):
+        # exe
+        base_path = os.path.dirname(sys.executable)
+    else:
+        # dev
         base_path = os.path.abspath(".")
 
     return os.path.join(base_path, relative_path)
-
 
 class GameLauncher:
     def __init__(self, selected_accounts=None, selected_group=None, stop_flag=None, log_func=None, progress_func=None):
