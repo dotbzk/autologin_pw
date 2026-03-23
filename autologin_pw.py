@@ -154,7 +154,8 @@ class GameLauncher:
 
         hwnd = hwnds[0]
 
-        win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+        win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+        time.sleep(0.3)
         win32gui.SetForegroundWindow(hwnd)
 
         time.sleep(0.5)
