@@ -12,7 +12,7 @@ def read_config_with_fallback(path):
         try:
             config = configparser.ConfigParser()
             config.read(path, encoding=enc)
-            print(f"✅ Loaded {path} with {enc}")
+            self.log(f"✅ Loaded {path} with {enc}")
             return config
         except Exception:
             continue
@@ -21,14 +21,22 @@ def read_config_with_fallback(path):
 
 
 class GameLauncher:
-    def __init__(self):
+    def __init__(self, selected_accounts=None, selected_group=None, stop_flag=None, log_func=None, progress_func=None):
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        self.selected_accounts = selected_accounts
+        self.selected_group = selected_group
+
+        self.stop_flag = stop_flag
+        self.log = log_func or self.log
+        self.progress = progress_func or (lambda x: None)
+
         self.load_config()
         self.load_accounts()
         self.prev_count = 0
 
     def load_config(self):
-        path = os.path.join(self.base_dir, "config.ini")
+        path = os.path.join(self.base_dir, "configs/config.ini")
         config = read_config_with_fallback(path)
 
         self.play_button = (
@@ -74,7 +82,7 @@ class GameLauncher:
         self.launcher_title = config["GENERAL"]["launcher_title"]
 
     def load_accounts(self):
-        path = os.path.join(self.base_dir, "accounts.ini")
+        path = os.path.join(self.base_dir, "accounts/accounts.ini")
         config = read_config_with_fallback(path)
 
         self.accounts = []
@@ -83,7 +91,12 @@ class GameLauncher:
             image_path = os.path.join(self.base_dir, "Accounts", str(level), f"{name}.png")
 
             if not os.path.exists(image_path):
-                print(f"❌ Missing file: {image_path}")
+                continue
+
+            if self.selected_group and str(level) != str(self.selected_group):
+                continue
+
+            if self.selected_accounts and name not in self.selected_accounts:
                 continue
 
             self.accounts.append({
@@ -96,7 +109,7 @@ class GameLauncher:
         windows = gw.getWindowsWithTitle(self.launcher_title)
 
         if not windows:
-            print("❌ Launcher not found")
+            self.log("❌ Launcher not found")
             return False
 
         windows[0].activate()
@@ -119,19 +132,31 @@ class GameLauncher:
 
                 if location:
                     x, y = pyautogui.center(location)
-                    print(f"✅ Found {image}")
+                    self.log(f"✅ Found {image}")
                     return (x, y)
 
             except Exception as e:
-                print(f"⚠️ Error finding {image}: {e}")
+                self.log(f"⚠️ Error finding {image}: {e}")
 
-            print(f"🔄 Attempt {attempt + 1}")
+            self.log(f"🔄 Attempt {attempt + 1}")
             self.scroll_down()
 
         return None
 
     def run(self):
-        for acc in self.accounts:
+        total = len(self.accounts)
+
+        for i, acc in enumerate(self.accounts):
+
+            # === STOP ===
+            if self.stop_flag and self.stop_flag():
+                self.log("⛔ Stopped by user")
+                break
+
+            # === PROGRESS ===
+            if total > 0:
+                progress_value = int((i / total) * 100)
+                self.progress(progress_value)
 
             name = acc["name"]
             image = acc["image"]
@@ -139,7 +164,7 @@ class GameLauncher:
             pyautogui.hotkey("win", "1")
             time.sleep(self.win_1_delay)
 
-            print(f"\n🔎 {name}")
+            self.log(f"\n🔎 {name}")
 
             if not self.activate_launcher():
                 break
@@ -148,13 +173,17 @@ class GameLauncher:
             time.sleep(self.wait_after_dropdown_delay)
 
             for _ in range(self.scroll_up_attempts):
+                if self.stop_flag and self.stop_flag():
+                    self.log("⛔ Stopped during scroll")
+                    return
+
                 pyautogui.scroll(self.search_scroll)
                 time.sleep(self.scroll_up_attempts_delay)
 
             found = self.find_account(image)
 
             if not found:
-                print(f"❌ Not found: {name}")
+                self.log(f"❌ Not found: {name}")
                 continue
 
             pyautogui.click(found)
@@ -166,12 +195,18 @@ class GameLauncher:
                 time.sleep(self.perv_count_delay)
                 pyautogui.click(self.open_new_client)
 
-            print(f"▶️ Launching {name}")
+            self.log(f"▶️ Launching {name}")
 
-            time.sleep(self.launch_delay)
+            for _ in range(int(self.launch_delay)):
+                if self.stop_flag and self.stop_flag():
+                    self.log("⛔ Stopped during launch wait")
+                    return
+                time.sleep(1)
 
             self.prev_count += 1
 
-            print(f"🚀 Launched: {name}")
+            self.log(f"🚀 Launched: {name}")
 
-        print("\n🎉 All accounts launched")
+        # === FINISH ===
+        self.progress(100)
+        self.log("\n🎉 All accounts launched")
