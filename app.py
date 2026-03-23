@@ -35,8 +35,8 @@ class App:
             print("⚠️ icon not loaded")
 
         self.base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.config_path = os.path.join(self.base_dir, "configs/config.ini")
-        self.accounts_path = os.path.join(self.base_dir, "accounts/accounts.ini")
+        self.config_path = os.path.join(self.base_dir, "config.ini")
+        self.accounts_path = os.path.join(self.base_dir, "accounts.ini")
 
         self.config = read_config_with_fallback(self.config_path)
 

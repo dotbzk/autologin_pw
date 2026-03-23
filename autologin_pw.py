@@ -36,7 +36,7 @@ class GameLauncher:
         self.prev_count = 0
 
     def load_config(self):
-        path = os.path.join(self.base_dir, "configs/config.ini")
+        path = os.path.join(self.base_dir, "config.ini")
         config = read_config_with_fallback(path)
 
         self.play_button = (
