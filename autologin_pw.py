@@ -69,43 +69,43 @@ class GameLauncher:
         config = read_config_with_fallback(path)
 
         self.play_button = (
-            int(get_number(config, "COORDINATES", "play_button_x")),
-            int(get_number(config, "COORDINATES", "play_button_y"))
+            get_number(config, "COORDINATES", "play_button_x"),
+            get_number(config, "COORDINATES", "play_button_y")
         )
 
         self.dropdown = (
-            int(get_number(config, "COORDINATES", "dropdown_x")),
-            int(get_number(config, "COORDINATES", "dropdown_y"))
+            get_number(config, "COORDINATES", "dropdown_x"),
+            get_number(config, "COORDINATES", "dropdown_y")
         )
 
         self.open_new_client = (
-            int(get_number(config, "COORDINATES", "open_new_client_x")),
-            int(get_number(config, "COORDINATES", "open_new_client_y"))
+            get_number(config, "COORDINATES", "open_new_client_x"),
+            get_number(config, "COORDINATES", "open_new_client_y")
         )
 
         self.scroll_position = (
-            int(get_number(config, "COORDINATES", "scroll_x")),
-            int(get_number(config, "COORDINATES", "scroll_y"))
+            get_number(config, "COORDINATES", "scroll_x"),
+            get_number(config, "COORDINATES", "scroll_y")
         )
 
         self.search_region = (
-            int(get_number(config, "SEARCH", "region_x")),
-            int(get_number(config, "SEARCH", "region_y")),
-            int(get_number(config, "SEARCH", "region_w")),
-            int(get_number(config, "SEARCH", "region_h"))
+            get_number(config, "SEARCH", "region_x"),
+            get_number(config, "SEARCH", "region_y"),
+            get_number(config, "SEARCH", "region_w"),
+            get_number(config, "SEARCH", "region_h")
         )
 
-        self.scroll_up_attempts = int(get_number(config, "SEARCH", "scroll_up_attempts"))
-        self.search_attempts = int(get_number(config, "SEARCH", "search_attempts"))
-        self.search_scroll = int(get_number(config, "SEARCH", "scroll"))
+        self.scroll_up_attempts = get_number(config, "SEARCH", "scroll_up_attempts")
+        self.search_attempts = get_number(config, "SEARCH", "search_attempts")
+        self.search_scroll = get_number(config, "SEARCH", "scroll")
 
-        self.click_delay = float(get_number(config, "DELAYS", "click_delay"))
-        self.launch_delay = float(get_number(config, "DELAYS", "launch_delay"))
-        self.account_switch_delay = float(get_number(config, "DELAYS", "account_switch_delay"))
-        self.scroll_delay = float(get_number(config, "DELAYS", "scroll_delay"))
-        self.wait_after_dropdown_delay = float(get_number(config, "DELAYS", "wait_after_dropdown_delay"))
-        self.scroll_up_attempts_delay = float(get_number(config, "DELAYS", "scroll_up_attempts_delay"))
-        self.perv_count_delay = float(get_number(config, "DELAYS", "perv_count_delay"))
+        self.click_delay = get_number(config, "DELAYS", "click_delay")
+        self.launch_delay = get_number(config, "DELAYS", "launch_delay")
+        self.account_switch_delay = get_number(config, "DELAYS", "account_switch_delay")
+        self.scroll_delay = get_number(config, "DELAYS", "scroll_delay")
+        self.wait_after_dropdown_delay = get_number(config, "DELAYS", "wait_after_dropdown_delay")
+        self.scroll_up_attempts_delay = get_number(config, "DELAYS", "scroll_up_attempts_delay")
+        self.perv_count_delay = get_number(config, "DELAYS", "perv_count_delay")
 
     # =========================
     # ACCOUNTS
@@ -135,7 +135,7 @@ class GameLauncher:
             })
 
     # =========================
-    # ACTIVATE LAUNCHER (FIXED)
+    # ACTIVATE LAUNCHER
     # =========================
     def activate_launcher(self):
         hwnd_list = []
@@ -173,11 +173,11 @@ class GameLauncher:
     # =========================
     def scroll_down(self):
         pyautogui.moveTo(*self.scroll_position)
-        pyautogui.scroll(-self.search_scroll)
+        pyautogui.scroll(-int(self.search_scroll))
         time.sleep(self.scroll_delay)
 
     def find_account(self, image):
-        for attempt in range(self.search_attempts):
+        for attempt in range(int(self.search_attempts)):
             try:
                 location = pyautogui.locateOnScreen(
                     image,
@@ -225,8 +225,8 @@ class GameLauncher:
             pyautogui.click()
             time.sleep(self.wait_after_dropdown_delay)
 
-            for _ in range(self.scroll_up_attempts):
-                pyautogui.scroll(self.search_scroll)
+            for _ in range(int(self.scroll_up_attempts)):
+                pyautogui.scroll(int(self.search_scroll))
                 time.sleep(self.scroll_up_attempts_delay)
 
             found = self.find_account(image)
