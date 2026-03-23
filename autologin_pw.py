@@ -84,10 +84,10 @@ class GameLauncher:
         self.click_delay = int(config["DELAYS"]["click_delay"])
         self.launch_delay = int(config["DELAYS"]["launch_delay"])
         self.account_switch_delay = int(config["DELAYS"]["account_switch_delay"])
-        self.scroll_delay = int(config["DELAYS"]["scroll_delay"])
+        self.scroll_delay = config["DELAYS"]["scroll_delay"]
         self.win_1_delay = int(config["DELAYS"]["win1_delay"])
         self.wait_after_dropdown_delay = int(config["DELAYS"]["wait_after_dropdown_delay"])
-        self.scroll_up_attempts_delay = int(config["DELAYS"]["scroll_up_attempts_delay"])
+        self.scroll_up_attempts_delay = config["DELAYS"]["scroll_up_attempts_delay"]
         self.perv_count_delay = int(config["DELAYS"]["perv_count_delay"])
 
         self.launcher_title = config["GENERAL"]["launcher_title"]
