@@ -9,6 +9,8 @@ from autologin_pw import GameLauncher
 
 def read_config_with_fallback(path):
     encodings = ["utf-8", "utf-8-sig", "cp1251"]
+    if not os.path.exists(path):
+        raise Exception(f"❌ not found: {path}")
 
     for enc in encodings:
         try:

@@ -28,8 +28,8 @@ class GameLauncher:
         self.selected_group = selected_group
 
         self.stop_flag = stop_flag
-        self.log = log_func or self.log
-        self.progress = progress_func or (lambda x: None)
+        self.log = log_func if log_func else print
+        self.progress = progress_func if progress_func else (lambda x: None)
 
         self.load_config()
         self.load_accounts()
