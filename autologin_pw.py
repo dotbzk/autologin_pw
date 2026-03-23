@@ -58,7 +58,6 @@ class GameLauncher:
 
         self.load_config()
         self.load_accounts()
-        self.prev_count = 0
 
     # =========================
     # CONFIG
@@ -237,15 +236,12 @@ class GameLauncher:
 
             pyautogui.click(*self.play_button)
 
-            if self.prev_count > 0:
-                time.sleep(self.perv_count_delay)
-                pyautogui.click(*self.open_new_client)
+            time.sleep(self.perv_count_delay)
+            pyautogui.click(*self.open_new_client)
 
             self.log(f"▶️ Launching {name}")
 
             time.sleep(self.launch_delay)
-
-            self.prev_count += 1
 
             self.log(f"🚀 Launched: {name}")
 
