@@ -137,37 +137,31 @@ class GameLauncher:
     # ACTIVATE LAUNCHER
     # =========================
     def activate_launcher(self):
-        hwnd_list = []
+        hwnds = []
 
-        def enum_windows(hwnd, _):
-            if win32gui.IsWindowVisible(hwnd) and win32gui.GetWindowText(hwnd):
-                _, pid = win32process.GetWindowThreadProcessId(hwnd)
+        def enum(hwnd, _):
+            if not win32gui.IsWindowVisible(hwnd):
+                return
 
-                try:
-                    handle = win32api.OpenProcess(0x1000, False, pid)
-                    exe = win32process.GetModuleFileNameEx(handle, 0)
+            title = win32gui.GetWindowText(hwnd)
 
-                    if "GameCenter.exe" in exe:
-                        hwnd_list.append(hwnd)
+            if "vk play" in title.lower() or "игровой центр" in title.lower():
+                hwnds.append(hwnd)
 
-                except:
-                    pass
+        win32gui.EnumWindows(enum, None)
 
-        win32gui.EnumWindows(enum_windows, None)
+        if not hwnds:
+            raise Exception("Launcher not found")
 
-        if not hwnd_list:
-            self.log("❌ Launcher not found")
-            return False
-
-        hwnd = hwnd_list[0]
+        hwnd = hwnds[0]
 
         win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
         win32gui.SetForegroundWindow(hwnd)
 
         time.sleep(0.5)
 
-        rect = win32gui.GetWindowRect(hwnd)
-        pyautogui.click(rect[0] + 50, rect[1] + 50)
+        x1, y1, _, _ = win32gui.GetWindowRect(hwnd)
+        pyautogui.click(x1 + 50, y1 + 50)
 
         return True
 
