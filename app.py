@@ -1,9 +1,23 @@
 import tkinter as tk
-from tkinter import ttk
 import configparser
 from threading import Thread
+import os
 
 from autologin_pw import GameLauncher
+
+
+def read_config_with_fallback(path):
+    encodings = ["utf-8", "utf-8-sig", "cp1251"]
+
+    for enc in encodings:
+        try:
+            config = configparser.ConfigParser()
+            config.read(path, encoding=enc)
+            return config
+        except:
+            continue
+
+    raise Exception(f"Cannot read {path}")
 
 
 class App:
@@ -11,55 +25,41 @@ class App:
         self.root = root
         self.root.title("Game Launcher Bot")
 
-        self.config = configparser.ConfigParser()
-        self.config.read("config.ini")
+        self.base_dir = os.path.dirname(os.path.abspath(__file__))
+        self.config_path = os.path.join(self.base_dir, "config.ini")
+
+        self.config = read_config_with_fallback(self.config_path)
 
         self.entries = {}
-
         self.build_ui()
 
     def build_ui(self):
         row = 0
 
-        # === GENERAL ===
-        tk.Label(self.root, text="GENERAL", font=("Arial", 12, "bold")).grid(row=row, column=0)
-        row += 1
+        for section in self.config.sections():
+            tk.Label(self.root, text=section, font=("Arial", 12, "bold")).grid(row=row, column=0)
+            row += 1
 
-        row = self.create_field("launcher_title", "GENERAL", row)
+            for key in self.config[section]:
+                row = self.create_field(key, section, row)
 
-        # === DELAYS ===
-        tk.Label(self.root, text="DELAYS", font=("Arial", 12, "bold")).grid(row=row, column=0)
-        row += 1
-
-        for key in self.config["DELAYS"]:
-            row = self.create_field(key, "DELAYS", row)
-
-        # === SEARCH ===
-        tk.Label(self.root, text="SEARCH", font=("Arial", 12, "bold")).grid(row=row, column=0)
-        row += 1
-
-        for key in self.config["SEARCH"]:
-            row = self.create_field(key, "SEARCH", row)
-
-        # === BUTTON ===
-        tk.Button(self.root, text="RUN", command=self.run_bot, bg="green", fg="white").grid(row=row, column=0, columnspan=2, pady=10)
+        tk.Button(self.root, text="RUN", command=self.run_bot, bg="green").grid(row=row, column=0, columnspan=2)
 
     def create_field(self, key, section, row):
-        tk.Label(self.root, text=key).grid(row=row, column=0, sticky="w")
+        tk.Label(self.root, text=key).grid(row=row, column=0)
 
-        entry = tk.Entry(self.root, width=20)
+        entry = tk.Entry(self.root)
         entry.insert(0, self.config[section][key])
         entry.grid(row=row, column=1)
 
         self.entries[(section, key)] = entry
-
         return row + 1
 
     def save_config(self):
         for (section, key), entry in self.entries.items():
             self.config[section][key] = entry.get()
 
-        with open("config.ini", "w") as f:
+        with open(self.config_path, "w", encoding="utf-8") as f:
             self.config.write(f)
 
     def run_bot(self):
@@ -72,7 +72,6 @@ class App:
         Thread(target=task).start()
 
 
-# === ENTRY ===
 if __name__ == "__main__":
     root = tk.Tk()
     app = App(root)

@@ -5,16 +5,31 @@ import configparser
 import os
 
 
+def read_config_with_fallback(path):
+    encodings = ["utf-8", "utf-8-sig", "cp1251"]
+
+    for enc in encodings:
+        try:
+            config = configparser.ConfigParser()
+            config.read(path, encoding=enc)
+            print(f"✅ Loaded {path} with {enc}")
+            return config
+        except Exception:
+            continue
+
+    raise Exception(f"❌ Cannot read config: {path}")
+
+
 class GameLauncher:
     def __init__(self):
+        self.base_dir = os.path.dirname(os.path.abspath(__file__))
         self.load_config()
         self.load_accounts()
         self.prev_count = 0
 
-    # === CONFIG ===
     def load_config(self):
-        config = configparser.ConfigParser()
-        config.read("config.ini")
+        path = os.path.join(self.base_dir, "config.ini")
+        config = read_config_with_fallback(path)
 
         self.play_button = (
             int(config["COORDINATES"]["play_button_x"]),
@@ -58,15 +73,14 @@ class GameLauncher:
 
         self.launcher_title = config["GENERAL"]["launcher_title"]
 
-    # === ACCOUNTS ===
     def load_accounts(self):
-        config = configparser.ConfigParser()
-        config.read("accounts.ini")
+        path = os.path.join(self.base_dir, "accounts.ini")
+        config = read_config_with_fallback(path)
 
         self.accounts = []
 
         for name, level in config["ACCOUNTS"].items():
-            image_path = os.path.join("Accounts", str(level), f"{name}.png")
+            image_path = os.path.join(self.base_dir, "Accounts", str(level), f"{name}.png")
 
             if not os.path.exists(image_path):
                 print(f"❌ Missing file: {image_path}")
@@ -77,8 +91,6 @@ class GameLauncher:
                 "level": level,
                 "image": image_path
             })
-
-    # === ACTIONS ===
 
     def activate_launcher(self):
         windows = gw.getWindowsWithTitle(self.launcher_title)
@@ -117,19 +129,17 @@ class GameLauncher:
             self.scroll_down()
 
         return None
-    # === MAIN LOGIC ===
 
     def run(self):
         for acc in self.accounts:
 
             name = acc["name"]
             image = acc["image"]
-            level = acc["level"]
 
             pyautogui.hotkey("win", "1")
             time.sleep(self.win_1_delay)
 
-            print(f"\n🔎 {name} (lvl {level})")
+            print(f"\n🔎 {name}")
 
             if not self.activate_launcher():
                 break
@@ -138,7 +148,7 @@ class GameLauncher:
             time.sleep(self.wait_after_dropdown_delay)
 
             for _ in range(self.scroll_up_attempts):
-                pyautogui.scroll(self.scroll)
+                pyautogui.scroll(self.search_scroll)
                 time.sleep(self.scroll_up_attempts_delay)
 
             found = self.find_account(image)
@@ -165,8 +175,3 @@ class GameLauncher:
             print(f"🚀 Launched: {name}")
 
         print("\n🎉 All accounts launched")
-
-
-if __name__ == "__main__":
-    bot = GameLauncher()
-    bot.run()
