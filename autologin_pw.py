@@ -82,7 +82,7 @@ class GameLauncher:
         self.launcher_title = config["GENERAL"]["launcher_title"]
 
     def load_accounts(self):
-        path = os.path.join(self.base_dir, "accounts/accounts.ini")
+        path = os.path.join(self.base_dir, "accounts.ini")
         config = read_config_with_fallback(path)
 
         self.accounts = []
