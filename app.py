@@ -1,11 +1,15 @@
+import customtkinter as ctk
 import tkinter as tk
-from tkinter import ttk
 import configparser
 from threading import Thread
 import os
 import sys
+from datetime import datetime
 
 from autologin_pw import GameLauncher
+
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("blue")
 
 
 def read_config_with_fallback(path):
@@ -27,33 +31,23 @@ def read_config_with_fallback(path):
 
 def resource_path(relative_path):
     if getattr(sys, 'frozen', False):
-        # exe
         base_path = os.path.dirname(sys.executable)
     else:
-        # dev
         base_path = os.path.abspath(".")
 
     return os.path.join(base_path, relative_path)
 
 
-class App:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Game Launcher Bot")
-        self.root.geometry("700x800")
-        self.root.configure(bg="#2b2b2b")
+class App(ctk.CTk):
+    def __init__(self):
+        super().__init__()
 
-        try:
-            self.root.iconbitmap("configs/ico/app.ico")
-        except:
-            print("⚠️ icon not loaded")
+        self.title("Game Launcher Bot")
+        self.geometry("750x850")
 
         self.config_path = resource_path("configs/config.ini")
         self.accounts_path = resource_path("accounts/accounts.ini")
 
-        self.config = read_config_with_fallback(self.config_path)
-
-        self.entries = {}
         self.account_vars = {}
         self.stop_requested = False
 
@@ -61,15 +55,21 @@ class App:
         self.build_ui()
 
     # =========================
-    # ACCOUNTS LOAD
+    # LOG
+    # =========================
+    def log(self, text):
+        ts = datetime.now().strftime("%H:%M:%S")
+        self.log_box.insert("end", f"[{ts}] {text}\n")
+        self.log_box.see("end")
+
+    # =========================
+    # ACCOUNTS
     # =========================
     def load_accounts(self):
         config = read_config_with_fallback(self.accounts_path)
-
         self.accounts_by_group = {}
 
         if "ACCOUNTS" not in config:
-            self.log("⚠️ ACCOUNTS section missing")
             return
 
         for name, level in config["ACCOUNTS"].items():
@@ -79,196 +79,166 @@ class App:
     # UI
     # =========================
     def build_ui(self):
-        row = 0
+        main = ctk.CTkFrame(self)
+        main.pack(fill="both", expand=True, padx=10, pady=10)
 
         # GROUP
-        tk.Label(self.root, text="Group", bg="#2b2b2b", fg="white").grid(row=row, column=0)
+        ctk.CTkLabel(main, text="Group").pack(anchor="w")
 
-        self.group_var = tk.StringVar()
-        self.group_menu = ttk.Combobox(
-            self.root,
-            textvariable=self.group_var,
-            values=list(self.accounts_by_group.keys())
+        self.group_var = ctk.StringVar()
+        self.group_menu = ctk.CTkComboBox(
+            main,
+            variable=self.group_var,
+            values=list(self.accounts_by_group.keys()),
+            command=self.update_accounts
         )
-        self.group_menu.grid(row=row, column=1)
-        self.group_menu.bind("<<ComboboxSelected>>", self.update_accounts)
+        self.group_menu.pack(fill="x")
 
-        row += 1
+        if self.accounts_by_group:
+            first = list(self.accounts_by_group.keys())[0]
+            self.group_var.set(first)
+            self.update_accounts(first)
 
-        # ACCOUNTS CHECKBOXES
-        self.accounts_frame = tk.Frame(self.root, bg="#2b2b2b")
-        self.accounts_frame.grid(row=row, column=0, columnspan=2)
+        # ACCOUNTS
+        self.accounts_frame = ctk.CTkScrollableFrame(main, height=200)
+        self.accounts_frame.pack(fill="both", expand=True, pady=10)
 
-        row += 1
+        # SELECT BUTTONS
+        btn_frame = ctk.CTkFrame(main)
+        btn_frame.pack(pady=5)
 
-        # =========================
-        # ACCOUNT MANAGER
-        # =========================
-        tk.Label(self.root, text="Accounts Manager", bg="#2b2b2b", fg="white").grid(row=row, column=0)
-        row += 1
+        ctk.CTkButton(btn_frame, text="Select All", command=self.select_all).pack(side="left", padx=5)
+        ctk.CTkButton(btn_frame, text="Unselect All", command=self.unselect_all).pack(side="left", padx=5)
 
-        self.new_name = tk.Entry(self.root)
-        self.new_name.grid(row=row, column=0)
+        # SETTINGS
+        ctk.CTkButton(main, text="⚙ Settings", command=self.open_settings).pack(pady=5)
 
-        self.new_group = tk.Entry(self.root)
-        self.new_group.grid(row=row, column=1)
-
-        row += 1
-
-        tk.Button(self.root, text="➕ Add", command=self.add_account, bg="blue", fg="white").grid(row=row, column=0)
-        tk.Button(self.root, text="❌ Delete", command=self.delete_account, bg="red", fg="white").grid(row=row, column=1)
-
-        row += 1
-
-        # =========================
         # LOG
-        # =========================
-        tk.Label(self.root, text="LOG", bg="#2b2b2b", fg="white").grid(row=row, column=0)
-        row += 1
+        ctk.CTkLabel(main, text="LOG").pack(anchor="w")
 
-        self.log_box = tk.Text(self.root, height=15, width=70, bg="#1e1e1e", fg="white")
-        self.log_box.grid(row=row, column=0, columnspan=2)
-
-        row += 1
+        self.log_box = ctk.CTkTextbox(main, height=200)
+        self.log_box.pack(fill="both", expand=True)
 
         # PROGRESS
-        self.progress = ttk.Progressbar(self.root, length=400)
-        self.progress.grid(row=row, column=0, columnspan=2, pady=10)
+        self.progress = ctk.CTkProgressBar(main)
+        self.progress.pack(fill="x", pady=10)
+        self.progress.set(0)
 
-        row += 1
+        # RUN/STOP
+        run_frame = ctk.CTkFrame(main)
+        run_frame.pack(pady=5)
 
-        # BUTTONS
-        tk.Button(self.root, text="RUN", bg="green", fg="white", command=self.run_bot).grid(row=row, column=0)
-        tk.Button(self.root, text="STOP", bg="red", fg="white", command=self.stop_bot).grid(row=row, column=1)
-
-    # =========================
-    # LOG / HELPERS
-    # =========================
-    def log(self, text):
-        self.log_box.insert(tk.END, text + "\n")
-        self.log_box.see(tk.END)
-
-    def update_progress(self, value):
-        self.progress["value"] = value
-        self.root.update_idletasks()
-
-    def is_stopped(self):
-        return self.stop_requested
-
-    def refresh_groups(self):
-        self.group_menu["values"] = list(self.accounts_by_group.keys())
-
-        if self.group_var.get():
-            self.update_accounts()
+        ctk.CTkButton(run_frame, text="RUN", command=self.run_bot).pack(side="left", padx=5)
+        ctk.CTkButton(run_frame, text="STOP", fg_color="red", command=self.stop_bot).pack(side="left", padx=5)
 
     # =========================
-    # ACCOUNT MANAGEMENT
+    # ACCOUNTS UI
     # =========================
-    def add_account(self):
-        name = self.new_name.get().strip()
-        group = self.new_group.get().strip()
-
-        if not name or not group:
-            self.log("❌ Enter name and group")
-            return
-
-        config = read_config_with_fallback(self.accounts_path)
-
-        if "ACCOUNTS" not in config:
-            config["ACCOUNTS"] = {}
-
-        config["ACCOUNTS"][name] = group
-
-        with open(self.accounts_path, "w", encoding="utf-8") as f:
-            config.write(f)
-
-        self.log(f"✅ Added: {name} -> {group}")
-
-        self.load_accounts()
-        self.refresh_groups()
-
-    def delete_account(self):
-        selected = [k for k, v in self.account_vars.items() if v.get()]
-
-        if not selected:
-            self.log("❌ Select account to delete")
-            return
-
-        config = read_config_with_fallback(self.accounts_path)
-
-        for acc in selected:
-            if acc in config["ACCOUNTS"]:
-                del config["ACCOUNTS"][acc]
-                self.log(f"🗑 Deleted: {acc}")
-
-        with open(self.accounts_path, "w", encoding="utf-8") as f:
-            config.write(f)
-
-        self.load_accounts()
-        self.update_accounts()
-
-    # =========================
-    # ACCOUNT UI
-    # =========================
-    def update_accounts(self, event=None):
+    def update_accounts(self, selected_group=None):
         for w in self.accounts_frame.winfo_children():
             w.destroy()
 
-        group = self.group_var.get()
+        group = selected_group or self.group_var.get()
         accounts = self.accounts_by_group.get(group, [])
 
         self.account_vars = {}
 
-        for i, acc in enumerate(accounts):
-            var = tk.BooleanVar()
-            cb = tk.Checkbutton(
-                self.accounts_frame,
-                text=acc,
-                variable=var,
-                bg="#2b2b2b",
-                fg="white",
-                selectcolor="#444"
-            )
-            cb.grid(row=i, column=0, sticky="w")
-
+        for acc in accounts:
+            var = ctk.BooleanVar()
+            cb = ctk.CTkCheckBox(self.accounts_frame, text=acc, variable=var)
+            cb.pack(anchor="w", pady=2)
             self.account_vars[acc] = var
 
+    def select_all(self):
+        for v in self.account_vars.values():
+            v.set(True)
+
+    def unselect_all(self):
+        for v in self.account_vars.values():
+            v.set(False)
+
     # =========================
-    # RUN / STOP
+    # SETTINGS
+    # =========================
+    def open_settings(self):
+        win = ctk.CTkToplevel(self)
+        win.title("Settings")
+        win.geometry("600x600")
+
+        cfg = read_config_with_fallback(self.config_path)
+        entries = {}
+
+        container = ctk.CTkScrollableFrame(win)
+        container.pack(fill="both", expand=True, padx=10, pady=10)
+
+        for section in cfg.sections():
+            ctk.CTkLabel(container, text=f"[{section}]").pack(anchor="w", pady=(10, 0))
+
+            for key, val in cfg[section].items():
+                row = ctk.CTkFrame(container)
+                row.pack(fill="x", pady=2)
+
+                ctk.CTkLabel(row, text=key, width=200).pack(side="left")
+
+                entry = ctk.CTkEntry(row)
+                entry.insert(0, val)
+                entry.pack(side="right", fill="x", expand=True)
+
+                entries[(section, key)] = entry
+
+        def save():
+            for (section, key), entry in entries.items():
+                cfg[section][key] = entry.get()
+
+            with open(self.config_path, "w", encoding="utf-8") as f:
+                cfg.write(f)
+
+            self.log("✅ Config saved")
+            win.destroy()
+
+        ctk.CTkButton(win, text="Save", command=save).pack(pady=10)
+
+    # =========================
+    # RUN
     # =========================
     def run_bot(self):
         self.stop_requested = False
 
         selected_accounts = [k for k, v in self.account_vars.items() if v.get()]
-        selected_group = self.group_var.get()
+        group = self.group_var.get()
 
-        self.log(f"🚀 Start | group={selected_group} accounts={selected_accounts}")
+        if not selected_accounts:
+            self.log("❌ No accounts selected")
+            return
+
+        self.log(f"🚀 Start | group={group} accounts={selected_accounts}")
 
         def task():
             try:
                 bot = GameLauncher(
                     selected_accounts=selected_accounts,
-                    selected_group=selected_group,
-                    stop_flag=self.is_stopped,
+                    selected_group=group,
+                    stop_flag=lambda: self.stop_requested,
                     log_func=self.log,
                     progress_func=self.update_progress
                 )
                 bot.run()
-
                 self.log("✅ DONE")
-                self.update_progress(100)
+                self.update_progress(1)
 
             except Exception as e:
                 self.log(f"❌ ERROR: {e}")
 
-        Thread(target=task).start()
+        Thread(target=task, daemon=True).start()
 
     def stop_bot(self):
         self.stop_requested = True
         self.log("⛔ Stop requested")
 
+    def update_progress(self, val):
+        self.progress.set(val / 100)
+
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = App(root)
-    root.mainloop()
+    app = App()
+    app.mainloop()
