@@ -86,22 +86,25 @@ class App(ctk.CTk):
         ctk.CTkLabel(main, text="Group").pack(anchor="w")
 
         self.group_var = ctk.StringVar()
+        self.accounts_frame = ctk.CTkScrollableFrame(main, height=200)
+        self.accounts_frame.pack(fill="both", expand=True, pady=10)
+
+        # GROUP
+        self.group_var = ctk.StringVar()
+
         self.group_menu = ctk.CTkComboBox(
             main,
             variable=self.group_var,
-            values=list(self.accounts_by_group.keys()),
-            command=self.update_accounts
+            values=list(self.accounts_by_group.keys())
         )
         self.group_menu.pack(fill="x")
+
+        self.group_menu.configure(command=self.update_accounts)
 
         if self.accounts_by_group:
             first = list(self.accounts_by_group.keys())[0]
             self.group_var.set(first)
             self.update_accounts(first)
-
-        # ACCOUNTS
-        self.accounts_frame = ctk.CTkScrollableFrame(main, height=200)
-        self.accounts_frame.pack(fill="both", expand=True, pady=10)
 
         # SELECT BUTTONS
         btn_frame = ctk.CTkFrame(main)
