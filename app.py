@@ -222,7 +222,6 @@ class App(ctk.CTk):
                     progress_func=self.update_progress
                 )
 
-                # ✅ ВАЖНО: callback
                 bot.finish_callback = lambda results: self.after(
                     0, lambda: self.show_summary(results, group)
                 )
@@ -242,17 +241,47 @@ class App(ctk.CTk):
         failed = results["failed"]
         total = launched + len(failed)
 
-        if not failed:
-            messagebox.showinfo("Done", f"✅ Done {launched}/{total}")
-            return
+        win = ctk.CTkToplevel(self)
+        win.title("Result")
+        win.geometry("400x250")
 
-        retry = messagebox.askyesno(
-            "Failed accounts",
-            f"Done {launched}/{total}\n\nRetry failed?"
-        )
+        win.attributes("-topmost", True)
 
-        if retry:
-            self.retry_failed([x[0] for x in failed], group)
+        win.transient(self)
+        win.grab_set()
+
+        win.update_idletasks()
+        x = self.winfo_x() + (self.winfo_width() // 2 - 200)
+        y = self.winfo_y() + (self.winfo_height() // 2 - 125)
+        win.geometry(f"+{x}+{y}")
+
+        # =========================
+        # CONTENT
+        # =========================
+        text = f"✅ Done {launched}/{total}"
+
+        if failed:
+            text += f"\n\n❌ Failed: {len(failed)}"
+
+        ctk.CTkLabel(win, text=text, font=("Arial", 16)).pack(pady=20)
+
+        # =========================
+        # BUTTONS
+        # =========================
+        btn_frame = ctk.CTkFrame(win)
+        btn_frame.pack(pady=10)
+
+        if failed:
+            def retry():
+                win.destroy()
+                self.retry_failed([x[0] for x in failed], group)
+
+            ctk.CTkButton(btn_frame, text="Retry", command=retry).pack(side="left", padx=10)
+
+        def close():
+            win.destroy()
+
+        ctk.CTkButton(btn_frame, text="Close", command=close).pack(side="left", padx=10)
 
     def retry_failed(self, accounts, group):
         self.log(f"🔁 Retrying failed: {accounts}")
