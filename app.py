@@ -164,6 +164,14 @@ class App(ctk.CTk):
         win.title("Settings")
         win.geometry("600x600")
 
+        win.transient(self)
+        win.grab_set()
+
+        win.after(10, lambda: win.lift())
+        win.after(10, lambda: win.focus_force())
+        win.after(10, lambda: win.attributes("-topmost", True))
+        win.after(500, lambda: win.attributes("-topmost", False))  # чтобы потом не мешало
+
         cfg = read_config_with_fallback(self.config_path)
         entries = {}
 
