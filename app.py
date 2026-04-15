@@ -5,7 +5,7 @@ import sys
 from datetime import datetime
 from tkinter import messagebox
 
-from autologin import GameLauncher
+from autologin_pw import GameLauncher
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
