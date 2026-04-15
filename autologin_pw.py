@@ -5,7 +5,6 @@ import os
 import sys
 
 import win32gui
-import win32process
 import win32con
 
 
@@ -39,15 +38,11 @@ def get_number(config, section, key):
             return float(value)
         return int(value)
     except ValueError:
-        raise Exception(f"❌ Invalid number in config: {section}.{key} = {value}")
+        raise Exception(f"❌ Invalid number: {section}.{key} = {value}")
 
 
 class GameLauncher:
     def __init__(self, selected_accounts=None, selected_group=None, stop_flag=None, log_func=None, progress_func=None):
-        if getattr(sys, 'frozen', False):
-            self.base_dir = os.path.dirname(sys.executable)
-        else:
-            self.base_dir = os.path.dirname(os.path.abspath(__file__))
 
         self.selected_accounts = selected_accounts
         self.selected_group = selected_group
@@ -56,35 +51,33 @@ class GameLauncher:
         self.log = log_func if log_func else print
         self.progress = progress_func if progress_func else (lambda x: None)
 
+        self.finish_callback = None
+
+        self.results = {"launched": [], "failed": []}
+        self._stop_requested = False
+
         self.load_config()
         self.load_accounts()
 
-    # =========================
-    # CONFIG
-    # =========================
+    def should_stop(self):
+        if self.stop_flag and self.stop_flag():
+            self._stop_requested = True
+        return self._stop_requested
+
     def load_config(self):
-        path = resource_path("configs/config.ini")
-        config = read_config_with_fallback(path)
+        config = read_config_with_fallback(resource_path("configs/config.ini"))
 
-        self.play_button = (
-            get_number(config, "COORDINATES", "play_button_x"),
-            get_number(config, "COORDINATES", "play_button_y")
-        )
+        self.play_button = (get_number(config, "COORDINATES", "play_button_x"),
+                            get_number(config, "COORDINATES", "play_button_y"))
 
-        self.dropdown = (
-            get_number(config, "COORDINATES", "dropdown_x"),
-            get_number(config, "COORDINATES", "dropdown_y")
-        )
+        self.dropdown = (get_number(config, "COORDINATES", "dropdown_x"),
+                         get_number(config, "COORDINATES", "dropdown_y"))
 
-        self.open_new_client = (
-            get_number(config, "COORDINATES", "open_new_client_x"),
-            get_number(config, "COORDINATES", "open_new_client_y")
-        )
+        self.open_new_client = (get_number(config, "COORDINATES", "open_new_client_x"),
+                                get_number(config, "COORDINATES", "open_new_client_y"))
 
-        self.scroll_position = (
-            get_number(config, "COORDINATES", "scroll_x"),
-            get_number(config, "COORDINATES", "scroll_y")
-        )
+        self.scroll_position = (get_number(config, "COORDINATES", "scroll_x"),
+                                get_number(config, "COORDINATES", "scroll_y"))
 
         self.search_region = (
             get_number(config, "SEARCH", "region_x"),
@@ -97,7 +90,6 @@ class GameLauncher:
         self.search_attempts = get_number(config, "SEARCH", "search_attempts")
         self.search_scroll = get_number(config, "SEARCH", "scroll")
 
-        self.click_delay = get_number(config, "DELAYS", "click_delay")
         self.launch_delay = get_number(config, "DELAYS", "launch_delay")
         self.account_switch_delay = get_number(config, "DELAYS", "account_switch_delay")
         self.scroll_delay = get_number(config, "DELAYS", "scroll_delay")
@@ -105,19 +97,14 @@ class GameLauncher:
         self.scroll_up_attempts_delay = get_number(config, "DELAYS", "scroll_up_attempts_delay")
         self.perv_count_delay = get_number(config, "DELAYS", "perv_count_delay")
 
-    # =========================
-    # ACCOUNTS
-    # =========================
     def load_accounts(self):
-        path = resource_path("accounts/accounts.ini")
-        config = read_config_with_fallback(path)
-
+        config = read_config_with_fallback(resource_path("accounts/accounts.ini"))
         self.accounts = []
 
         for name, level in config["ACCOUNTS"].items():
-            image_path = resource_path(os.path.join("Accounts", str(level), f"{name}.png"))
+            image = resource_path(f"Accounts/{level}/{name}.png")
 
-            if not os.path.exists(image_path):
+            if not os.path.exists(image):
                 continue
 
             if self.selected_group and str(level) != str(self.selected_group):
@@ -126,26 +113,16 @@ class GameLauncher:
             if self.selected_accounts and name not in self.selected_accounts:
                 continue
 
-            self.accounts.append({
-                "name": name,
-                "level": level,
-                "image": image_path
-            })
+            self.accounts.append({"name": name, "image": image})
 
-    # =========================
-    # ACTIVATE LAUNCHER
-    # =========================
     def activate_launcher(self):
         hwnds = []
 
         def enum(hwnd, _):
-            if not win32gui.IsWindowVisible(hwnd):
-                return
-
-            title = win32gui.GetWindowText(hwnd)
-
-            if "vk play" in title.lower() or "игровой центр" in title.lower():
-                hwnds.append(hwnd)
+            if win32gui.IsWindowVisible(hwnd):
+                title = win32gui.GetWindowText(hwnd)
+                if "vk play" in title.lower() or "игровой центр" in title.lower():
+                    hwnds.append(hwnd)
 
         win32gui.EnumWindows(enum, None)
 
@@ -153,98 +130,84 @@ class GameLauncher:
             raise Exception("Launcher not found")
 
         hwnd = hwnds[0]
-
         win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
         time.sleep(0.3)
         win32gui.SetForegroundWindow(hwnd)
-
         time.sleep(0.5)
 
-        x1, y1, _, _ = win32gui.GetWindowRect(hwnd)
-        pyautogui.click(x1 + 50, y1 + 50)
-
-        return True
-
-    # =========================
-    # HELPERS
-    # =========================
-    def scroll_down(self):
-        pyautogui.moveTo(*self.scroll_position)
-        pyautogui.scroll(-int(self.search_scroll))
-        time.sleep(self.scroll_delay)
-
     def find_account(self, image):
-        for attempt in range(int(self.search_attempts)):
+        for attempt in range(self.search_attempts):
+
+            if self.should_stop():
+                return None
+
             try:
-                location = pyautogui.locateOnScreen(
-                    image,
-                    region=self.search_region,
-                    confidence=0.8
-                )
-
-                if location:
-                    x, y = pyautogui.center(location)
-                    self.log(f"✅ Found {image}")
-                    return (x, y)
-
+                loc = pyautogui.locateOnScreen(image, region=self.search_region, confidence=0.7)
+                if loc:
+                    return pyautogui.center(loc)
             except Exception as e:
-                self.log(f"⚠️ Error finding {image}: {e}")
+                self.log(f"⚠️ {e}")
 
-            self.log(f"🔄 Attempt {attempt + 1}")
-            self.scroll_down()
+            pyautogui.moveTo(*self.scroll_position)
+            pyautogui.scroll(-self.search_scroll)
+            time.sleep(self.scroll_delay)
 
         return None
 
-    # =========================
-    # MAIN
-    # =========================
     def run(self):
         total = len(self.accounts)
+        pending = self.accounts.copy()
 
-        for i, acc in enumerate(self.accounts):
-
-            if self.stop_flag and self.stop_flag():
-                self.log("⛔ Stopped by user")
+        for round_num in range(2):
+            if not pending or self.should_stop():
                 break
 
-            if total > 0:
-                self.progress(int((i / total) * 100))
+            self.log(f"\n🔁 PASS {round_num+1}")
+            next_pending = []
 
-            name = acc["name"]
-            image = acc["image"]
+            for acc in pending:
 
-            self.log(f"\n🔎 {name}")
+                if self.should_stop():
+                    break
 
-            if not self.activate_launcher():
-                break
+                name = acc["name"]
+                self.log(f"🔎 {name}")
 
-            pyautogui.moveTo(*self.dropdown)
-            pyautogui.click()
-            time.sleep(self.wait_after_dropdown_delay)
+                try:
+                    self.activate_launcher()
+                except Exception:
+                    next_pending.append((acc, "launcher error"))
+                    continue
 
-            for _ in range(int(self.scroll_up_attempts)):
-                pyautogui.scroll(int(self.search_scroll))
-                time.sleep(self.scroll_up_attempts_delay)
+                pyautogui.click(*self.dropdown)
+                time.sleep(self.wait_after_dropdown_delay)
 
-            found = self.find_account(image)
+                for _ in range(self.scroll_up_attempts):
+                    pyautogui.scroll(self.search_scroll)
+                    time.sleep(self.scroll_up_attempts_delay)
 
-            if not found:
-                self.log(f"❌ Not found: {name}")
-                continue
+                found = self.find_account(acc["image"])
 
-            pyautogui.click(found)
-            time.sleep(self.account_switch_delay)
+                if not found:
+                    next_pending.append((acc, "not found"))
+                    continue
 
-            pyautogui.click(*self.play_button)
+                pyautogui.click(found)
+                time.sleep(self.account_switch_delay)
 
-            time.sleep(self.perv_count_delay)
-            pyautogui.click(*self.open_new_client)
+                pyautogui.click(*self.play_button)
+                time.sleep(self.perv_count_delay)
+                pyautogui.click(*self.open_new_client)
 
-            self.log(f"▶️ Launching {name}")
+                self.results["launched"].append(name)
+                self.log(f"🚀 {name} ({len(self.results['launched'])}/{total})")
 
-            time.sleep(self.launch_delay)
+                time.sleep(self.launch_delay)
 
-            self.log(f"🚀 Launched: {name}")
+            pending = [x[0] for x in next_pending]
 
-        self.progress(100)
-        self.log("\n🎉 All accounts launched")
+        for acc in pending:
+            self.results["failed"].append((acc["name"], "not launched"))
+
+        if self.finish_callback:
+            self.finish_callback(self.results)

@@ -4,6 +4,7 @@ from threading import Thread
 import os
 import sys
 from datetime import datetime
+from tkinter import messagebox
 
 from autologin_pw import GameLauncher
 
@@ -88,16 +89,12 @@ class App(ctk.CTk):
         self.accounts_frame = ctk.CTkScrollableFrame(main, height=200)
         self.accounts_frame.pack(fill="both", expand=True, pady=10)
 
-        # GROUP
-        self.group_var = ctk.StringVar()
-
         self.group_menu = ctk.CTkComboBox(
             main,
             variable=self.group_var,
             values=list(self.accounts_by_group.keys())
         )
         self.group_menu.pack(fill="x")
-
         self.group_menu.configure(command=self.update_accounts)
 
         if self.accounts_by_group:
@@ -167,6 +164,14 @@ class App(ctk.CTk):
         win.title("Settings")
         win.geometry("600x600")
 
+        win.transient(self)
+        win.grab_set()
+
+        win.after(10, lambda: win.lift())
+        win.after(10, lambda: win.focus_force())
+        win.after(10, lambda: win.attributes("-topmost", True))
+        win.after(500, lambda: win.attributes("-topmost", False))  # чтобы потом не мешало
+
         cfg = read_config_with_fallback(self.config_path)
         entries = {}
 
@@ -224,12 +229,89 @@ class App(ctk.CTk):
                     log_func=self.log,
                     progress_func=self.update_progress
                 )
+
+                bot.finish_callback = lambda results: self.after(
+                    0, lambda: self.show_summary(results, group)
+                )
+
                 bot.run()
-                self.log("✅ DONE")
-                self.update_progress(1)
 
             except Exception as e:
                 self.log(f"❌ ERROR: {e}")
+
+        Thread(target=task, daemon=True).start()
+
+    # =========================
+    # SUMMARY + RETRY
+    # =========================
+    def show_summary(self, results, group):
+        launched = len(results["launched"])
+        failed = results["failed"]
+        total = launched + len(failed)
+
+        win = ctk.CTkToplevel(self)
+        win.title("Result")
+        win.geometry("400x250")
+
+        win.attributes("-topmost", True)
+
+        win.transient(self)
+        win.grab_set()
+
+        win.update_idletasks()
+        x = self.winfo_x() + (self.winfo_width() // 2 - 200)
+        y = self.winfo_y() + (self.winfo_height() // 2 - 125)
+        win.geometry(f"+{x}+{y}")
+
+        # =========================
+        # CONTENT
+        # =========================
+        text = f"✅ Done {launched}/{total}"
+
+        if failed:
+            text += f"\n\n❌ Failed: {len(failed)}"
+
+        ctk.CTkLabel(win, text=text, font=("Arial", 16)).pack(pady=20)
+
+        # =========================
+        # BUTTONS
+        # =========================
+        btn_frame = ctk.CTkFrame(win)
+        btn_frame.pack(pady=10)
+
+        if failed:
+            def retry():
+                win.destroy()
+                self.retry_failed([x[0] for x in failed], group)
+
+            ctk.CTkButton(btn_frame, text="Retry", command=retry).pack(side="left", padx=10)
+
+        def close():
+            win.destroy()
+
+        ctk.CTkButton(btn_frame, text="Close", command=close).pack(side="left", padx=10)
+
+    def retry_failed(self, accounts, group):
+        self.log(f"🔁 Retrying failed: {accounts}")
+
+        def task():
+            try:
+                bot = GameLauncher(
+                    selected_accounts=accounts,
+                    selected_group=group,
+                    stop_flag=lambda: self.stop_requested,
+                    log_func=self.log,
+                    progress_func=self.update_progress
+                )
+
+                bot.finish_callback = lambda results: self.after(
+                    0, lambda: self.show_summary(results, group)
+                )
+
+                bot.run()
+
+            except Exception as e:
+                self.log(f"❌ ERROR (retry): {e}")
 
         Thread(target=task, daemon=True).start()
 
