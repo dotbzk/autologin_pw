@@ -142,7 +142,7 @@ class GameLauncher:
                 return None
 
             try:
-                loc = pyautogui.locateOnScreen(image, region=self.search_region, confidence=0.92)
+                loc = pyautogui.locateOnScreen(image, region=self.search_region, confidence=0.8)
                 if loc:
                     return pyautogui.center(loc)
             except Exception as e:
