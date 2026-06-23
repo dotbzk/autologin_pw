@@ -1,0 +1,1 @@
+"""GameLauncherBot source package."""

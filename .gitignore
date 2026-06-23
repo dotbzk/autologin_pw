@@ -1,4 +1,7 @@
 # User-specific files
+.DS_Store
+.idea/
+
 *.rsuser
 *.suo
 *.user
@@ -374,5 +377,7 @@ local.properties
 # Python
 *.pyc
 __pycache__
+.venv/
+logs/
 
 .DS_Store
