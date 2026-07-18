@@ -14,7 +14,9 @@ from account_ocr import (
     AccountTextRecognizer,
     find_exact_combined_match,
     find_matching_line,
+    get_lines_center,
 )
+from memory_cleanup import cleanup_memory
 from window_detection import WindowInfo, find_new_windows
 
 
@@ -117,6 +119,12 @@ class GameLauncher:
         self.search_scroll = get_number(config, "SEARCH", "scroll")
         self.ocr_min_confidence = get_number(config, "SEARCH", "ocr_min_confidence")
         self.ocr_fuzzy_threshold = get_number(config, "SEARCH", "ocr_fuzzy_threshold")
+        self.account_click_offset_x = config.getint(
+            "SEARCH", "account_click_offset_x", fallback=70
+        )
+        self.account_click_offset_y = config.getint(
+            "SEARCH", "account_click_offset_y", fallback=0
+        )
 
         self.current_account_region = (
             get_number(config, "CURRENT_ACCOUNT", "region_x"),
@@ -147,12 +155,36 @@ class GameLauncher:
             "LAUNCH_VERIFICATION", "min_window_height", fallback=200
         )
 
+        self.memory_cleanup_enabled = config.getboolean(
+            "MEMORY_CLEANUP", "enabled", fallback=False
+        )
+        self.memory_cleanup_trim_processes = config.getboolean(
+            "MEMORY_CLEANUP", "trim_processes", fallback=True
+        )
+        self.memory_cleanup_trim_file_cache = config.getboolean(
+            "MEMORY_CLEANUP", "trim_file_cache", fallback=True
+        )
+        self.memory_cleanup_purge_standby_list = config.getboolean(
+            "MEMORY_CLEANUP", "purge_standby_list", fallback=True
+        )
+
         self.launch_delay = get_number(config, "DELAYS", "launch_delay")
         self.account_switch_delay = get_number(config, "DELAYS", "account_switch_delay")
         self.scroll_delay = get_number(config, "DELAYS", "scroll_delay")
         self.wait_after_dropdown_delay = get_number(config, "DELAYS", "wait_after_dropdown_delay")
         self.scroll_up_attempts_delay = get_number(config, "DELAYS", "scroll_up_attempts_delay")
         self.perv_count_delay = get_number(config, "DELAYS", "perv_count_delay")
+
+    def account_click_point(self, center):
+        x, y = center
+        region_x, region_y, region_w, region_h = self.search_region
+        screen_x = region_x + x + self.account_click_offset_x
+        screen_y = region_y + y + self.account_click_offset_y
+
+        return (
+            round(max(region_x + 5, min(region_x + region_w - 5, screen_x))),
+            round(max(region_y + 5, min(region_y + region_h - 5, screen_y))),
+        )
 
     def load_accounts(self):
         self.accounts = []
@@ -265,11 +297,20 @@ class GameLauncher:
                     fuzzy_threshold=self.ocr_fuzzy_threshold,
                 )
                 if match:
-                    center_x, center_y = match.center
-                    screen_x = self.search_region[0] + center_x
-                    screen_y = self.search_region[1] + center_y
                     self.debug(f"✅ OCR: {match.text} ({match.confidence:.0%})")
-                    return (round(screen_x), round(screen_y))
+                    return self.account_click_point(match.center)
+
+                combined_match = find_exact_combined_match(
+                    account_name,
+                    lines,
+                    min_confidence=self.ocr_min_confidence,
+                )
+                if combined_match:
+                    recognized_parts = " + ".join(
+                        repr(line.text) for line in combined_match
+                    )
+                    self.debug(f"✅ OCR combined: {recognized_parts}")
+                    return self.account_click_point(get_lines_center(combined_match))
 
                 recognized = [
                     line.text
@@ -323,6 +364,7 @@ class GameLauncher:
                 account_name,
                 lines,
                 min_confidence=self.ocr_min_confidence,
+                max_y_distance=54,
             )
             if combined_match:
                 recognized_parts = " + ".join(
@@ -455,6 +497,33 @@ class GameLauncher:
 
         return None
 
+    def cleanup_memory_before_launch(self, account_name):
+        if not self.memory_cleanup_enabled:
+            return True
+        if self.should_stop():
+            return False
+
+        self.log(f"🧹 Cleaning memory before launch: {account_name}")
+
+        try:
+            result = cleanup_memory(
+                trim_processes=self.memory_cleanup_trim_processes,
+                trim_file_cache=self.memory_cleanup_trim_file_cache,
+                purge_standby_list=self.memory_cleanup_purge_standby_list,
+            )
+        except Exception as exc:
+            self.log(f"⚠️ Memory cleanup failed: {exc}")
+            return True
+
+        if result.supported:
+            self.debug(f"Memory cleanup completed: {result.summary()}")
+            if result.errors:
+                self.log(f"⚠️ Memory cleanup partial: {'; '.join(result.errors)}")
+        else:
+            self.log(f"⚠️ Memory cleanup skipped: {'; '.join(result.errors)}")
+
+        return True
+
     def run(self):
         total = len(self.accounts)
         pending = self.accounts.copy()
@@ -524,6 +593,10 @@ class GameLauncher:
                         self.log(f"❌ Account selection not confirmed: {name}")
                         next_pending.append((acc, "selection not confirmed"))
                         continue
+
+                if not self.cleanup_memory_before_launch(name):
+                    next_pending.extend((item, "stopped") for item in pending[index:])
+                    break
 
                 try:
                     self.ensure_launcher_active()
