@@ -139,12 +139,13 @@ dialog. Every key must have a matching image in `src/configs/classes`.
 | `scroll` | Mouse-wheel steps per search attempt (not pixels) |
 | `ocr_min_confidence` | Minimum accepted OCR confidence |
 | `ocr_fuzzy_threshold` | Minimum similarity for fuzzy account-name matching |
+| `account_click_offset_x/y` | Offset from the recognized account text center to the final click point |
 
 ### `CURRENT_ACCOUNT`
 
 | Setting | Description |
 | --- | --- |
-| `region_x/y/w/h` | Screen region containing the currently selected account name |
+| `region_x/y/w/h` | Screen region containing the currently selected account name; keep it wide enough for the longest account name |
 | `confirm_attempts` | Number of OCR checks after selecting an account |
 | `confirm_delay` | Delay in seconds between confirmation checks |
 
@@ -160,6 +161,29 @@ small text in the VK Play header.
 | `required_observations` | Consecutive checks required to confirm the window |
 | `min_window_width/height` | Minimum accepted game-window size |
 
+### `MEMORY_CLEANUP`
+
+| Setting | Description |
+| --- | --- |
+| `enabled` | Enables memory cleanup before every client launch |
+| `trim_processes` | Trims process working sets through the Windows `EmptyWorkingSet` API |
+| `trim_file_cache` | Attempts to trim the system file cache |
+| `purge_standby_list` | Attempts to purge the Windows standby memory list |
+
+The main window also has a **Clean memory before each client** checkbox. It
+updates `MEMORY_CLEANUP.enabled` in `config.ini`.
+
+The cleaner is implemented in `src/memory_cleanup.py` and can be used
+separately:
+
+```powershell
+python .\src\memory_cleanup.py
+```
+
+The PyInstaller build also includes `MemoryCleaner.exe` in the `client`
+directory. Some cleanup operations require administrator privileges; if they are
+not available, the bot logs a warning and continues launching clients.
+
 ### `DELAYS`
 
 All delay values are specified in seconds. Increase them if VK Play or the game does not have enough time to react.
@@ -172,8 +196,16 @@ Settings can be edited manually or through the **Settings** button in the applic
 2. It captures the configured `SEARCH` region.
 3. RapidOCR returns recognized text and its screen coordinates.
 4. The recognized text is compared with the requested account name.
-5. On a match, the bot clicks the center of the recognized text.
+5. On a match, the bot clicks the same row with the configured `account_click_offset_x/y`.
 6. If no match is found, the list is scrolled and scanned again.
+
+If OCR splits an account name into adjacent fragments on the same row, the bot
+can combine those fragments before clicking. Fragments from different rows are
+ignored to avoid mixing similar account names.
+
+For account names that start with a numbered prefix, such as
+`x3_mist_fenrir` or `v3_mist_fenrir`, the prefix must match exactly. Fuzzy OCR
+matching is still allowed for the rest of the name.
 
 OCR models are included in the application build and do not need to be downloaded at runtime.
 

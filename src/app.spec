@@ -21,6 +21,20 @@ a = Analysis(
 
 pyz = PYZ(a.pure)
 
+memory_cleaner_a = Analysis(
+    [str(source_dir / 'memory_cleanup.py')],
+    pathex=[str(source_dir)],
+    binaries=[],
+    datas=[],
+    hiddenimports=[],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+)
+
+memory_cleaner_pyz = PYZ(memory_cleaner_a.pure)
+
 exe = EXE(
     pyz,
     a.scripts,
@@ -31,10 +45,23 @@ exe = EXE(
     icon=str(source_dir / 'configs/ico/app.ico')
 )
 
+memory_cleaner_exe = EXE(
+    memory_cleaner_pyz,
+    memory_cleaner_a.scripts,
+    [],
+    exclude_binaries=True,
+    name='MemoryCleaner',
+    console=True,
+)
+
 coll = COLLECT(
     exe,
+    memory_cleaner_exe,
     a.binaries,
+    memory_cleaner_a.binaries,
     a.zipfiles,
+    memory_cleaner_a.zipfiles,
     a.datas,
+    memory_cleaner_a.datas,
     name='client'
 )

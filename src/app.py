@@ -76,6 +76,9 @@ class App(ctk.CTk):
             "UI", "account_icon_size", fallback=32
         )
         self.account_icon_size = max(16, min(64, configured_icon_size))
+        self.memory_cleanup_enabled = ui_config.getboolean(
+            "MEMORY_CLEANUP", "enabled", fallback=False
+        )
         self.class_options = (
             list(ui_config["LIST_OF_CLASSES"].keys())
             if "LIST_OF_CLASSES" in ui_config
@@ -206,6 +209,17 @@ class App(ctk.CTk):
             command=self.open_settings,
         ).pack(side="left", padx=5)
 
+        # RUN OPTIONS
+        options_frame = ctk.CTkFrame(main)
+        options_frame.pack(fill="x", pady=5)
+        self.memory_cleanup_var = ctk.BooleanVar(value=self.memory_cleanup_enabled)
+        ctk.CTkCheckBox(
+            options_frame,
+            text="Clean memory before each client",
+            variable=self.memory_cleanup_var,
+            command=self.save_memory_cleanup_setting,
+        ).pack(anchor="w", padx=10, pady=8)
+
         # LOG
         ctk.CTkLabel(main, text="LOG").pack(anchor="w")
 
@@ -247,6 +261,26 @@ class App(ctk.CTk):
     def debug_log(self, text):
         if self.debug_enabled:
             self.log(text)
+
+    def save_memory_cleanup_setting(self):
+        enabled = self.memory_cleanup_var.get()
+        try:
+            cfg = read_config_with_fallback(self.config_path)
+            if "MEMORY_CLEANUP" not in cfg:
+                cfg.add_section("MEMORY_CLEANUP")
+            cfg["MEMORY_CLEANUP"]["enabled"] = "yes" if enabled else "no"
+            with open(self.config_path, "w", encoding="utf-8") as config_file:
+                cfg.write(config_file)
+        except Exception as exc:
+            self.memory_cleanup_var.set(not enabled)
+            messagebox.showerror(
+                "Memory Cleanup",
+                f"Cannot save memory cleanup setting:\n{exc}",
+                parent=self,
+            )
+            return
+
+        self.log(f"Memory cleanup {'enabled' if enabled else 'disabled'}")
 
     # =========================
     # ACCOUNTS UI
