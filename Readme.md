@@ -4,6 +4,9 @@ A Windows application for launching multiple Perfect World accounts through VK P
 
 The bot opens the account list, recognizes account names with OCR, selects the requested account, and performs the configured launch sequence.
 
+This repository also contains a separate Electron app for isolated website
+account profiles in `site_profiles_client/`.
+
 > The application controls the mouse and keyboard. Do not move the mouse, resize VK Play, or switch windows while the bot is running.
 
 ## Features

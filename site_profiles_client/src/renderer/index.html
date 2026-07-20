@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:;"
+    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Profiles Client</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main id="profiles-view" class="app-shell">
+      <section class="sidebar">
+        <div>
+          <h1>Profiles</h1>
+          <p class="muted">Isolated persistent browser sessions</p>
+        </div>
+
+        <label class="field">
+          <span>Search</span>
+          <input id="search-input" type="search" autocomplete="off" placeholder="Name, URL, note">
+        </label>
+
+        <button id="new-profile-button" class="primary full-width" type="button">New Profile</button>
+      </section>
+
+      <section class="content">
+        <header class="content-header">
+          <div>
+            <h2>Account Profiles</h2>
+            <p id="profile-count" class="muted"></p>
+          </div>
+        </header>
+
+        <section class="settings-panel">
+          <label class="field">
+            <span>Default URL</span>
+            <input id="default-url-input" type="url" placeholder="https://example.com">
+          </label>
+          <label class="field compact">
+            <span>Startup</span>
+            <select id="launch-mode-select">
+              <option value="profiles">Open profile list</option>
+              <option value="last">Open last profile</option>
+            </select>
+          </label>
+          <button id="save-settings-button" type="button">Save Settings</button>
+        </section>
+
+        <div id="profiles-list" class="profiles-list"></div>
+        <div id="empty-state" class="empty-state hidden">
+          <h3>No profiles yet</h3>
+          <p>Create a profile, log in once, and the browser session will stay isolated for that profile.</p>
+        </div>
+      </section>
+    </main>
+
+    <main id="browser-view" class="browser-shell hidden">
+      <header class="browser-toolbar">
+        <button id="back-button" type="button" title="Back">Back</button>
+        <button id="forward-button" type="button" title="Forward">Forward</button>
+        <button id="reload-button" type="button" title="Reload">Reload</button>
+        <input id="address-input" type="url" spellcheck="false">
+        <button id="go-button" class="primary" type="button">Go</button>
+        <button id="external-button" type="button">External</button>
+        <button id="profiles-button" type="button">Profiles</button>
+      </header>
+      <div id="browser-title-bar">
+        <span id="active-profile-name"></span>
+        <span id="browser-title" class="muted"></span>
+      </div>
+      <section id="browser-frame"></section>
+    </main>
+
+    <dialog id="profile-dialog">
+      <form id="profile-form" method="dialog">
+        <h2 id="dialog-title">Profile</h2>
+        <input id="profile-id-input" type="hidden">
+        <label class="field">
+          <span>Name</span>
+          <input id="profile-name-input" type="text" autocomplete="off" required>
+        </label>
+        <label class="field">
+          <span>Site URL</span>
+          <input id="profile-url-input" type="url" placeholder="https://example.com">
+        </label>
+        <label class="field">
+          <span>Color</span>
+          <input id="profile-color-input" type="color" value="#3b82f6">
+        </label>
+        <label class="field">
+          <span>Note</span>
+          <textarea id="profile-note-input" rows="4"></textarea>
+        </label>
+        <menu>
+          <button id="cancel-dialog-button" type="button">Cancel</button>
+          <button class="primary" type="submit">Save</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>
