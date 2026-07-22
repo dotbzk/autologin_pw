@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from difflib import SequenceMatcher
-from itertools import permutations
+from itertools import combinations
 import unicodedata
 
 
@@ -23,10 +23,48 @@ def normalize_account_name(value):
     return "".join(char for char in normalized if char.isalnum())
 
 
+def normalize_account_tokens(value):
+    normalized = unicodedata.normalize("NFKC", value).casefold()
+    tokens = []
+    current = []
+
+    for char in normalized:
+        if char.isalnum():
+            current.append(char)
+        elif current:
+            tokens.append("".join(current))
+            current = []
+
+    if current:
+        tokens.append("".join(current))
+
+    return tokens
+
+
+def _protected_prefix(target):
+    tokens = normalize_account_tokens(target)
+    if len(tokens) < 2:
+        return ""
+
+    first = tokens[0]
+    return first if any(char.isdigit() for char in first) else ""
+
+
+def _can_fuzzy_match(target_normalized, recognized, protected_prefix):
+    if protected_prefix:
+        return recognized.startswith(protected_prefix)
+
+    # A wrong first character can point to a different account entirely.
+    # For example, OCR may crop "luk_kapela" to "ukkapela", which must
+    # never be accepted as "mk_kapela" by the fuzzy matcher.
+    return recognized[0] == target_normalized[0]
+
+
 def find_matching_line(target, lines, min_confidence=0.45, fuzzy_threshold=0.86):
     target_normalized = normalize_account_name(target)
     if not target_normalized:
         return None
+    protected_prefix = _protected_prefix(target)
 
     candidates = []
     for line in lines:
@@ -40,10 +78,7 @@ def find_matching_line(target, lines, min_confidence=0.45, fuzzy_threshold=0.86)
         if recognized == target_normalized:
             return line
 
-        # A wrong first character can point to a different account entirely.
-        # For example, OCR may crop "luk_kapela" to "ukkapela", which must
-        # never be accepted as "mk_kapela" by the fuzzy matcher.
-        if recognized[0] != target_normalized[0]:
+        if not _can_fuzzy_match(target_normalized, recognized, protected_prefix):
             continue
 
         similarity = SequenceMatcher(None, target_normalized, recognized).ratio()
@@ -56,18 +91,42 @@ def find_matching_line(target, lines, min_confidence=0.45, fuzzy_threshold=0.86)
     return line if similarity >= fuzzy_threshold else None
 
 
-def find_exact_combined_match(target, lines, min_confidence=0.45, max_lines=3):
+def _same_text_row(lines, max_y_distance=18):
+    centers = [line.center for line in lines]
+    ys = [center[1] for center in centers]
+    return max(ys) - min(ys) <= max_y_distance
+
+
+def find_exact_combined_match(
+    target,
+    lines,
+    min_confidence=0.45,
+    max_lines=3,
+    max_y_distance=18,
+):
     """Find an exact account name split by OCR into adjacent text fragments."""
     target_normalized = normalize_account_name(target)
     eligible = [line for line in lines if line.confidence >= min_confidence]
 
     for size in range(2, min(max_lines, len(eligible)) + 1):
-        for group in permutations(eligible, size):
-            combined = "".join(line.text for line in group)
+        for group in combinations(eligible, size):
+            if not _same_text_row(group, max_y_distance=max_y_distance):
+                continue
+
+            ordered = sorted(group, key=lambda line: line.center[0])
+            combined = "".join(line.text for line in ordered)
             if normalize_account_name(combined) == target_normalized:
-                return list(group)
+                return list(ordered)
 
     return None
+
+
+def get_lines_center(lines):
+    centers = [line.center for line in lines]
+    return (
+        sum(center[0] for center in centers) / len(centers),
+        sum(center[1] for center in centers) / len(centers),
+    )
 
 
 class AccountTextRecognizer:
