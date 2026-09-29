@@ -1034,9 +1034,61 @@ class App(ctk.CTk):
         for section in cfg.sections():
             ctk.CTkLabel(container, text=f"[{section}]").pack(anchor="w", pady=(10, 0))
 
+            point_names = {}
+            if section == "COORDINATES":
+                point_names = {
+                    f"{name}_x": name for name in POINT_NAMES
+                    if f"{name}_x" in cfg[section] and f"{name}_y" in cfg[section]
+                }
+            region_keys = ("region_x", "region_y", "region_w", "region_h")
+            has_region = section in REGION_SECTIONS and all(
+                key in cfg[section] for key in region_keys
+            )
+
+            def add_coordinate_entry(row, key, label):
+                ctk.CTkLabel(row, text=label, width=18).pack(side="left")
+                entry = ctk.CTkEntry(row, width=58)
+                entry.insert(0, cfg[section][key])
+                entry.pack(side="left", padx=(0, 6))
+                entries[(section, key)] = entry
+
             for key, val in cfg[section].items():
+                if key in {f"{name}_y" for name in point_names.values()}:
+                    continue
+                if has_region and key in region_keys[1:]:
+                    continue
+
                 row = ctk.CTkFrame(container)
                 row.pack(fill="x", pady=2)
+
+                if key in point_names:
+                    name = point_names[key]
+                    ctk.CTkLabel(
+                        row, text=name.replace("_", " "), width=150, anchor="w",
+                    ).pack(side="left", padx=(6, 0))
+                    add_coordinate_entry(row, key, "X")
+                    add_coordinate_entry(row, f"{name}_y", "Y")
+                    ctk.CTkButton(
+                        row, text="Select point", width=100,
+                        command=lambda point_name=name, selected_section=section: self.pick_screen_target(
+                            win, entries, selected_section, point_name,
+                        ),
+                    ).pack(side="left", padx=(2, 6))
+                    continue
+
+                if has_region and key == "region_x":
+                    ctk.CTkLabel(row, text="Area", width=60, anchor="w").pack(
+                        side="left", padx=(6, 0),
+                    )
+                    for region_key, label in zip(region_keys, ("X", "Y", "W", "H")):
+                        add_coordinate_entry(row, region_key, label)
+                    ctk.CTkButton(
+                        row, text="Select area", width=100,
+                        command=lambda selected_section=section: self.pick_screen_target(
+                            win, entries, selected_section,
+                        ),
+                    ).pack(side="left", padx=(2, 6))
+                    continue
 
                 ctk.CTkLabel(row, text=key, width=200).pack(side="left")
 
@@ -1045,32 +1097,6 @@ class App(ctk.CTk):
                 entry.pack(side="right", fill="x", expand=True)
 
                 entries[(section, key)] = entry
-
-            if section == "COORDINATES":
-                for name in POINT_NAMES:
-                    if (section, f"{name}_x") not in entries or (section, f"{name}_y") not in entries:
-                        continue
-                    ctk.CTkButton(
-                        container,
-                        text=f"Select {name.replace('_', ' ')} on screen",
-                        command=lambda point_name=name, selected_section=section: self.pick_screen_target(
-                            win, entries, selected_section, point_name,
-                        ),
-                    ).pack(fill="x", pady=2)
-
-            if section in REGION_SECTIONS:
-                row = ctk.CTkFrame(container)
-                row.pack(fill="x", pady=(4, 8))
-                ctk.CTkLabel(row, text="", width=200).pack(side="left")
-                ctk.CTkButton(
-                    row,
-                    text="Select screen area",
-                    command=lambda selected_section=section: self.pick_screen_target(
-                        win,
-                        entries,
-                        selected_section,
-                    ),
-                ).pack(side="right", fill="x", expand=True)
 
         def save():
             values = {(section, key): entry.get() for (section, key), entry in entries.items()}
