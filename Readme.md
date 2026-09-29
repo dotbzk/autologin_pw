@@ -79,6 +79,29 @@ To rebuild without reinstalling dependencies:
 .\src\build.ps1 -SkipInstall
 ```
 
+Local builds preserve the existing `client/configs/config.ini`,
+`client/accounts/accounts.ini`, and logs. Use `-FreshConfig` to build with the
+defaults from `src` instead.
+
+## Updates
+
+The built application has an **Update** button. It checks the latest published
+GitHub Release, asks before installing a newer version, and starts a separate
+updater. The updater closes the current application, verifies and installs the
+release archive, restarts the application, and removes temporary files. Account
+definitions, logs, and custom class icons are kept; user settings are merged with
+new default settings.
+
+The first build containing the updater must be installed manually, preferably
+outside the Git checkout. Future releases can then be installed from the
+application. To publish a release:
+
+1. Increase the version in `src/version.json` and commit it to `main`.
+2. Push a matching tag, for example `v0.1.0` for version `0.1.0`.
+3. The Windows CI build publishes `GameLauncherBot-win64.zip` to GitHub Releases.
+
+The update button uses published releases, not arbitrary commits on `main`.
+
 ## Configure accounts
 
 Accounts are defined in `src/accounts/accounts.ini`. Each account uses its own
@@ -189,6 +212,11 @@ not available, the bot logs a warning and continues launching clients.
 All delay values are specified in seconds. Increase them if VK Play or the game does not have enough time to react.
 
 Settings can be edited manually or through the **Settings** button in the application.
+In **Settings**, use **Select screen area** to drag an OCR region over a screenshot,
+or use the corresponding **Select ... on screen** button to choose a click or scroll
+point. Press Escape to cancel. All coordinate fields remain editable by hand.
+The application checks that points and OCR regions fit on the primary display
+before saving.
 
 ## How account search works
 

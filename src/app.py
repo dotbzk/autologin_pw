@@ -5,10 +5,15 @@ from threading import Thread, current_thread, main_thread
 from queue import Empty, Queue
 import os
 import re
+import shutil
 import sys
+import tkinter as tk
+import tempfile
 from datetime import datetime
 from tkinter import PhotoImage, messagebox
-from PIL import Image
+from PIL import Image, ImageGrab, ImageTk
+import win32con
+import win32gui
 
 from accounts_config import (
     AccountDefinition,
@@ -17,6 +22,13 @@ from accounts_config import (
     write_account_definitions,
 )
 from autologin_pw import GameLauncher
+from screen_settings import (
+    POINT_NAMES,
+    REGION_SECTIONS,
+    rectangle_from_points,
+    validate_screen_entries,
+)
+from update_support import find_update, installed_version, start_updater
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -64,6 +76,7 @@ class App(ctk.CTk):
         self.accounts_path = resource_path("accounts/accounts.ini")
         self.icon_png_path = resource_path("configs/ico/app.png")
         self.icon_ico_path = resource_path("configs/ico/app.ico")
+        self.app_version = installed_version(resource_path("version.json"))
 
         if os.path.exists(self.icon_png_path):
             self.app_icon = PhotoImage(file=self.icon_png_path)
@@ -102,6 +115,58 @@ class App(ctk.CTk):
         self.load_accounts()
         self.build_ui()
         self.after(50, self.process_ui_queue)
+        self.after(0, self.signal_update_ready)
+        self.after(10000, self.cleanup_update_temp)
+        self.after(20000, self.cleanup_completed_stages)
+
+    def signal_update_ready(self):
+        marker = os.environ.get("GAME_LAUNCHER_UPDATE_READY_FILE")
+        if not marker:
+            return
+        temporary_dir = os.environ.get("GAME_LAUNCHER_UPDATE_TEMP")
+        if not temporary_dir or os.path.realpath(marker) != os.path.realpath(
+            os.path.join(temporary_dir, "ready")
+        ):
+            return
+        try:
+            with open(marker, "w", encoding="utf-8") as ready_file:
+                ready_file.write(self.app_version)
+        except OSError:
+            pass
+
+    def cleanup_update_temp(self, attempts=12):
+        path = os.environ.get("GAME_LAUNCHER_UPDATE_TEMP")
+        if not path:
+            return
+        resolved = os.path.realpath(path)
+        temp_root = os.path.realpath(tempfile.gettempdir())
+        if (
+            os.path.dirname(resolved) != temp_root
+            or not os.path.basename(resolved).startswith("GameLauncherBot-update-")
+        ):
+            return
+        try:
+            shutil.rmtree(resolved)
+            os.environ.pop("GAME_LAUNCHER_UPDATE_TEMP", None)
+            os.environ.pop("GAME_LAUNCHER_UPDATE_READY_FILE", None)
+        except OSError:
+            if attempts > 1:
+                self.after(5000, self.cleanup_update_temp, attempts - 1)
+
+    def cleanup_completed_stages(self):
+        install_parent = os.path.dirname(resource_path("version.json"))
+        install_parent = os.path.dirname(install_parent)
+        try:
+            with os.scandir(install_parent) as entries:
+                for entry in entries:
+                    if (
+                        entry.name.startswith("GameLauncherBot-stage-")
+                        and entry.is_dir(follow_symlinks=False)
+                        and os.path.isfile(os.path.join(entry.path, "completed"))
+                    ):
+                        shutil.rmtree(entry.path, ignore_errors=True)
+        except OSError:
+            pass
 
     # =========================
     # LOG
@@ -208,6 +273,12 @@ class App(ctk.CTk):
             text="⚙ Settings",
             command=self.open_settings,
         ).pack(side="left", padx=5)
+        self.update_button = ctk.CTkButton(
+            manage_frame,
+            text="Update",
+            command=self.check_for_updates,
+        )
+        self.update_button.pack(side="left", padx=5)
 
         # RUN OPTIONS
         options_frame = ctk.CTkFrame(main)
@@ -257,6 +328,52 @@ class App(ctk.CTk):
             ),
         )
         self.log(f"Debug logging {'enabled' if self.debug_enabled else 'disabled'}")
+
+    def check_for_updates(self):
+        if not getattr(sys, "frozen", False):
+            messagebox.showinfo("Update", "Updates are available in the built application.", parent=self)
+            return
+        if self.worker_thread and self.worker_thread.is_alive():
+            messagebox.showwarning("Update", "Stop the current run before updating.", parent=self)
+            return
+        self.update_button.configure(state="disabled")
+        self.log("Checking for updates...")
+
+        def task():
+            try:
+                release = find_update(self.app_version)
+                self.call_on_ui(self.show_update_result, release)
+            except Exception as exc:
+                self.call_on_ui(self.show_update_error, str(exc))
+
+        Thread(target=task, daemon=True).start()
+
+    def show_update_error(self, message):
+        self.update_button.configure(state="normal")
+        self.log(f"Update check failed: {message}")
+        messagebox.showerror("Update", message, parent=self)
+
+    def show_update_result(self, release):
+        self.update_button.configure(state="normal")
+        if not release:
+            messagebox.showinfo("Update", f"Version {self.app_version} is up to date.", parent=self)
+            return
+        if self.worker_thread and self.worker_thread.is_alive():
+            messagebox.showwarning("Update", "Stop the current run before updating.", parent=self)
+            return
+        approved = messagebox.askyesno(
+            "Update",
+            f"Version {release['version']} is available. Install and restart now?",
+            parent=self,
+        )
+        if not approved:
+            return
+        try:
+            start_updater(os.path.dirname(sys.executable), release)
+        except Exception as exc:
+            self.show_update_error(str(exc))
+            return
+        self.destroy()
 
     def debug_log(self, text):
         if self.debug_enabled:
@@ -784,6 +901,118 @@ class App(ctk.CTk):
     # =========================
     # SETTINGS
     # =========================
+    def screen_bounds(self):
+        metrics = ctypes.windll.user32.GetSystemMetrics
+        return 0, 0, metrics(0), metrics(1)
+
+    def pick_screen_target(self, settings_window, entries, section, name=None):
+        try:
+            settings_window.grab_release()
+        except tk.TclError:
+            pass
+
+        settings_window.withdraw()
+        self.withdraw()
+
+        def restore_windows():
+            self.deiconify()
+            settings_window.deiconify()
+            settings_window.lift()
+            settings_window.focus_force()
+            settings_window.grab_set()
+
+        def show_picker():
+            try:
+                left, top, screen_w, screen_h = self.screen_bounds()
+                screenshot = ImageGrab.grab()
+                if screenshot.size != (screen_w, screen_h):
+                    raise RuntimeError("Screen capture size does not match display coordinates")
+            except Exception as exc:
+                restore_windows()
+                messagebox.showerror("Select on screen", str(exc), parent=settings_window)
+                return
+
+            try:
+                picker = tk.Toplevel(self)
+                picker.overrideredirect(True)
+                picker.geometry(f"{screen_w}x{screen_h}+0+0")
+                picker.update_idletasks()
+                win32gui.SetWindowPos(
+                    picker.winfo_id(), win32con.HWND_TOPMOST,
+                    left, top, screen_w, screen_h, win32con.SWP_SHOWWINDOW,
+                )
+                picker.screen_image = ImageTk.PhotoImage(screenshot)
+            except Exception as exc:
+                if "picker" in locals():
+                    picker.destroy()
+                restore_windows()
+                messagebox.showerror("Select on screen", str(exc), parent=settings_window)
+                return
+            canvas = tk.Canvas(
+                picker,
+                cursor="crosshair",
+                highlightthickness=0,
+            )
+            canvas.pack(fill="both", expand=True)
+            canvas.create_image(0, 0, image=picker.screen_image, anchor="nw")
+            state = {"start": None, "rect": None}
+
+            def set_entry_value(key, value):
+                entry = entries[(section, key)]
+                entry.delete(0, "end")
+                entry.insert(0, str(int(value)))
+
+            def close_picker():
+                picker.destroy()
+                restore_windows()
+
+            def on_press(event):
+                state["start"] = (event.x, event.y)
+                if name is None:
+                    state["rect"] = canvas.create_rectangle(
+                        event.x, event.y, event.x, event.y,
+                        outline="#00ff88", width=3,
+                    )
+
+            def on_drag(event):
+                if state["rect"] is None:
+                    return
+                start_x, start_y = state["start"]
+                canvas.coords(
+                    state["rect"],
+                    start_x,
+                    start_y,
+                    event.x,
+                    event.y,
+                )
+
+            def on_release(event):
+                if state["start"] is None:
+                    return
+                end = (max(0, min(screen_w - 1, event.x)), max(0, min(screen_h - 1, event.y)))
+                if name is not None:
+                    set_entry_value(f"{name}_x", left + end[0])
+                    set_entry_value(f"{name}_y", top + end[1])
+                else:
+                    x, y, width, height = rectangle_from_points(state["start"], end)
+                    if width >= 5 and height >= 5:
+                        set_entry_value("region_x", left + x)
+                        set_entry_value("region_y", top + y)
+                        set_entry_value("region_w", width)
+                        set_entry_value("region_h", height)
+
+                close_picker()
+
+            picker.bind("<Escape>", lambda _event: close_picker())
+            picker.protocol("WM_DELETE_WINDOW", close_picker)
+            canvas.bind("<ButtonPress-1>", on_press)
+            canvas.bind("<B1-Motion>", on_drag)
+            canvas.bind("<ButtonRelease-1>", on_release)
+            picker.grab_set()
+            picker.focus_force()
+
+        self.after(250, show_picker)
+
     def open_settings(self):
         win = ctk.CTkToplevel(self)
         win.title("Settings")
@@ -817,12 +1046,55 @@ class App(ctk.CTk):
 
                 entries[(section, key)] = entry
 
-        def save():
-            for (section, key), entry in entries.items():
-                cfg[section][key] = entry.get()
+            if section == "COORDINATES":
+                for name in POINT_NAMES:
+                    if (section, f"{name}_x") not in entries or (section, f"{name}_y") not in entries:
+                        continue
+                    ctk.CTkButton(
+                        container,
+                        text=f"Select {name.replace('_', ' ')} on screen",
+                        command=lambda point_name=name, selected_section=section: self.pick_screen_target(
+                            win, entries, selected_section, point_name,
+                        ),
+                    ).pack(fill="x", pady=2)
 
-            with open(self.config_path, "w", encoding="utf-8") as f:
-                cfg.write(f)
+            if section in REGION_SECTIONS:
+                row = ctk.CTkFrame(container)
+                row.pack(fill="x", pady=(4, 8))
+                ctk.CTkLabel(row, text="", width=200).pack(side="left")
+                ctk.CTkButton(
+                    row,
+                    text="Select screen area",
+                    command=lambda selected_section=section: self.pick_screen_target(
+                        win,
+                        entries,
+                        selected_section,
+                    ),
+                ).pack(side="right", fill="x", expand=True)
+
+        def save():
+            values = {(section, key): entry.get() for (section, key), entry in entries.items()}
+            temporary_path = None
+            try:
+                validate_screen_entries(values, self.screen_bounds())
+                for (section, key), value in values.items():
+                    cfg[section][key] = value
+                with tempfile.NamedTemporaryFile(
+                    mode="w", encoding="utf-8", dir=os.path.dirname(self.config_path),
+                    prefix="config-", suffix=".tmp", delete=False,
+                ) as temporary_file:
+                    temporary_path = temporary_file.name
+                    cfg.write(temporary_file)
+                os.replace(temporary_path, self.config_path)
+            except (OSError, ValueError) as exc:
+                messagebox.showerror("Settings", str(exc), parent=win)
+                return
+            finally:
+                if temporary_path and os.path.exists(temporary_path):
+                    try:
+                        os.remove(temporary_path)
+                    except OSError:
+                        pass
 
             self.log("✅ Config saved")
             win.destroy()

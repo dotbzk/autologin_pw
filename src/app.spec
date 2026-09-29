@@ -35,6 +35,20 @@ memory_cleaner_a = Analysis(
 
 memory_cleaner_pyz = PYZ(memory_cleaner_a.pure)
 
+updater_a = Analysis(
+    [str(source_dir / 'updater.py')],
+    pathex=[str(source_dir)],
+    binaries=[],
+    datas=[],
+    hiddenimports=[],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[],
+)
+
+updater_pyz = PYZ(updater_a.pure)
+
 exe = EXE(
     pyz,
     a.scripts,
@@ -54,9 +68,22 @@ memory_cleaner_exe = EXE(
     console=True,
 )
 
+updater_exe = EXE(
+    updater_pyz,
+    updater_a.scripts,
+    updater_a.binaries,
+    updater_a.zipfiles,
+    updater_a.datas,
+    [],
+    name='Updater',
+    console=False,
+    icon=str(source_dir / 'configs/ico/app.ico'),
+)
+
 coll = COLLECT(
     exe,
     memory_cleaner_exe,
+    updater_exe,
     a.binaries,
     memory_cleaner_a.binaries,
     a.zipfiles,
