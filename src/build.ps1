@@ -1,6 +1,7 @@
 param(
     [string]$Python = "python",
     [switch]$SkipInstall,
+    [switch]$FreshConfig,
     [switch]$NoPause
 )
 
@@ -14,6 +15,9 @@ $TestsDir = Join-Path $SourceDir "tests"
 $OutputDir = Join-Path $ProjectRoot "client"
 $BuildRoot = Join-Path $ProjectRoot "build"
 $BuildDir = Join-Path $BuildRoot "GameLauncherBot"
+$StageRoot = Join-Path $BuildRoot "dist"
+$StagedOutput = Join-Path $StageRoot "client"
+$BackupOutput = Join-Path $BuildRoot "previous-client"
 $SpecFile = Join-Path $SourceDir "app.spec"
 $BuildError = $null
 $PythonCacheDirs = @(
@@ -51,24 +55,24 @@ try {
         throw "Tests failed."
     }
 
-    Write-Host "Removing the previous build..."
-    if (Test-Path $OutputDir) {
-        Remove-Item $OutputDir -Recurse -Force
-    }
+    Write-Host "Preparing the new build..."
     if (Test-Path $BuildDir) {
         Remove-Item $BuildDir -Recurse -Force
     }
+    if (Test-Path $StageRoot) {
+        Remove-Item $StageRoot -Recurse -Force
+    }
 
     Write-Host "Building GameLauncherBot..."
-    & $VenvPython -m PyInstaller --clean --noconfirm --distpath $ProjectRoot --workpath $BuildDir $SpecFile
+    & $VenvPython -m PyInstaller --clean --noconfirm --distpath $StageRoot --workpath $BuildDir $SpecFile
     if ($LASTEXITCODE -ne 0) {
         throw "PyInstaller build failed."
     }
 
-    $ConfigDir = Join-Path $OutputDir "configs"
+    $ConfigDir = Join-Path $StagedOutput "configs"
     $IconDir = Join-Path $ConfigDir "ico"
     $ClassesDir = Join-Path $ConfigDir "classes"
-    $AccountsDir = Join-Path $OutputDir "accounts"
+    $AccountsDir = Join-Path $StagedOutput "accounts"
     New-Item -ItemType Directory -Force $ConfigDir | Out-Null
     New-Item -ItemType Directory -Force $IconDir | Out-Null
     New-Item -ItemType Directory -Force $ClassesDir | Out-Null
@@ -79,10 +83,20 @@ try {
     Copy-Item (Join-Path $SourceDir "configs\ico\app.ico") (Join-Path $IconDir "app.ico") -Force
     Copy-Item (Join-Path $SourceDir "configs\classes\*") $ClassesDir -Force
     Copy-Item (Join-Path $SourceDir "accounts\accounts.ini") (Join-Path $AccountsDir "accounts.ini") -Force
+    Copy-Item (Join-Path $SourceDir "version.json") (Join-Path $StagedOutput "version.json") -Force
 
-    $Executable = Join-Path $OutputDir "GameLauncherBot.exe"
+    if (-not $FreshConfig -and (Test-Path $OutputDir)) {
+        & $VenvPython -c "from src.update_support import preserve_user_data; import sys; preserve_user_data(sys.argv[1], sys.argv[2])" $OutputDir $StagedOutput
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to preserve local settings and accounts."
+        }
+    }
+
+    $Executable = Join-Path $StagedOutput "GameLauncherBot.exe"
     $RequiredFiles = @(
         $Executable,
+        (Join-Path $StagedOutput "Updater.exe"),
+        (Join-Path $StagedOutput "version.json"),
         (Join-Path $ConfigDir "config.ini"),
         (Join-Path $IconDir "app.png"),
         (Join-Path $IconDir "app.ico"),
@@ -92,6 +106,30 @@ try {
     foreach ($RequiredFile in $RequiredFiles) {
         if (-not (Test-Path $RequiredFile)) {
             throw "Build completed without required file: $RequiredFile"
+        }
+    }
+
+    if (Test-Path $BackupOutput) {
+        throw "Previous build backup still exists: $BackupOutput"
+    }
+    if (Test-Path $OutputDir) {
+        Move-Item $OutputDir $BackupOutput
+    }
+    try {
+        Move-Item $StagedOutput $OutputDir
+    }
+    catch {
+        if (Test-Path $BackupOutput) {
+            Move-Item $BackupOutput $OutputDir
+        }
+        throw
+    }
+    if (Test-Path $BackupOutput) {
+        try {
+            Remove-Item $BackupOutput -Recurse -Force
+        }
+        catch {
+            Write-Warning "Cannot remove previous build backup: $BackupOutput"
         }
     }
 
@@ -108,6 +146,9 @@ finally {
     try {
         if (Test-Path $BuildDir) {
             Remove-Item $BuildDir -Recurse -Force
+        }
+        if (Test-Path $StageRoot) {
+            Remove-Item $StageRoot -Recurse -Force
         }
         if ((Test-Path $BuildRoot) -and -not (Get-ChildItem $BuildRoot -Force)) {
             Remove-Item $BuildRoot -Force
