@@ -1,5 +1,5 @@
 {
-  "version": "0.1.1",
+  "version": "0.1.2",
   "changes": [
     "Optional automatic update checks at startup (enabled by default).",
     "A What's New window after installing an update.",
