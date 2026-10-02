@@ -330,6 +330,9 @@ def cleanup_memory(
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Clean Windows memory")
+    parser.add_argument("--background", action="store_true")
+    parser.add_argument("--install-dir")
+    parser.add_argument("--parent-pid", type=int)
     parser.add_argument(
         "--skip-processes",
         action="store_true",
@@ -351,6 +354,15 @@ def main(argv=None):
         help="Also trim this cleaner process",
     )
     args = parser.parse_args(argv)
+
+    if args.background:
+        if not args.install_dir or not args.parent_pid:
+            parser.error("--background requires --install-dir and --parent-pid")
+        try:
+            from .background_memory import run_background_cleaner
+        except ImportError:
+            from background_memory import run_background_cleaner
+        return run_background_cleaner(args.install_dir, args.parent_pid, cleanup_memory)
 
     result = cleanup_memory(
         trim_processes=not args.skip_processes,

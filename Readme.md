@@ -97,10 +97,29 @@ outside the Git checkout. Future releases can then be installed from the
 application. To publish a release:
 
 1. Increase the version in `src/version.json` and commit it to `main`.
-2. Push a matching tag, for example `v0.1.0` for version `0.1.0`.
-3. The Windows CI build publishes `GameLauncherBot-win64.zip` to GitHub Releases.
+2. Run `bash ./src/release.sh` from the project root. Add `--dry-run` to check
+   the version and commit without creating
+   a tag.
+3. The script tags the current `origin/main`. The Windows CI build then
+   publishes `GameLauncherBot-win64.zip` to GitHub Releases.
+
+The script uses your existing Git push credentials. It does not need a personal
+access token: GitHub Actions publishes the release with its `GITHUB_TOKEN`.
+Do not commit a token to this repository.
 
 The update button uses published releases, not arbitrary commits on `main`.
+
+**Settings → UPDATES → Check for updates at startup** is enabled by default,
+including when upgrading from an older configuration. The built application checks
+once at startup in a background thread. It only prompts when a newer release is
+available and always asks before installation. Automatic checks log network errors
+without showing an error dialog; the **Update** button still supports manual checks.
+
+After updating, a small **What's new** window shows the release description once.
+Keep GitHub Release descriptions concise and user-facing. If no description is
+available, the bundled `changes` list in `src/version.json` is used. Update that
+list together with the version for each release; it also supports the first upgrade
+from an older updater.
 
 ## Configure accounts
 
@@ -189,6 +208,7 @@ small text in the VK Play header.
 | Setting | Description |
 | --- | --- |
 | `enabled` | Enables memory cleanup before every client launch |
+| `background_enabled` | Starts a hidden memory cleaner after closing the application (default: `no`) |
 | `trim_processes` | Trims process working sets through the Windows `EmptyWorkingSet` API |
 | `trim_file_cache` | Attempts to trim the system file cache |
 | `purge_standby_list` | Attempts to purge the Windows standby memory list |
@@ -206,6 +226,21 @@ python .\src\memory_cleanup.py
 The PyInstaller build also includes `MemoryCleaner.exe` in the `client`
 directory. Some cleanup operations require administrator privileges; if they are
 not available, the bot logs a warning and continues launching clients.
+
+In **Settings**, enable **Clean memory after closing the app (every 3 min)** to
+start a separate, hidden `MemoryCleaner.exe` when closing GameLauncherBot normally.
+It waits for the application to exit, cleans immediately, then every 180 seconds.
+It uses the same `trim_processes`, `trim_file_cache`, and `purge_standby_list` settings
+as the foreground cleaner. The pre-launch checkbox and background checkbox are
+independent.
+
+Reopening GameLauncherBot stops the background cleaner. To keep it off, uncheck
+the background option and save settings before closing. Changes to the INI flag
+are also detected while the cleaner runs. Only one cleaner per installation can
+run, and the updater stops it before replacing application files. Background
+activity is recorded in `logs/memory-cleaner.log`, with two rotated backups.
+There is no Windows service or startup registration; after a reboot or forced
+termination of GameLauncherBot, open and close the application to start it again.
 
 ### `DELAYS`
 
@@ -245,6 +280,7 @@ autologin_pw/
 │   ├── app.py                 # Desktop UI
 │   ├── autologin_pw.py        # VK Play automation
 │   ├── account_ocr.py         # OCR and account-name matching
+│   ├── background_memory.py   # Background memory-cleaner lifecycle and scheduler
 │   ├── build.ps1              # Windows build script
 │   ├── app.spec               # PyInstaller configuration
 │   ├── requirements.txt       # Runtime dependencies
