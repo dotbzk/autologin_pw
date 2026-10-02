@@ -1,5 +1,6 @@
 import argparse
 import ctypes
+import json
 from ctypes import wintypes
 import os
 from pathlib import Path
@@ -12,6 +13,7 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from update_support import download_release, install_release
+from background_memory import stop_background_cleaner
 
 
 def wait_for_parent_exit(pid):
@@ -43,6 +45,7 @@ def run_update(args, events):
     try:
         status("Waiting for the application to close...")
         wait_for_parent_exit(args.parent_pid)
+        stop_background_cleaner(args.install_dir)
         status("Downloading update...")
         download_release(
             args.url, args.sha256, archive_path,
@@ -51,6 +54,11 @@ def run_update(args, events):
             )),
         )
         status("Installing update...")
+        notes_path = archive_path.parent / "release-notes.json"
+        release_notes = ""
+        if notes_path.is_file():
+            with open(notes_path, encoding="utf-8") as notes_file:
+                release_notes = json.load(notes_file).get("notes", "")
 
         def launch_app(executable):
             environment = os.environ.copy()
@@ -76,6 +84,7 @@ def run_update(args, events):
         install_release(
             archive_path, args.install_dir, args.version, launch_app,
             progress=status,
+            release_notes=release_notes,
         )
         events.put(("done", "Update installed"))
     except Exception as exc:

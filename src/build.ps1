@@ -96,6 +96,7 @@ try {
     $RequiredFiles = @(
         $Executable,
         (Join-Path $StagedOutput "Updater.exe"),
+        (Join-Path $StagedOutput "MemoryCleaner.exe"),
         (Join-Path $StagedOutput "version.json"),
         (Join-Path $ConfigDir "config.ini"),
         (Join-Path $IconDir "app.png"),

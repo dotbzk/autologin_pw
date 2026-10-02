@@ -375,6 +375,7 @@ local.properties
 *.launch
 
 # Python
+/[Aa][Gg][Ee][Nn][Tt][Ss].[Mm][Dd]
 *.pyc
 __pycache__
 .venv/

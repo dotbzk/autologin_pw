@@ -1,6 +1,7 @@
 import customtkinter as ctk
 import configparser
 import ctypes
+import json
 from threading import Thread, current_thread, main_thread
 from queue import Empty, Queue
 import os
@@ -28,7 +29,8 @@ from screen_settings import (
     rectangle_from_points,
     validate_screen_entries,
 )
-from update_support import find_update, installed_version, start_updater
+from update_support import UPDATE_NOTICE, find_update, installed_version, start_updater
+from background_memory import start_background_cleaner, stop_background_cleaner
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
@@ -104,6 +106,10 @@ class App(ctk.CTk):
         self.debug_enabled = False
         self.stop_requested = False
         self.worker_thread = None
+        self.update_check_running = False
+        self.closing = False
+        self.background_ready = False
+        self.background_preparing = False
         self.ui_queue = Queue()
         self.log_file_error_reported = False
 
@@ -114,10 +120,134 @@ class App(ctk.CTk):
 
         self.load_accounts()
         self.build_ui()
+        self.protocol("WM_DELETE_WINDOW", self.close_app)
         self.after(50, self.process_ui_queue)
-        self.after(0, self.signal_update_ready)
+        self.after(0, self.prepare_background_cleaner)
+        self.after(500, self.show_update_changelog)
         self.after(10000, self.cleanup_update_temp)
         self.after(20000, self.cleanup_completed_stages)
+
+    def prepare_background_cleaner(self):
+        if self.closing:
+            return
+        self.background_preparing = True
+        self.run_button.configure(state="disabled")
+        self.update_button.configure(state="disabled")
+
+        def task():
+            try:
+                stop_background_cleaner(resource_path(""))
+            except Exception as exc:
+                self.call_on_ui(self.background_prepared, str(exc))
+            else:
+                self.call_on_ui(self.background_prepared, None)
+
+        Thread(target=task, daemon=True).start()
+
+    def background_prepared(self, error):
+        self.background_preparing = False
+        if error:
+            self.log(f"Cannot stop background cleaner: {error}")
+            self.after(5000, self.prepare_background_cleaner)
+            return
+        self.background_ready = True
+        self.run_button.configure(state="normal")
+        self.update_button.configure(state="normal")
+        self.signal_update_ready()
+        self.after(1500, self.auto_check_updates)
+
+    def auto_check_updates(self):
+        if self.closing or not getattr(sys, "frozen", False):
+            return
+        try:
+            config = read_config_with_fallback(self.config_path)
+            enabled = config.getboolean("UPDATES", "auto_check", fallback=True)
+        except Exception as exc:
+            self.log(f"Cannot read update settings: {exc}")
+            return
+        if enabled:
+            if self.worker_thread and self.worker_thread.is_alive():
+                self.after(3000, self.auto_check_updates)
+                return
+            self.check_for_updates(automatic=True)
+
+    def show_update_changelog(self):
+        if self.closing:
+            return
+        notice_path = resource_path(UPDATE_NOTICE)
+        has_notice = os.path.isfile(notice_path)
+        if not has_notice and not os.environ.get("GAME_LAUNCHER_UPDATE_READY_FILE"):
+            return
+        try:
+            # Older updaters do not write notices. Bundled notes cover that first upgrade.
+            with open(notice_path if has_notice else resource_path("version.json"),
+                      encoding="utf-8") as notice_file:
+                notice = json.load(notice_file)
+            if notice.get("version") != self.app_version:
+                return
+            notes = notice.get("notes") or "\n".join(
+                f"• {change}" for change in notice.get("changes", [])
+            ) or "The release author did not provide change notes."
+            win = ctk.CTkToplevel(self)
+            win.title(f"What's new in {self.app_version}")
+            win.geometry("560x390")
+            win.transient(self)
+            ctk.CTkLabel(win, text=f"Updated to {self.app_version}",
+                         font=ctk.CTkFont(size=20, weight="bold")).pack(padx=20, pady=15)
+            text = ctk.CTkTextbox(win, wrap="word")
+            text.pack(fill="both", expand=True, padx=20)
+            text.insert("1.0", notes[:12000])
+            text.configure(state="disabled")
+            ctk.CTkButton(win, text="Got it", command=win.destroy).pack(pady=15)
+            win.lift()
+            if has_notice:
+                os.remove(notice_path)
+        except (OSError, ValueError, TypeError) as exc:
+            self.log(f"Cannot display update notes: {exc}")
+
+    def close_app(self):
+        if self.closing:
+            return
+        self.closing = True
+        self.stop_requested = True
+        self.run_button.configure(state="disabled")
+        self.update_button.configure(state="disabled")
+        self.finish_close()
+
+    def finish_close(self):
+        if self.worker_thread and self.worker_thread.is_alive():
+            self.after(100, self.finish_close)
+            return
+        if self.background_preparing:
+            self.after(100, self.finish_close)
+            return
+        if not self.background_ready:
+            self.destroy()
+            return
+        try:
+            config = read_config_with_fallback(self.config_path)
+            enabled = config.getboolean("MEMORY_CLEANUP", "background_enabled", fallback=False)
+        except Exception as exc:
+            self.close_failed(str(exc))
+            return
+        if not enabled:
+            self.destroy()
+            return
+
+        def task():
+            try:
+                start_background_cleaner(resource_path(""))
+            except Exception as exc:
+                self.call_on_ui(self.close_failed, str(exc))
+            else:
+                self.call_on_ui(self.destroy)
+
+        Thread(target=task, daemon=True).start()
+
+    def close_failed(self, error):
+        self.log(f"Background cleaner startup failed: {error}")
+        messagebox.showwarning("Memory cleaner", f"Closing without background cleanup.\n{error}", parent=self)
+        self.destroy()
 
     def signal_update_ready(self):
         marker = os.environ.get("GAME_LAUNCHER_UPDATE_READY_FILE")
@@ -205,7 +335,8 @@ class App(ctk.CTk):
 
     def finish_worker(self):
         self.worker_thread = None
-        self.run_button.configure(state="normal")
+        if not self.closing:
+            self.run_button.configure(state="normal")
 
     # =========================
     # ACCOUNTS
@@ -329,7 +460,9 @@ class App(ctk.CTk):
         )
         self.log(f"Debug logging {'enabled' if self.debug_enabled else 'disabled'}")
 
-    def check_for_updates(self):
+    def check_for_updates(self, automatic=False):
+        if self.closing or self.update_check_running or not self.background_ready:
+            return
         if not getattr(sys, "frozen", False):
             messagebox.showinfo("Update", "Updates are available in the built application.", parent=self)
             return
@@ -337,28 +470,40 @@ class App(ctk.CTk):
             messagebox.showwarning("Update", "Stop the current run before updating.", parent=self)
             return
         self.update_button.configure(state="disabled")
+        self.update_check_running = True
         self.log("Checking for updates...")
 
         def task():
             try:
                 release = find_update(self.app_version)
-                self.call_on_ui(self.show_update_result, release)
+                self.call_on_ui(self.show_update_result, release, automatic)
             except Exception as exc:
-                self.call_on_ui(self.show_update_error, str(exc))
+                self.call_on_ui(self.show_update_error, str(exc), automatic)
 
         Thread(target=task, daemon=True).start()
 
-    def show_update_error(self, message):
+    def show_update_error(self, message, automatic=False):
+        self.update_check_running = False
+        if self.closing:
+            return
         self.update_button.configure(state="normal")
         self.log(f"Update check failed: {message}")
-        messagebox.showerror("Update", message, parent=self)
+        if not automatic:
+            messagebox.showerror("Update", message, parent=self)
 
-    def show_update_result(self, release):
+    def show_update_result(self, release, automatic=False):
+        self.update_check_running = False
+        if self.closing:
+            return
         self.update_button.configure(state="normal")
         if not release:
-            messagebox.showinfo("Update", f"Version {self.app_version} is up to date.", parent=self)
+            if not automatic:
+                messagebox.showinfo("Update", f"Version {self.app_version} is up to date.", parent=self)
             return
         if self.worker_thread and self.worker_thread.is_alive():
+            if automatic:
+                self.log(f"Version {release['version']} is available. Use Update after the current run.")
+                return
             messagebox.showwarning("Update", "Stop the current run before updating.", parent=self)
             return
         approved = messagebox.askyesno(
@@ -1026,6 +1171,20 @@ class App(ctk.CTk):
         win.after(10, lambda: win.attributes("-topmost", True))
 
         cfg = read_config_with_fallback(self.config_path)
+        boolean_settings = {
+            ("UPDATES", "auto_check"): ("Check for updates at startup", True),
+            ("MEMORY_CLEANUP", "background_enabled"): (
+                "Clean memory after closing the app (every 3 min)", False),
+            ("MEMORY_CLEANUP", "enabled"): ("Clean memory before each client", False),
+            ("MEMORY_CLEANUP", "trim_processes"): ("Trim process working sets", True),
+            ("MEMORY_CLEANUP", "trim_file_cache"): ("Trim system file cache", True),
+            ("MEMORY_CLEANUP", "purge_standby_list"): ("Purge standby memory", True),
+        }
+        for (section, key), (_, default) in boolean_settings.items():
+            if not cfg.has_section(section):
+                cfg.add_section(section)
+            if not cfg.has_option(section, key):
+                cfg[section][key] = "yes" if default else "no"
         entries = {}
 
         container = ctk.CTkScrollableFrame(win)
@@ -1060,6 +1219,15 @@ class App(ctk.CTk):
 
                 row = ctk.CTkFrame(container)
                 row.pack(fill="x", pady=2)
+
+                if (section, key) in boolean_settings:
+                    label, default = boolean_settings[(section, key)]
+                    checkbox = ctk.CTkCheckBox(row, text=label, onvalue="yes", offvalue="no")
+                    if cfg.getboolean(section, key, fallback=default):
+                        checkbox.select()
+                    checkbox.pack(anchor="w", padx=10, pady=8)
+                    entries[(section, key)] = checkbox
+                    continue
 
                 if key in point_names:
                     name = point_names[key]
@@ -1123,6 +1291,8 @@ class App(ctk.CTk):
                         pass
 
             self.log("✅ Config saved")
+            self.memory_cleanup_enabled = cfg.getboolean("MEMORY_CLEANUP", "enabled", fallback=False)
+            self.memory_cleanup_var.set(self.memory_cleanup_enabled)
             win.destroy()
 
         ctk.CTkButton(win, text="Save", command=save).pack(pady=10)
@@ -1131,6 +1301,8 @@ class App(ctk.CTk):
     # RUN
     # =========================
     def run_bot(self):
+        if self.closing or not self.background_ready:
+            return
         if self.worker_thread and self.worker_thread.is_alive():
             self.log("⚠️ Bot is already running")
             return
@@ -1176,6 +1348,8 @@ class App(ctk.CTk):
     # SUMMARY + RETRY
     # =========================
     def show_summary(self, results, group):
+        if self.closing:
+            return
         launched = len(results["launched"])
         failed = results["failed"]
         total = launched + len(failed)

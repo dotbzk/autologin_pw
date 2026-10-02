@@ -20,6 +20,7 @@ VERSION_PATTERN = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
 SHA256_PATTERN = re.compile(r"^sha256:([0-9a-fA-F]{64})$")
 MAX_ARCHIVE_SIZE = 1_500_000_000
 MAX_UNPACKED_SIZE = 3_000_000_000
+UPDATE_NOTICE = "update-notice.json"
 
 
 def version_tuple(value):
@@ -47,7 +48,8 @@ def parse_release(data):
     parsed = urlparse(url)
     if parsed.scheme != "https" or parsed.hostname != "github.com":
         raise ValueError("Unexpected release download URL")
-    return {"version": version.lstrip("v"), "url": url, "sha256": digest.group(1).lower()}
+    return {"version": version.lstrip("v"), "url": url, "sha256": digest.group(1).lower(),
+            "notes": (data.get("body") or "").strip()[:12000]}
 
 
 def latest_release():
@@ -78,6 +80,8 @@ def start_updater(install_dir, release):
     updater = temporary_dir / "Updater.exe"
     try:
         shutil.copy2(source, updater)
+        with open(temporary_dir / "release-notes.json", "w", encoding="utf-8") as output:
+            json.dump({"notes": release.get("notes", "")}, output, ensure_ascii=False)
         subprocess.Popen([
             str(updater), "--install-dir", str(install_dir),
             "--parent-pid", str(os.getpid()),
@@ -170,7 +174,8 @@ def preserve_user_data(previous, staged):
         shutil.copytree(old_logs, staged / "logs", dirs_exist_ok=True)
 
 
-def install_release(archive_path, install_dir, expected_version, launch_app, progress=None):
+def install_release(archive_path, install_dir, expected_version, launch_app, progress=None,
+                    release_notes=""):
     install_dir = Path(install_dir).resolve()
     if not install_dir.is_dir():
         raise ValueError("Installation directory does not exist")
@@ -189,6 +194,14 @@ def install_release(archive_path, install_dir, expected_version, launch_app, pro
         if installed_version(staged / "version.json") != expected_version:
             raise ValueError("Update archive version does not match release")
         preserve_user_data(install_dir, staged)
+        if not release_notes.strip():
+            with open(staged / "version.json", encoding="utf-8") as version_file:
+                release_notes = "\n".join(
+                    f"• {change}" for change in json.load(version_file).get("changes", [])
+                )
+        with open(staged / UPDATE_NOTICE, "w", encoding="utf-8") as output:
+            json.dump({"version": expected_version, "notes": release_notes[:12000]},
+                      output, ensure_ascii=False)
 
         if progress:
             progress("Replacing application files")
