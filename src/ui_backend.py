@@ -218,7 +218,7 @@ class AppBackend(QObject):
 
     @Property(str, constant=True)
     def backgroundUrl(self):
-        return QUrl.fromLocalFile(resource_path("configs/back.png")).toString()
+        return QUrl.fromLocalFile(resource_path("configs/theme/ea.png")).toString()
 
     @Property(str, constant=True)
     def version(self):

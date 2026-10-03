@@ -276,15 +276,19 @@ before saving.
 
 ## Interface artwork
 
-The desktop interface is implemented with PySide6 and QML. `src/configs/back.png`
+The desktop interface is implemented with PySide6 and QML. `src/configs/theme/ea.png`
 is the visual background; all controls placed over its right-hand panel are live
 QML components. Their positions use the same proportional coordinate space as
 the background, so Windows display scaling does not move controls away from the
 panel.
 
-The current `back.png` is a 1122×1402 RGBA image with a real alpha channel. Its
+The current `ea.png` is a 1122×1402 RGBA image with a real alpha channel. Its
 transparent pixels allow the desktop to remain visible around the character and
 decorative frame without color-key removal or a simulated solid background.
+
+The main panel keeps selection actions directly accessible. **Settings** opens a
+compact action hub containing application settings, group management, update
+checks, and the debug toggle. **RUN** and **STOP** remain fixed at the bottom.
 
 ## How account search works
 
@@ -328,7 +332,8 @@ autologin_pw/
 │   │   └── accounts.ini
 │   ├── configs/
 │   │   ├── config.ini
-│   │   ├── back.png           # Transparent interface artwork background
+│   │   ├── theme/
+│   │   │   └── ea.png         # Transparent Crimson Archer theme
 │   │   ├── classes/           # Account class images
 │   │   └── ico/               # Application icon
 ├── client/                    # Built Windows artifact
