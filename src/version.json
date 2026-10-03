@@ -1,9 +1,11 @@
 {
-  "version": "0.1.2",
+  "version": "0.1.4",
   "changes": [
-    "Optional automatic update checks at startup (enabled by default).",
-    "A What's New window after installing an update.",
-    "Optional background memory cleanup every 3 minutes after closing the app.",
-    "Checkboxes for update and memory cleanup settings."
+    "Rebuilt the application interface with PySide6 and QML.",
+    "Added a frameless, movable launcher window styled for the new game artwork.",
+    "Added responsive client cards and polished hover, pressed, selected, and disabled states.",
+    "Moved group management, settings, update prompts, results, and changelog into the new interface.",
+    "Replaced the checkerboard artwork with a true transparent RGBA background.",
+    "Added a safe macOS UI preview launcher with simulated RUN and STOP actions."
   ]
 }

@@ -6,13 +6,17 @@ from PyInstaller.utils.hooks import collect_all
 
 source_dir = Path(SPECPATH)
 rapidocr_datas, rapidocr_binaries, rapidocr_hiddenimports = collect_all('rapidocr')
+qml_datas = [(str(source_dir / 'qml'), 'qml')]
 
 a = Analysis(
     [str(source_dir / 'app.py')],
     pathex=[str(source_dir)],
     binaries=rapidocr_binaries,
-    datas=rapidocr_datas,
-    hiddenimports=rapidocr_hiddenimports,
+    datas=rapidocr_datas + qml_datas,
+    hiddenimports=rapidocr_hiddenimports + [
+        'PySide6.QtQuick',
+        'PySide6.QtQuickControls2',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

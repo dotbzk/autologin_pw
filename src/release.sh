@@ -4,6 +4,7 @@ set -euo pipefail
 
 usage() {
     echo "Usage: $0 [--dry-run]"
+    echo "Set PYTHON_BIN to override automatic Python 3 detection (python3, then python)."
 }
 
 dry_run=false
@@ -27,7 +28,25 @@ fi
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 project_root="$(dirname -- "$script_dir")"
-python_bin="${PYTHON_BIN:-python}"
+if [[ -n "${PYTHON_BIN:-}" ]]; then
+    python_bin="$PYTHON_BIN"
+elif command -v python3 >/dev/null 2>&1; then
+    python_bin="python3"
+elif command -v python >/dev/null 2>&1; then
+    python_bin="python"
+else
+    echo "Python 3 was not found. Install Python 3 or set PYTHON_BIN to its executable path." >&2
+    exit 1
+fi
+
+if ! command -v "$python_bin" >/dev/null 2>&1; then
+    echo "Python executable not found: $python_bin. Check PYTHON_BIN." >&2
+    exit 1
+fi
+if ! "$python_bin" -c 'import sys; sys.exit(0 if sys.version_info[0] == 3 else 1)' >/dev/null 2>&1; then
+    echo "Python 3 is required: $python_bin. Set PYTHON_BIN to a working Python 3 executable." >&2
+    exit 1
+fi
 
 git -C "$project_root" rev-parse --is-inside-work-tree >/dev/null
 

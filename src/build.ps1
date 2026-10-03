@@ -81,6 +81,7 @@ try {
     Copy-Item (Join-Path $SourceDir "configs\config.ini") (Join-Path $ConfigDir "config.ini") -Force
     Copy-Item (Join-Path $SourceDir "configs\ico\app.png") (Join-Path $IconDir "app.png") -Force
     Copy-Item (Join-Path $SourceDir "configs\ico\app.ico") (Join-Path $IconDir "app.ico") -Force
+    Copy-Item (Join-Path $SourceDir "configs\back.png") (Join-Path $ConfigDir "back.png") -Force
     Copy-Item (Join-Path $SourceDir "configs\classes\*") $ClassesDir -Force
     Copy-Item (Join-Path $SourceDir "accounts\accounts.ini") (Join-Path $AccountsDir "accounts.ini") -Force
     Copy-Item (Join-Path $SourceDir "version.json") (Join-Path $StagedOutput "version.json") -Force
@@ -101,6 +102,7 @@ try {
         (Join-Path $ConfigDir "config.ini"),
         (Join-Path $IconDir "app.png"),
         (Join-Path $IconDir "app.ico"),
+        (Join-Path $ConfigDir "back.png"),
         (Join-Path $ClassesDir "luk.png"),
         (Join-Path $AccountsDir "accounts.ini")
     )

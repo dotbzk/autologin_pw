@@ -379,6 +379,7 @@ local.properties
 *.pyc
 __pycache__
 .venv/
+.venv-macos/
 logs/
 
 .DS_Store

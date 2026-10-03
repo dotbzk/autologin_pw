@@ -4,10 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-customtkinter = "==5.2.2"
 onnxruntime = ">=1.20,<2"
 pillow = ">=10,<13"
 pyautogui = "==0.9.54"
+pyside6 = ">=6.8,<7"
 pywin32 = ">=308"
 rapidocr = "==3.8.1"
 
