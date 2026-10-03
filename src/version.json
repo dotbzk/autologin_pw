@@ -1,11 +1,20 @@
 {
-  "version": "0.1.4",
+  "version": "1.0.0",
   "changes": [
-    "Rebuilt the application interface with PySide6 and QML.",
-    "Added a frameless, movable launcher window styled for the new game artwork.",
-    "Added responsive client cards and polished hover, pressed, selected, and disabled states.",
-    "Moved group management, settings, update prompts, results, and changelog into the new interface.",
-    "Replaced the checkerboard artwork with a true transparent RGBA background.",
-    "Added a safe macOS UI preview launcher with simulated RUN and STOP actions."
+    "Rebuilt the desktop interface with PySide6 and QML while preserving the existing VK Play client-launch workflow.",
+    "Added a frameless, always-on-top window with a draggable title area and working minimize and close controls.",
+    "Added DPI-aware proportional positioning so interactive controls stay aligned with the background artwork on scaled Windows displays.",
+    "Added the transparent Crimson Archer theme with a red, black, and silver visual style.",
+    "Added a group selector and a scrollable client list with class icons, selected states, hover feedback, and disabled states.",
+    "Consolidated application settings, group management, update checks, and the debug toggle into a single Settings hub.",
+    "Added in-app group creation, renaming, deletion, multi-account editing, and class assignment with atomic account-file updates.",
+    "Added an in-app configuration editor with checkbox controls for update and memory-cleanup options.",
+    "Added visual screen-point and OCR-region selection tools with display-bound validation and automatic launcher hiding during capture.",
+    "Added a scrollable live log, progress indicator, debug mode, launch summary, failed-account reporting, and retry support.",
+    "Added an option to clean memory before launching each selected client.",
+    "Added an optional standalone MemoryCleaner that starts after the launcher closes, cleans immediately, and repeats every three minutes.",
+    "Added single-instance coordination for the background cleaner and automatic shutdown of the cleaner when the launcher or updater starts.",
+    "Added automatic update checks at startup, enabled by default, while keeping manual update checks available from Settings.",
+    "Updated the Windows build to package the QML interface, active theme, updater, and background memory cleaner."
   ]
 }

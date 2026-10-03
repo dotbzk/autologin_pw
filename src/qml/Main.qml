@@ -16,12 +16,12 @@ ApplicationWindow {
     maximumWidth: 1122
     maximumHeight: 1402
 
-    property color cyan: "#35d8ff"
-    property color cyanSoft: "#168dbd"
-    property color surface: "#d90a1c34"
-    property color surfaceHover: "#ed102b4b"
-    property color textPrimary: "#edfaff"
-    property color textMuted: "#8fb7cc"
+    property color accent: "#ff3048"
+    property color accentSoft: "#a82132"
+    property color surface: "#dc100d10"
+    property color surfaceHover: "#ed31151c"
+    property color textPrimary: "#fff4f4"
+    property color textMuted: "#c8a8aa"
 
     onClosing: function(event) {
         event.accepted = false
@@ -46,11 +46,11 @@ ApplicationWindow {
         background: Rectangle {
             radius: 5
             color: !control.enabled ? "#55101c29"
-                  : control.down ? "#dd0877aa"
-                  : control.selected ? "#cc116f9a"
-                  : control.hovered ? "#cc164568" : "#b912304d"
+                  : control.down ? "#e0a51b2d"
+                  : control.selected ? "#d0931828"
+                  : control.hovered ? "#d15d1a26" : "#c11a1118"
             border.width: control.activeFocus || control.hovered || control.selected ? 2 : 1
-            border.color: control.enabled ? (control.selected ? "#70ecff" : "#35bfe9") : "#3c5664"
+            border.color: control.enabled ? (control.selected ? "#ff8392" : "#c8aeb1") : "#5d4b4d"
         }
     }
 
@@ -58,7 +58,7 @@ ApplicationWindow {
         id: stopControl
         background: Rectangle {
             radius: 5
-            color: !stopControl.enabled ? "#55291622" : stopControl.down ? "#bd2034" : stopControl.hovered ? "#a9283b" : "#7f1e31"
+            color: !stopControl.enabled ? "#55291622" : stopControl.down ? "#e32640" : stopControl.hovered ? "#bd2037" : "#8c1729"
             border.width: stopControl.hovered ? 2 : 1
             border.color: stopControl.enabled ? "#ff6578" : "#65404a"
         }
@@ -74,9 +74,9 @@ ApplicationWindow {
             x: check.leftPadding
             y: parent.height / 2 - height / 2
             radius: 4
-            color: check.checked ? "#1686b7" : "#b90b192b"
+            color: check.checked ? "#b91e34" : "#ba171014"
             border.width: check.hovered || check.activeFocus ? 2 : 1
-            border.color: check.enabled ? "#42dfff" : "#526875"
+            border.color: check.enabled ? "#e1b8bd" : "#665457"
             Text {
                 anchors.centerIn: parent
                 text: "✓"
@@ -99,7 +99,7 @@ ApplicationWindow {
     component StyledField: TextField {
         id: field
         color: root.textPrimary
-        selectionColor: root.cyanSoft
+        selectionColor: root.accentSoft
         selectedTextColor: "white"
         placeholderTextColor: "#617f91"
         font.pixelSize: 12
@@ -109,7 +109,7 @@ ApplicationWindow {
             radius: 4
             color: "#d509182b"
             border.width: field.activeFocus ? 2 : 1
-            border.color: field.activeFocus ? root.cyan : "#39657a"
+            border.color: field.activeFocus ? root.accent : "#76565a"
         }
     }
 
@@ -130,14 +130,14 @@ ApplicationWindow {
             x: combo.width - width - 10
             anchors.verticalCenter: parent.verticalCenter
             text: "▾"
-            color: root.cyan
+            color: root.accent
             font.pixelSize: 15
         }
         background: Rectangle {
             radius: 5
             color: combo.down ? "#e20c2d4a" : combo.hovered ? "#e00f2944" : "#dc09182b"
             border.width: combo.activeFocus || combo.hovered ? 2 : 1
-            border.color: combo.enabled ? root.cyanSoft : "#405563"
+            border.color: combo.enabled ? root.accentSoft : "#5e4b4e"
         }
         popup: Popup {
             y: combo.height + 2
@@ -153,7 +153,7 @@ ApplicationWindow {
             }
             background: Rectangle {
                 color: "#f009192d"
-                border.color: root.cyanSoft
+                border.color: root.accentSoft
                 border.width: 1
                 radius: 5
             }
@@ -171,7 +171,7 @@ ApplicationWindow {
                 leftPadding: 8
                 elide: Text.ElideRight
             }
-            background: Rectangle { color: comboDelegate.highlighted ? "#a81777a2" : "transparent"; radius: 3 }
+            background: Rectangle { color: comboDelegate.highlighted ? "#b06f1726" : "transparent"; radius: 3 }
             highlighted: combo.highlightedIndex === comboDelegate.index
         }
     }
@@ -187,14 +187,14 @@ ApplicationWindow {
 
     Item {
         id: panel
-        x: root.width * 0.443
-        y: root.height * 0.174
-        width: root.width * 0.492
-        height: root.height * 0.704
+        x: root.width * 0.435
+        y: root.height * 0.168
+        width: root.width * 0.500
+        height: root.height * 0.714
 
         Rectangle {
             anchors.fill: parent
-            color: "#16000b17"
+            color: "#13000000"
             radius: 8
         }
 
@@ -270,7 +270,7 @@ ApplicationWindow {
                 Layout.minimumHeight: 150
                 color: root.surface
                 radius: 6
-                border.color: "#466a7f"
+                border.color: "#72585b"
                 border.width: 1
                 ListView {
                     id: accountsList
@@ -286,9 +286,9 @@ ApplicationWindow {
                         width: accountsList.width - (accountsList.ScrollBar.vertical.visible ? 10 : 0)
                         height: 43
                         radius: 5
-                        color: modelData.selected ? "#c4175d83" : accountMouse.containsMouse ? root.surfaceHover : "#a80a1a2f"
+                        color: modelData.selected ? "#c1741726" : accountMouse.containsMouse ? root.surfaceHover : "#b3140e11"
                         border.width: modelData.selected || accountMouse.containsMouse ? 2 : 1
-                        border.color: modelData.selected ? "#65e8ff" : "#315c72"
+                        border.color: modelData.selected ? "#ff7183" : "#654b4e"
                         Image {
                             id: accountIcon
                             x: 7; width: 32; height: 32
@@ -314,8 +314,8 @@ ApplicationWindow {
                             anchors.rightMargin: 9
                             anchors.verticalCenter: parent.verticalCenter
                             width: 18; height: 18; radius: 9
-                            color: modelData.selected ? "#29bce9" : "#172f42"
-                            border.color: modelData.selected ? "#98f4ff" : "#4c7184"
+                            color: modelData.selected ? "#c51e38" : "#2b1b1e"
+                            border.color: modelData.selected ? "#ff9aa7" : "#74565a"
                             Text { anchors.centerIn: parent; text: modelData.selected ? "✓" : ""; color: "white"; font.bold: true }
                         }
                         MouseArea {
@@ -343,13 +343,13 @@ ApplicationWindow {
                 GlowButton { objectName: "unselectAllButton"; text: "UNSELECT ALL"; Layout.fillWidth: true; onClicked: backend.unselectAll() }
             }
 
-            RowLayout {
+            GlowButton {
+                objectName: "settingsButton"
+                text: "SETTINGS"
+                font.pixelSize: 11
                 Layout.fillWidth: true
-                Layout.preferredHeight: 32
-                spacing: 5
-                GlowButton { objectName: "manageGroupsButton"; text: "MANAGE GROUPS"; font.pixelSize: root.width < 700 ? 9 : 11; Layout.fillWidth: true; enabled: !backend.running; onClicked: managePopup.openEditor() }
-                GlowButton { objectName: "settingsButton"; text: "SETTINGS"; font.pixelSize: root.width < 700 ? 9 : 11; Layout.fillWidth: true; onClicked: settingsPopup.openEditor() }
-                GlowButton { objectName: "updateButton"; text: "UPDATE"; font.pixelSize: root.width < 700 ? 9 : 11; Layout.fillWidth: true; enabled: backend.ready && !backend.running && !backend.updateBusy; onClicked: backend.checkForUpdates(false) }
+                Layout.preferredHeight: 34
+                onClicked: settingsMenuPopup.open()
             }
 
             StyledCheckBox {
@@ -367,7 +367,7 @@ ApplicationWindow {
                 Layout.preferredHeight: Math.max(104, panel.height * 0.17)
                 color: "#e0061223"
                 radius: 5
-                border.color: "#315d73"
+                border.color: "#684b50"
                 border.width: 1
                 ScrollView {
                     anchors.fill: parent
@@ -377,7 +377,7 @@ ApplicationWindow {
                         objectName: "logArea"
                         readOnly: true
                         text: backend.logText
-                        color: "#caefff"
+                        color: "#ffe3e6"
                         font.family: "Consolas"
                         font.pixelSize: 10
                         wrapMode: TextEdit.Wrap
@@ -397,24 +397,72 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 9
                 from: 0; to: 100; value: backend.progress
-                background: Rectangle { radius: 4; color: "#80101f31"; border.color: "#31586b" }
+                background: Rectangle { radius: 4; color: "#801c1114"; border.color: "#64494d" }
                 contentItem: Item {
                     Rectangle {
                         width: progressBar.visualPosition * parent.width
                         height: parent.height
                         radius: 4
-                        color: root.cyan
+                        color: root.accent
                     }
                 }
             }
 
             RowLayout {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 38
+                Layout.preferredHeight: 42
                 spacing: 7
-                GlowButton { objectName: "runButton"; text: backend.running ? "RUNNING..." : "RUN"; font.pixelSize: root.width < 700 ? 9 : 11; Layout.fillWidth: true; enabled: backend.ready && !backend.running; onClicked: backend.runBot() }
-                StopButton { objectName: "stopButton"; text: "STOP"; font.pixelSize: root.width < 700 ? 9 : 11; Layout.fillWidth: true; enabled: backend.running; onClicked: backend.stopBot() }
-                GlowButton { objectName: "debugButton"; text: "DEBUG: " + (backend.debugEnabled ? "ON" : "OFF"); font.pixelSize: root.width < 700 ? 9 : 11; selected: backend.debugEnabled; Layout.fillWidth: true; onClicked: backend.toggleDebug() }
+                GlowButton { objectName: "runButton"; text: backend.running ? "RUNNING..." : "RUN"; font.pixelSize: 12; selected: !backend.running; Layout.fillWidth: true; enabled: backend.ready && !backend.running; onClicked: backend.runBot() }
+                StopButton { objectName: "stopButton"; text: "STOP"; font.pixelSize: 12; Layout.fillWidth: true; enabled: backend.running; onClicked: backend.stopBot() }
+            }
+        }
+    }
+
+    Popup {
+        id: settingsMenuPopup
+        objectName: "settingsMenuPopup"
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        x: (root.width - width) / 2
+        y: (root.height - height) / 2
+        width: root.width * 0.68
+        padding: 18
+        background: Rectangle { color: "#f00b080a"; radius: 10; border.width: 2; border.color: root.accentSoft }
+        contentItem: ColumnLayout {
+            spacing: 10
+            RowLayout {
+                Layout.fillWidth: true
+                Text { text: "SETTINGS"; color: root.textPrimary; font.pixelSize: 18; font.bold: true; Layout.fillWidth: true }
+                GlowButton { text: "×"; Layout.preferredWidth: 34; onClicked: settingsMenuPopup.close() }
+            }
+            GlowButton {
+                objectName: "advancedSettingsButton"
+                text: "APPLICATION SETTINGS"
+                Layout.fillWidth: true
+                enabled: !backend.running
+                onClicked: { settingsMenuPopup.close(); settingsPopup.openEditor() }
+            }
+            GlowButton {
+                objectName: "manageGroupsButton"
+                text: "MANAGE GROUPS"
+                Layout.fillWidth: true
+                enabled: !backend.running
+                onClicked: { settingsMenuPopup.close(); managePopup.openEditor() }
+            }
+            GlowButton {
+                objectName: "updateButton"
+                text: backend.updateBusy ? "CHECKING UPDATE..." : "CHECK UPDATE"
+                Layout.fillWidth: true
+                enabled: backend.ready && !backend.running && !backend.updateBusy
+                onClicked: { settingsMenuPopup.close(); backend.checkForUpdates(false) }
+            }
+            GlowButton {
+                objectName: "debugButton"
+                text: "DEBUG: " + (backend.debugEnabled ? "ON" : "OFF")
+                selected: backend.debugEnabled
+                Layout.fillWidth: true
+                onClicked: backend.toggleDebug()
             }
         }
     }
@@ -449,7 +497,7 @@ ApplicationWindow {
             if (backend.groups.length) loadGroup(backend.currentGroup || backend.groups[0]); else newGroup()
             open()
         }
-        background: Rectangle { color: "#f4071528"; radius: 10; border.width: 2; border.color: root.cyanSoft }
+        background: Rectangle { color: "#f00b080a"; radius: 10; border.width: 2; border.color: root.accentSoft }
         ListModel { id: groupRows }
         contentItem: ColumnLayout {
             spacing: 9
@@ -478,9 +526,9 @@ ApplicationWindow {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                color: "#85071325"
+                color: "#85120b0d"
                 radius: 5
-                border.color: "#315d73"
+                border.color: "#684b50"
                 ListView {
                     id: groupRowsView
                     anchors.fill: parent; anchors.margins: 5
@@ -543,7 +591,7 @@ ApplicationWindow {
             for (let i = 0; i < rows.length; ++i) settingsModel.append(rows[i])
             open()
         }
-        background: Rectangle { color: "#f4071528"; radius: 10; border.width: 2; border.color: root.cyanSoft }
+        background: Rectangle { color: "#f00b080a"; radius: 10; border.width: 2; border.color: root.accentSoft }
         ListModel { id: settingsModel; dynamicRoles: true }
         contentItem: ColumnLayout {
             spacing: 8
@@ -554,7 +602,7 @@ ApplicationWindow {
             }
             Rectangle {
                 Layout.fillWidth: true; Layout.fillHeight: true
-                color: "#85071325"; radius: 5; border.color: "#315d73"
+                color: "#85120b0d"; radius: 5; border.color: "#684b50"
                 ListView {
                     id: settingsView
                     anchors.fill: parent; anchors.margins: 7; clip: true; spacing: 4
@@ -575,7 +623,7 @@ ApplicationWindow {
                         Text {
                             visible: settingRow.kind === "header"
                             anchors.left: parent.left; anchors.verticalCenter: parent.verticalCenter
-                            text: settingRow.label; color: root.cyan; font.bold: true; font.pixelSize: 13
+                            text: settingRow.label; color: root.accent; font.bold: true; font.pixelSize: 13
                         }
                         RowLayout {
                             visible: settingRow.kind !== "header"
@@ -627,11 +675,11 @@ ApplicationWindow {
         width: Math.min(root.width * 0.70, 500); padding: 18
         property string dialogTitle: ""
         property string message: ""
-        background: Rectangle { color: "#f609192d"; radius: 9; border.width: 2; border.color: root.cyanSoft }
+        background: Rectangle { color: "#f00b080a"; radius: 9; border.width: 2; border.color: root.accentSoft }
         contentItem: ColumnLayout {
             spacing: 14
             Text { text: alertPopup.dialogTitle; color: root.textPrimary; font.pixelSize: 17; font.bold: true; Layout.fillWidth: true; wrapMode: Text.Wrap }
-            Text { text: alertPopup.message; color: "#cdefff"; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap }
+            Text { text: alertPopup.message; color: "#ffe1e4"; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap }
             GlowButton { text: "OK"; Layout.alignment: Qt.AlignRight; onClicked: alertPopup.close() }
         }
     }
@@ -642,11 +690,11 @@ ApplicationWindow {
         x: (root.width - width) / 2; y: (root.height - height) / 2
         width: root.width * 0.68; padding: 18
         property string updateVersion: ""
-        background: Rectangle { color: "#f609192d"; radius: 9; border.width: 2; border.color: root.cyanSoft }
+        background: Rectangle { color: "#f00b080a"; radius: 9; border.width: 2; border.color: root.accentSoft }
         contentItem: ColumnLayout {
             spacing: 14
             Text { text: "UPDATE AVAILABLE"; color: root.textPrimary; font.pixelSize: 17; font.bold: true }
-            Text { text: "Version " + updateConfirm.updateVersion + " is available. Install and restart now?"; color: "#cdefff"; Layout.fillWidth: true; wrapMode: Text.Wrap }
+            Text { text: "Version " + updateConfirm.updateVersion + " is available. Install and restart now?"; color: "#ffe1e4"; Layout.fillWidth: true; wrapMode: Text.Wrap }
             RowLayout {
                 Layout.alignment: Qt.AlignRight
                 GlowButton { text: "NOT NOW"; onClicked: updateConfirm.close() }
@@ -662,11 +710,11 @@ ApplicationWindow {
         width: root.width * 0.76; height: root.height * 0.48; padding: 18
         property string updateVersion: ""
         property string notes: ""
-        background: Rectangle { color: "#f609192d"; radius: 9; border.width: 2; border.color: root.cyanSoft }
+        background: Rectangle { color: "#f00b080a"; radius: 9; border.width: 2; border.color: root.accentSoft }
         contentItem: ColumnLayout {
             spacing: 10
             Text { text: "WHAT'S NEW IN " + changelogPopup.updateVersion; color: root.textPrimary; font.pixelSize: 17; font.bold: true }
-            ScrollView { Layout.fillWidth: true; Layout.fillHeight: true; TextArea { text: changelogPopup.notes; readOnly: true; wrapMode: TextEdit.Wrap; color: "#cdefff"; background: null } }
+            ScrollView { Layout.fillWidth: true; Layout.fillHeight: true; TextArea { text: changelogPopup.notes; readOnly: true; wrapMode: TextEdit.Wrap; color: "#ffe1e4"; background: null } }
             GlowButton { text: "GOT IT"; Layout.alignment: Qt.AlignRight; onClicked: changelogPopup.close() }
         }
     }
@@ -680,11 +728,11 @@ ApplicationWindow {
         property int total: 0
         property var failed: []
         property string group: ""
-        background: Rectangle { color: "#f609192d"; radius: 9; border.width: 2; border.color: root.cyanSoft }
+        background: Rectangle { color: "#f00b080a"; radius: 9; border.width: 2; border.color: root.accentSoft }
         contentItem: ColumnLayout {
             spacing: 14
             Text { text: "RUN COMPLETE"; color: root.textPrimary; font.pixelSize: 17; font.bold: true }
-            Text { text: "Done " + summaryPopup.launched + "/" + summaryPopup.total + (summaryPopup.failed.length ? "\nFailed: " + summaryPopup.failed.length : ""); color: "#cdefff"; font.pixelSize: 13 }
+            Text { text: "Done " + summaryPopup.launched + "/" + summaryPopup.total + (summaryPopup.failed.length ? "\nFailed: " + summaryPopup.failed.length : ""); color: "#ffe1e4"; font.pixelSize: 13 }
             RowLayout {
                 Layout.alignment: Qt.AlignRight
                 GlowButton { visible: summaryPopup.failed.length > 0; text: "RETRY"; onClicked: { summaryPopup.close(); backend.retryFailed(summaryPopup.failed, summaryPopup.group) } }
@@ -702,7 +750,7 @@ ApplicationWindow {
         contentItem: ColumnLayout {
             spacing: 14
             Text { text: "DELETE GROUP"; color: root.textPrimary; font.pixelSize: 17; font.bold: true }
-            Text { text: "Delete group '" + managePopup.originalGroup + "' and all its accounts?"; color: "#cdefff"; Layout.fillWidth: true; wrapMode: Text.Wrap }
+            Text { text: "Delete group '" + managePopup.originalGroup + "' and all its accounts?"; color: "#ffe1e4"; Layout.fillWidth: true; wrapMode: Text.Wrap }
             RowLayout {
                 Layout.alignment: Qt.AlignRight
                 GlowButton { text: "CANCEL"; onClicked: deleteConfirm.close() }

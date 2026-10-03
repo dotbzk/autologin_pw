@@ -310,7 +310,7 @@ class=tank
 
 class QmlSmokeTests(unittest.TestCase):
     def test_background_artwork_has_real_transparency(self):
-        artwork = Path(__file__).resolve().parents[1] / "configs/back.png"
+        artwork = Path(__file__).resolve().parents[1] / "configs/theme/ea.png"
         image = QImage(str(artwork))
         self.assertFalse(image.isNull())
         self.assertTrue(image.hasAlphaChannel())
@@ -327,7 +327,8 @@ class QmlSmokeTests(unittest.TestCase):
         root = engine.rootObjects()[0]
         names = {
             "groupCombo", "accountsList", "selectAllButton", "unselectAllButton",
-            "manageGroupsButton", "settingsButton", "updateButton",
+            "settingsMenuPopup", "advancedSettingsButton", "manageGroupsButton",
+            "settingsButton", "updateButton",
             "memoryCleanupCheckBox", "logArea", "progressBar", "runButton",
             "stopButton", "debugButton", "minimizeButton", "closeButton",
         }
@@ -339,6 +340,10 @@ class QmlSmokeTests(unittest.TestCase):
         QT_APP.processEvents()
         self.assertTrue(all(account["selected"] for account in backend.accounts))
         QMetaObject.invokeMethod(root.findChild(object, "unselectAllButton"), "click")
+        settings_menu = root.findChild(object, "settingsMenuPopup")
+        QMetaObject.invokeMethod(root.findChild(object, "settingsButton"), "click")
+        QT_APP.processEvents()
+        self.assertTrue(settings_menu.property("visible"))
         QMetaObject.invokeMethod(root.findChild(object, "debugButton"), "click")
         QT_APP.processEvents()
         self.assertFalse(any(account["selected"] for account in backend.accounts))
@@ -356,8 +361,12 @@ class QmlSmokeTests(unittest.TestCase):
         QMetaObject.invokeMethod(manage, "close")
         QMetaObject.invokeMethod(root.findChild(object, "settingsButton"), "click")
         QT_APP.processEvents()
+        QMetaObject.invokeMethod(root.findChild(object, "advancedSettingsButton"), "click")
+        QT_APP.processEvents()
         self.assertTrue(settings.property("visible"))
         QMetaObject.invokeMethod(settings, "close")
+        QMetaObject.invokeMethod(root.findChild(object, "settingsButton"), "click")
+        QT_APP.processEvents()
         QMetaObject.invokeMethod(root.findChild(object, "updateButton"), "click")
         QT_APP.processEvents()
         self.assertTrue(alert.property("visible"))
