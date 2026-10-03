@@ -22,6 +22,7 @@ The bot opens the account list, recognizes account names with OCR, selects the r
 - Progress and normal/debug real-time log modes
 - Per-run log files in `logs/run_YYYY-MM-DD_HH-MM-SS.txt`
 - Always-on-top application window
+- Frameless PySide6/QML interface with DPI-aware artwork and controls
 - Automatic VK Play foreground restoration between game launches
 - Editable coordinates and delays
 - Reproducible Windows build with PyInstaller
@@ -30,6 +31,7 @@ The bot opens the account list, recognizes account names with OCR, selects the r
 
 - Windows 10 or Windows 11
 - Python 3.12 for running from source or building the application
+- PySide6 6.8 or newer (installed by `requirements.txt`)
 - VK Play running and visible
 - Consistent screen resolution and Windows display scaling
 
@@ -46,6 +48,20 @@ python -m venv src\.venv
 python -m pip install -r src\requirements.txt
 python src/app.py
 ```
+
+### Preview the interface on macOS
+
+The macOS preview installs only PySide6 into an isolated environment and starts
+the application with Windows automation disabled:
+
+```bash
+./src/run-ui-macos.sh
+```
+
+In preview mode, **RUN** simulates progress for the selected clients and **STOP**
+stops that simulation. It does not import the Windows automation stack, move the
+mouse, or start VK Play. To use an existing Python environment containing
+PySide6, set `PYTHON_BIN=/path/to/python` before the command.
 
 ## Build the Windows application
 
@@ -106,6 +122,11 @@ application. To publish a release:
 The script uses your existing Git push credentials. It does not need a personal
 access token: GitHub Actions publishes the release with its `GITHUB_TOKEN`.
 Do not commit a token to this repository.
+
+The release script requires Bash, Git, and Python 3. It automatically tries
+`python3`, then `python`, and checks the interpreter before accessing Git.
+To select a specific interpreter, run
+`PYTHON_BIN=/path/to/python3 bash ./src/release.sh --dry-run`.
 
 The update button uses published releases, not arbitrary commits on `main`.
 
@@ -253,6 +274,18 @@ point. Press Escape to cancel. All coordinate fields remain editable by hand.
 The application checks that points and OCR regions fit on the primary display
 before saving.
 
+## Interface artwork
+
+The desktop interface is implemented with PySide6 and QML. `src/configs/back.png`
+is the visual background; all controls placed over its right-hand panel are live
+QML components. Their positions use the same proportional coordinate space as
+the background, so Windows display scaling does not move controls away from the
+panel.
+
+The current `back.png` is a 1122×1402 RGBA image with a real alpha channel. Its
+transparent pixels allow the desktop to remain visible around the character and
+decorative frame without color-key removal or a simulated solid background.
+
 ## How account search works
 
 1. The bot opens the VK Play account list.
@@ -278,10 +311,14 @@ OCR models are included in the application build and do not need to be downloade
 autologin_pw/
 ├── src/
 │   ├── app.py                 # Desktop UI
+│   ├── ui_backend.py          # QML bridge and UI action handlers
+│   ├── qml/
+│   │   └── Main.qml           # Interactive frameless interface
 │   ├── autologin_pw.py        # VK Play automation
 │   ├── account_ocr.py         # OCR and account-name matching
 │   ├── background_memory.py   # Background memory-cleaner lifecycle and scheduler
 │   ├── build.ps1              # Windows build script
+│   ├── run-ui-macos.sh        # Safe macOS interface preview
 │   ├── app.spec               # PyInstaller configuration
 │   ├── requirements.txt       # Runtime dependencies
 │   ├── requirements-dev.txt   # Build dependencies
@@ -291,6 +328,7 @@ autologin_pw/
 │   │   └── accounts.ini
 │   ├── configs/
 │   │   ├── config.ini
+│   │   ├── back.png           # Transparent interface artwork background
 │   │   ├── classes/           # Account class images
 │   │   └── ico/               # Application icon
 ├── client/                    # Built Windows artifact
