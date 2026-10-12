@@ -79,14 +79,16 @@ The build script will:
 1. Create a `src/.venv` virtual environment
 2. Install application and build dependencies
 3. Run the test suite
-4. Remove the previous GameLauncherBot build
-5. Build the application with PyInstaller
-6. Copy the editable INI files next to the executable
+4. Build Game Launcher Bot and Game Tools Hub with PyInstaller
+5. Publish PW Account Hub with the .NET 8 SDK
+6. Assemble all components, manifests, and editable configuration into one bundle
 
 Build output:
 
 ```text
+client\GameToolsHub.exe
 client\GameLauncherBot.exe
+client\PwHub\Pw.Hub.exe
 ```
 
 To rebuild without reinstalling dependencies:
@@ -95,18 +97,27 @@ To rebuild without reinstalling dependencies:
 .\src\build.ps1 -SkipInstall
 ```
 
-Local builds preserve the existing `client/configs/config.ini`,
-`client/accounts/accounts.ini`, and logs. Use `-FreshConfig` to build with the
-defaults from `src` instead.
+Local builds preserve the existing Game Launcher Bot configuration, accounts and
+logs, together with PW Account Hub databases, browser profiles and application
+settings. Use `-FreshConfig` to build with the Game Launcher Bot defaults from
+`src` instead.
 
 ## Updates
 
-The built application has an **Update** button. It checks the latest published
-GitHub Release, asks before installing a newer version, and starts a separate
-updater. The updater closes the current application, verifies and installs the
-release archive, restarts the application, and removes temporary files. Account
-definitions, logs, and custom class icons are kept; user settings are merged with
-new default settings.
+The Windows release is a single bundle containing Game Tools Hub, Game Launcher
+Bot and PW Account Hub. Existing Game Launcher Bot installations keep using the
+compatible `GameLauncherBot-win64.zip` asset name, so their first update installs
+the complete bundle automatically.
+
+Game Tools Hub is the central update UI after that first upgrade. **Check Updates**
+loads verified release metadata and compares the installed versions of all three
+components. Installation always replaces the complete bundle atomically and then
+restarts Game Tools Hub. Running tools must be closed before installation.
+
+Game Launcher Bot keeps its own **Update** action for compatibility. It downloads
+the same complete bundle and restarts Game Launcher Bot. Account definitions, logs,
+custom class icons, PW Account Hub databases, cookies, fingerprints and local
+settings are preserved during replacement.
 
 The first build containing the updater must be installed manually, preferably
 outside the Git checkout. Future releases can then be installed from the
@@ -117,7 +128,8 @@ application. To publish a release:
    the version and commit without creating
    a tag.
 3. The script tags the current `origin/main`. The Windows CI build then
-   publishes `GameLauncherBot-win64.zip` to GitHub Releases.
+   publishes `GameLauncherBot-win64.zip` and `release-manifest.json` to GitHub
+   Releases.
 
 The script uses your existing Git push credentials. It does not need a personal
 access token: GitHub Actions publishes the release with its `GITHUB_TOKEN`.
@@ -128,7 +140,7 @@ The release script requires Bash, Git, and Python 3. It automatically tries
 To select a specific interpreter, run
 `PYTHON_BIN=/path/to/python3 bash ./src/release.sh --dry-run`.
 
-The update button uses published releases, not arbitrary commits on `main`.
+Update checks use published releases, not arbitrary commits on `main`.
 
 **Settings → UPDATES → Check for updates at startup** is enabled by default,
 including when upgrading from an older configuration. The built application checks
@@ -325,6 +337,9 @@ OCR models are included in the application build and do not need to be downloade
 
 ```text
 autologin_pw/
+├── release-manifest.json      # Versions and executable paths for the release bundle
+├── game_tools_hub/            # Central launcher and component update UI
+├── pw_hub_recovered/          # Editable recovered PW Account Hub source
 ├── src/
 │   ├── app.py                 # Desktop UI
 │   ├── ui_backend.py          # QML bridge and UI action handlers
@@ -348,7 +363,7 @@ autologin_pw/
 │   │   │   └── ea.png         # Transparent Crimson Archer theme
 │   │   ├── classes/           # Account class images
 │   │   └── ico/               # Application icon
-├── client/                    # Built Windows artifact
+├── client/                    # Built unified Windows bundle
 ├── README.md
 └── .gitignore
 ```

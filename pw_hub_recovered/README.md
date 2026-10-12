@@ -49,6 +49,10 @@ The recovered project currently builds with zero errors and 23 compiler
 warnings. Most warnings describe fire-and-forget async calls or unused fields
 preserved by decompilation and should be reviewed before feature development.
 
+The unified Windows build publishes this project into `client/PwHub` and launches
+it through Game Tools Hub. Bundle updates preserve `pwhub.db`, cookies,
+fingerprints, logs, and local `appsettings*.json` files.
+
 ## Browser isolation found in the recovered code
 
 `WebCoreBrowser` supports two modes:

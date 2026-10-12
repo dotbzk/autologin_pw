@@ -1,0 +1,8 @@
+{
+  "version": "1.0.2",
+  "changes": [
+    "Recovered an editable .NET 8 project from the reference application.",
+    "Restored account management, isolated browser sessions, automation scripts, and compiled WPF resources.",
+    "Standardized bundled script names and source comments in English."
+  ]
+}

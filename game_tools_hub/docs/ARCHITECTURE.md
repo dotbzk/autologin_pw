@@ -4,10 +4,11 @@
 Game Tools Hub (shell)
 ├── module registry
 ├── process manager
+├── bundle update coordinator
 ├── shared navigation and status UI
 └── module manifests
     ├── Game Launcher Bot adapter ──> existing independent process
-    ├── PW Account Hub adapter ─────> future independent process
+    ├── PW Account Hub adapter ─────> independent .NET process
     └── additional tools ───────────> future independent processes
 ```
 
@@ -17,12 +18,23 @@ Every module has a `module.json` containing stable identity, display metadata,
 supported platforms, capabilities, lifecycle status and process entry points.
 The shell validates manifests before exposing them to the UI.
 
-The initial lifecycle is intentionally small:
+The module lifecycle is intentionally small:
 
 1. discover manifests;
 2. show available and planned tools;
 3. start a ready tool in its own process;
 4. prevent accidental duplicate starts.
+
+## Release bundle
+
+`release-manifest.json` is the source of truth for the installed bundle and lists
+Game Tools Hub, Game Launcher Bot and PW Account Hub separately. The release ZIP
+contains all component executables. The shared updater verifies the archive,
+preserves user data, replaces the installation atomically and rolls back if the
+new shell cannot start.
+
+The archive keeps the historical `GameLauncherBot-win64.zip` name so an older
+launcher can perform the migration without understanding the new manifest.
 
 A future IPC contract should be versioned independently and use local JSON
 messages. It can add health, focus, shutdown and notification operations without

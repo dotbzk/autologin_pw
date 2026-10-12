@@ -1,9 +1,9 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "changes": [
-    "Added the initial modular Game Tools Hub shell.",
-    "Added manifest-based discovery for independently versioned tools.",
-    "Added an isolated process adapter for the existing Game Launcher Bot.",
-    "Added the planned PW Account Hub module for private per-account browser sessions."
+    "Added component-aware update checks for the complete Windows tool bundle.",
+    "Added installation support for Game Launcher Bot and PW Account Hub.",
+    "Added version reporting for every installed component.",
+    "Added safe handoff to the shared updater and restart into Game Tools Hub."
   ]
 }

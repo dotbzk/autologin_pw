@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "id": "game-launcher-bot",
   "displayName": "Game Launcher Bot",
+  "version": "1.0.2",
   "shortName": "GL",
   "description": "Select accounts and launch Perfect World clients through VK Play.",
   "status": "ready",
@@ -10,6 +11,6 @@
   "launch": {
     "type": "external-process",
     "sourceEntry": "../../../src/app.py",
-    "windowsEntry": "../../../client/GameLauncherBot.exe"
+    "windowsEntry": "../../GameLauncherBot.exe"
   }
 }

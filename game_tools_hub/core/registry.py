@@ -5,9 +5,10 @@ from .manifest import ModuleManifest
 
 
 class ModuleRegistry:
-    def __init__(self, modules_root, allowed_root):
+    def __init__(self, modules_root, allowed_root, entry_mode="all"):
         self.modules_root = Path(modules_root)
         self.allowed_root = Path(allowed_root)
+        self.entry_mode = entry_mode
 
     def discover(self):
         manifests = []
@@ -23,6 +24,7 @@ class ModuleRegistry:
                 data,
                 manifest_path,
                 allowed_root=self.allowed_root,
+                entry_mode=self.entry_mode,
             )
             if manifest.module_id in seen:
                 raise ValueError(f"Duplicate module id: {manifest.module_id}")

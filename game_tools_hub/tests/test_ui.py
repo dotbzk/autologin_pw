@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
@@ -29,10 +30,48 @@ class HubUiTests(unittest.TestCase):
         root = engine.rootObjects()[0]
         self.assertIsNotNone(root.findChild(object, "moduleGrid"))
         self.assertIsNotNone(root.findChild(object, "hubAlertPopup"))
+        self.assertIsNotNone(root.findChild(object, "checkUpdatesButton"))
+        self.assertIsNotNone(root.findChild(object, "hubUpdatePopup"))
         root.deleteLater()
         QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
         QT_APP.processEvents()
         engine.deleteLater()
+
+    def test_update_summary_reports_each_changed_component(self):
+        package_root = Path(__file__).resolve().parents[1]
+        backend = HubBackend(package_root)
+        requested = []
+        backend.updateConfirmationRequested.connect(
+            lambda version, details: requested.append((version, details))
+        )
+        manifest = {
+            "schemaVersion": 1,
+            "releaseVersion": "1.1.0",
+            "components": {
+                "gameToolsHub": {"displayName": "Game Tools Hub", "version": "0.3.0"},
+                "gameLauncherBot": {"displayName": "Game Launcher Bot", "version": "1.1.0"},
+                "pwHub": {"displayName": "PW Account Hub", "version": "1.1.0"},
+            },
+        }
+        backend._show_update_result({"version": "1.1.0", "manifest": manifest})
+        self.assertEqual(requested[0][0], "1.1.0")
+        self.assertIn("Game Tools Hub: 0.2.0 → 0.3.0", requested[0][1])
+        self.assertIn("Game Launcher Bot: 1.0.2 → 1.1.0", requested[0][1])
+        self.assertIn("PW Account Hub: 1.0.2 → 1.1.0", requested[0][1])
+
+    def test_install_update_restarts_into_game_tools_hub(self):
+        package_root = Path(__file__).resolve().parents[1]
+        backend = HubBackend(package_root)
+        backend._pending_release = {"version": "1.1.0"}
+        with patch("game_tools_hub.backend.start_updater") as start, \
+                patch("game_tools_hub.backend.QCoreApplication.quit") as quit_app:
+            backend.installPendingUpdate()
+        start.assert_called_once_with(
+            backend.install_root,
+            backend._pending_release,
+            launch_executable="GameToolsHub.exe",
+        )
+        quit_app.assert_called_once_with()
 
 
 if __name__ == "__main__":

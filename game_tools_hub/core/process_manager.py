@@ -12,6 +12,12 @@ class ModuleProcessManager:
         process = self._processes.get(module_id)
         return process is not None and process.poll() is None
 
+    def running_module_ids(self):
+        return [
+            module_id for module_id in self._processes
+            if self.is_running(module_id)
+        ]
+
     def build_command(self, manifest, frozen=None):
         if manifest.launch_type != "external-process":
             raise ValueError(f"Module {manifest.module_id} has no executable entry")
