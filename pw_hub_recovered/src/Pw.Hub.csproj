@@ -1,0 +1,82 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Pw.Hub</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <OutputType>WinExe</OutputType>
+    <UseWPF>True</UseWPF>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>Preview</LangVersion>
+    <Nullable>annotations</Nullable>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <RootNamespace />
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="pages/editsquadwindow.baml" />
+    <None Remove="assets/luaeditor/lua.xshd" />
+    <None Remove="windows/aiapikeywindow.baml" />
+    <None Remove="windows/updateprogresswindow.baml" />
+    <None Remove="pages/createaccountwindow.baml" />
+    <None Remove="windows/diffpreviewwindow.baml" />
+    <None Remove="pages/accountpage.baml" />
+    <None Remove="windows/profileeditwindow.baml" />
+    <None Remove="windows/logswindow.baml" />
+    <None Remove="windows/scriptlogwindow.baml" />
+    <None Remove="pages/editaccountwindow.baml" />
+    <None Remove="windows/modulesapieditorwindow.baml" />
+    <None Remove="controls/browserview.baml" />
+    <None Remove="windows/luaeditorwindow.baml" />
+    <None Remove="windows/debugvariableswindow.baml" />
+    <None Remove="pages/createsquadwindow.baml" />
+    <None Remove="assets/icon.png" />
+    <None Remove="mainwindow.baml" />
+    <None Remove="app.baml" />
+    <None Remove="windows/moduleslibrarywindow.baml" />
+    <None Remove="windows/moduleargswindow.baml" />
+    <None Remove="windows/loginregisterwindow.baml" />
+    <EmbeddedResource Include="pages/editsquadwindow.baml" LogicalName="pages/editsquadwindow.baml" />
+    <EmbeddedResource Include="assets/luaeditor/lua.xshd" LogicalName="assets/luaeditor/lua.xshd" />
+    <EmbeddedResource Include="windows/aiapikeywindow.baml" LogicalName="windows/aiapikeywindow.baml" />
+    <EmbeddedResource Include="windows/updateprogresswindow.baml" LogicalName="windows/updateprogresswindow.baml" />
+    <EmbeddedResource Include="pages/createaccountwindow.baml" LogicalName="pages/createaccountwindow.baml" />
+    <EmbeddedResource Include="windows/diffpreviewwindow.baml" LogicalName="windows/diffpreviewwindow.baml" />
+    <EmbeddedResource Include="pages/accountpage.baml" LogicalName="pages/accountpage.baml" />
+    <EmbeddedResource Include="windows/profileeditwindow.baml" LogicalName="windows/profileeditwindow.baml" />
+    <EmbeddedResource Include="windows/logswindow.baml" LogicalName="windows/logswindow.baml" />
+    <EmbeddedResource Include="windows/scriptlogwindow.baml" LogicalName="windows/scriptlogwindow.baml" />
+    <EmbeddedResource Include="pages/editaccountwindow.baml" LogicalName="pages/editaccountwindow.baml" />
+    <EmbeddedResource Include="windows/modulesapieditorwindow.baml" LogicalName="windows/modulesapieditorwindow.baml" />
+    <EmbeddedResource Include="controls/browserview.baml" LogicalName="controls/browserview.baml" />
+    <EmbeddedResource Include="windows/luaeditorwindow.baml" LogicalName="windows/luaeditorwindow.baml" />
+    <EmbeddedResource Include="windows/debugvariableswindow.baml" LogicalName="windows/debugvariableswindow.baml" />
+    <EmbeddedResource Include="pages/createsquadwindow.baml" LogicalName="pages/createsquadwindow.baml" />
+    <EmbeddedResource Include="assets/icon.png" LogicalName="assets/icon.png" />
+    <EmbeddedResource Include="mainwindow.baml" LogicalName="mainwindow.baml" />
+    <EmbeddedResource Include="app.baml" LogicalName="app.baml" />
+    <EmbeddedResource Include="windows/moduleslibrarywindow.baml" LogicalName="windows/moduleslibrarywindow.baml" />
+    <EmbeddedResource Include="windows/moduleargswindow.baml" LogicalName="windows/moduleargswindow.baml" />
+    <EmbeddedResource Include="windows/loginregisterwindow.baml" LogicalName="windows/loginregisterwindow.baml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AvalonEdit" Version="6.3.1.120" />
+    <PackageReference Include="Markdig" Version="0.37.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3537.50" />
+    <PackageReference Include="NLua" Version="1.7.6" />
+    <PackageReference Include="NotifyIconEx" Version="1.1.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Scripts/**/*" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="assets/luaeditor/index.html" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -181,6 +182,104 @@ class=tank
         config.read(self.root / "configs/config.ini")
         self.assertFalse(config.getboolean("UPDATES", "auto_check"))
 
+    def test_settings_expose_coordinate_verification_actions(self):
+        rows = self.backend.settingsData()
+        actions = {
+            (row.get("section"), row.get("key")): row.get("testKind")
+            for row in rows
+            if row.get("testKind")
+        }
+        self.assertEqual(actions, {
+            ("COORDINATES", "play_button_x"): "play",
+            ("SEARCH", "region_x"): "search",
+            ("CURRENT_ACCOUNT", "region_x"): "current",
+        })
+
+    def test_coordinate_verification_uses_unsaved_settings_values(self):
+        rows = self.backend.settingsData()
+        for row in rows:
+            if row.get("section") == "COORDINATES" and row.get("key") == "play_button_x":
+                row["value"] = "71"
+            if row.get("section") == "COORDINATES" and row.get("key") == "play_button_y":
+                row["value"] = "72"
+        worker = Mock()
+        hidden = []
+        self.backend.automationVerificationChanged.connect(hidden.append)
+        with patch.object(ui_backend.sys, "platform", "win32"), \
+                patch.object(self.backend, "screen_bounds", return_value=(0, 0, 100, 100)), \
+                patch.object(
+                    self.backend,
+                    "_perform_setting_verification",
+                    return_value=("Play Button Test", "Done", "info"),
+                ) as perform, \
+                patch.object(ui_backend, "Thread", return_value=worker) as thread:
+            self.backend.verifySetting("play", "", rows)
+            worker.start.assert_called_once()
+            self.assertTrue(self.backend.verificationBusy)
+            self.assertEqual(hidden, [True])
+            thread.call_args.kwargs["target"]()
+            values = perform.call_args.args[2]
+        self.assertEqual(values[("COORDINATES", "play_button_x")], "71")
+        self.assertEqual(values[("COORDINATES", "play_button_y")], "72")
+
+    def test_play_coordinate_verification_activates_and_clicks(self):
+        values = self.backend._settings_values(self.backend.settingsData())
+        values[("COORDINATES", "play_button_x")] = "61"
+        values[("COORDINATES", "play_button_y")] = "62"
+        launcher = Mock()
+        automation = SimpleNamespace(
+            GameLauncher=Mock(return_value=launcher),
+            pyautogui=Mock(),
+        )
+        with patch.object(self.backend, "_load_automation_module", return_value=automation):
+            title, message, level = self.backend._perform_setting_verification(
+                "play", "", values
+            )
+        launcher.activate_launcher.assert_called_once_with()
+        automation.pyautogui.click.assert_called_once_with(61, 62)
+        self.assertEqual(title, "Play Button Test")
+        self.assertIn("(61, 62)", message)
+        self.assertEqual(level, "info")
+
+    def test_current_account_verification_reports_detected_account(self):
+        values = self.backend._settings_values(self.backend.settingsData())
+        launcher = Mock()
+        launcher.detect_current_account.return_value = ("mage_one", "mage_one (99%)")
+        automation = SimpleNamespace(GameLauncher=Mock(return_value=launcher), pyautogui=Mock())
+        with patch.object(self.backend, "_load_automation_module", return_value=automation):
+            title, message, level = self.backend._perform_setting_verification(
+                "current", "", values
+            )
+        launcher.activate_launcher.assert_called_once_with()
+        self.assertEqual(title, "Current Account Test")
+        self.assertIn("Current account: mage_one", message)
+        self.assertEqual(level, "info")
+
+    def test_account_search_verification_clicks_and_confirms_match(self):
+        values = self.backend._settings_values(self.backend.settingsData())
+        launcher = Mock()
+        launcher.wait_after_dropdown_delay = 0
+        launcher.scroll_up_attempts = 0
+        launcher.scroll_up_amount = 10
+        launcher.scroll_up_attempts_delay = 0
+        launcher.account_switch_delay = 0
+        launcher.find_account.return_value = (75, 76)
+        launcher.wait_for_account_selected.return_value = True
+        automation = SimpleNamespace(GameLauncher=Mock(return_value=launcher), pyautogui=Mock())
+        with patch.object(self.backend, "_load_automation_module", return_value=automation), \
+                patch.object(ui_backend.time, "sleep"):
+            title, message, level = self.backend._perform_setting_verification(
+                "search", "mage_one", values
+            )
+        self.assertEqual(
+            automation.pyautogui.click.call_args_list,
+            [unittest.mock.call(20, 20), unittest.mock.call(75, 76)],
+        )
+        launcher.find_account.assert_called_once_with("mage_one")
+        launcher.wait_for_account_selected.assert_called_once_with("mage_one")
+        self.assertIn("confirmed as current", message)
+        self.assertEqual((title, level), ("Account Search Test", "info"))
+
     def test_screen_picker_hides_and_restores_the_launcher(self):
         visibility = []
         self.backend.screenPickingChanged.connect(visibility.append)
@@ -331,6 +430,7 @@ class QmlSmokeTests(unittest.TestCase):
             "settingsButton", "updateButton",
             "memoryCleanupCheckBox", "logArea", "progressBar", "runButton",
             "stopButton", "debugButton", "minimizeButton", "closeButton",
+            "accountSearchPopup", "accountSearchField",
         }
         self.assertEqual(
             {name for name in names if root.findChild(object, name) is None},
@@ -352,6 +452,13 @@ class QmlSmokeTests(unittest.TestCase):
         accounts_list.setProperty("contentY", 24)
         QT_APP.processEvents()
         self.assertGreater(accounts_list.property("contentY"), 0)
+        scroll_position = accounts_list.property("contentY")
+        backend.toggleAccount(backend.accounts[-1]["name"])
+        QT_APP.processEvents()
+        QT_APP.processEvents()
+        self.assertAlmostEqual(
+            accounts_list.property("contentY"), scroll_position, delta=0.5
+        )
         manage = root.findChild(object, "managePopup")
         settings = root.findChild(object, "settingsPopup")
         alert = root.findChild(object, "alertPopup")

@@ -1,6 +1,7 @@
 import unittest
 
 from src.screen_settings import POINT_NAMES, rectangle_from_points, validate_screen_entries
+from src.ui_backend import windows_cursor_position, windows_primary_screen_bounds
 
 
 def settings_values():
@@ -17,6 +18,27 @@ def settings_values():
 
 
 class ScreenSettingsTests(unittest.TestCase):
+    def test_windows_cursor_position_uses_native_physical_coordinates(self):
+        class User32:
+            @staticmethod
+            def GetPhysicalCursorPos(pointer):
+                pointer._obj.x = 1823
+                pointer._obj.y = 947
+                return 1
+
+        self.assertEqual(windows_cursor_position(User32()), (1823, 947))
+
+    def test_windows_primary_bounds_use_physical_metrics(self):
+        class User32:
+            @staticmethod
+            def GetSystemMetrics(index):
+                return (2560, 1440)[index]
+
+        self.assertEqual(
+            windows_primary_screen_bounds(User32()),
+            (0, 0, 2560, 1440),
+        )
+
     def test_rectangle_supports_reverse_drag(self):
         self.assertEqual(rectangle_from_points((100, 80), (20, 10)), (20, 10, 80, 70))
 

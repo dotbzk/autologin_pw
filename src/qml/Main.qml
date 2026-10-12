@@ -260,7 +260,10 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     model: backend.groups
                     currentIndex: Math.max(0, backend.groups.indexOf(backend.currentGroup))
-                    onActivated: backend.selectGroup(currentText)
+                    onActivated: {
+                        accountsList.restoreSelectionScroll = false
+                        backend.selectGroup(currentText)
+                    }
                 }
             }
 
@@ -280,6 +283,25 @@ ApplicationWindow {
                     clip: true
                     spacing: 4
                     model: backend.accounts
+                    property real savedSelectionContentY: 0
+                    property bool restoreSelectionScroll: false
+                    function restoreSavedSelectionScroll() {
+                        if (!restoreSelectionScroll) return
+                        let maximum = Math.max(originY, contentHeight - height)
+                        contentY = Math.max(originY, Math.min(savedSelectionContentY, maximum))
+                        restoreSelectionScroll = false
+                    }
+                    Connections {
+                        target: backend
+                        function onAccountSelectionChanging() {
+                            accountsList.savedSelectionContentY = accountsList.contentY
+                            accountsList.restoreSelectionScroll = true
+                        }
+                        function onAccountsChanged() {
+                            if (accountsList.restoreSelectionScroll)
+                                Qt.callLater(accountsList.restoreSavedSelectionScroll)
+                        }
+                    }
                     ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
                     delegate: Rectangle {
                         required property var modelData
@@ -591,6 +613,18 @@ ApplicationWindow {
             for (let i = 0; i < rows.length; ++i) settingsModel.append(rows[i])
             open()
         }
+        function settingRows() {
+            let rows = []
+            for (let i = 0; i < settingsModel.count; ++i) rows.push(settingsModel.get(i))
+            return rows
+        }
+        function testSetting(kind) {
+            if (kind === "search") {
+                accountSearchPopup.openPrompt(settingRows())
+            } else {
+                backend.verifySetting(kind, "", settingRows())
+            }
+        }
         background: Rectangle { color: "#f00b080a"; radius: 10; border.width: 2; border.color: root.accentSoft }
         ListModel { id: settingsModel; dynamicRoles: true }
         contentItem: ColumnLayout {
@@ -618,6 +652,7 @@ ApplicationWindow {
                         required property var value
                         required property string pickKind
                         required property string pickName
+                        required property string testKind
                         width: settingsView.width - 12
                         height: settingRow.kind === "header" ? 34 : 38
                         Text {
@@ -646,7 +681,15 @@ ApplicationWindow {
                                 visible: settingRow.pickKind !== ""
                                 text: settingRow.pickKind === "point" ? "SELECT POINT" : "SELECT AREA"
                                 Layout.preferredWidth: 112
+                                enabled: !backend.verificationBusy
                                 onClicked: backend.pickScreenTarget(settingRow.section, settingRow.pickName)
+                            }
+                            GlowButton {
+                                visible: settingRow.testKind !== ""
+                                text: "TEST"
+                                Layout.preferredWidth: 66
+                                enabled: !backend.verificationBusy
+                                onClicked: settingsPopup.testSetting(settingRow.testKind)
                             }
                         }
                     }
@@ -654,13 +697,63 @@ ApplicationWindow {
             }
             RowLayout {
                 Layout.fillWidth: true
+                Text {
+                    text: backend.verificationBusy ? "Testing in VK Play…" : "TEST uses the values shown above without saving them."
+                    color: root.textMuted; font.pixelSize: 10; Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
                 Item { Layout.fillWidth: true }
                 GlowButton {
                     text: "SAVE"
+                    enabled: !backend.verificationBusy
                     onClicked: {
-                        let rows = []
-                        for (let i = 0; i < settingsModel.count; ++i) rows.push(settingsModel.get(i))
-                        backend.saveSettings(rows)
+                        backend.saveSettings(settingsPopup.settingRows())
+                    }
+                }
+            }
+        }
+    }
+
+    Popup {
+        id: accountSearchPopup
+        objectName: "accountSearchPopup"
+        modal: true; focus: true; closePolicy: Popup.CloseOnEscape
+        x: (root.width - width) / 2; y: (root.height - height) / 2
+        width: Math.min(root.width * 0.72, 520); padding: 18
+        property var settingsRows: []
+        function openPrompt(rows) {
+            settingsRows = rows
+            accountSearchField.text = ""
+            open()
+            accountSearchField.forceActiveFocus()
+        }
+        background: Rectangle { color: "#f00b080a"; radius: 9; border.width: 2; border.color: root.accentSoft }
+        contentItem: ColumnLayout {
+            spacing: 12
+            Text { text: "TEST ACCOUNT SEARCH"; color: root.textPrimary; font.pixelSize: 17; font.bold: true }
+            Text {
+                text: "Enter the account to find. VK Play will be activated, the account list will be searched, and the matching account will be clicked."
+                color: "#ffe1e4"; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap
+            }
+            StyledField {
+                id: accountSearchField
+                objectName: "accountSearchField"
+                Layout.fillWidth: true
+                placeholderText: "Account name"
+                onAccepted: findAccountButton.clicked()
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                GlowButton { text: "CANCEL"; onClicked: accountSearchPopup.close() }
+                GlowButton {
+                    id: findAccountButton
+                    text: "FIND & CLICK"
+                    enabled: accountSearchField.text.trim().length > 0 && !backend.verificationBusy
+                    onClicked: {
+                        let name = accountSearchField.text.trim()
+                        let rows = accountSearchPopup.settingsRows
+                        accountSearchPopup.close()
+                        backend.verifySetting("search", name, rows)
                     }
                 }
             }
@@ -776,6 +869,15 @@ ApplicationWindow {
             }
         }
         function onScreenPickingChanged(active) {
+            if (active) {
+                root.hide()
+            } else {
+                root.show()
+                root.raise()
+                root.requestActivate()
+            }
+        }
+        function onAutomationVerificationChanged(active) {
             if (active) {
                 root.hide()
             } else {
