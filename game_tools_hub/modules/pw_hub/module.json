@@ -2,12 +2,14 @@
   "schemaVersion": 1,
   "id": "pw-hub",
   "displayName": "PW Account Hub",
+  "version": "1.0.2",
   "shortName": "PW",
   "description": "Manage game accounts and open web pages in isolated private sessions.",
-  "status": "planned",
+  "status": "ready",
   "platforms": ["win32"],
   "capabilities": ["Account management", "Private browser sessions", "Automation scripts"],
   "launch": {
-    "type": "none"
+    "type": "external-process",
+    "windowsEntry": "../../PwHub/Pw.Hub.exe"
   }
 }

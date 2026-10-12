@@ -70,10 +70,34 @@ ApplicationWindow {
                 }
             }
             Item { Layout.fillWidth: true }
-            Text {
-                text: "v" + backend.version
-                color: root.textMuted
-                font.pixelSize: 12
+            ColumnLayout {
+                spacing: 2
+                Text {
+                    text: "Hub v" + backend.version + "  •  Bundle v" + backend.releaseVersion
+                    color: root.textMuted
+                    font.pixelSize: 11
+                    Layout.alignment: Qt.AlignRight
+                }
+                Text {
+                    text: {
+                        let values = []
+                        for (let i = 0; i < backend.components.length; ++i) {
+                            let component = backend.components[i]
+                            values.push(component.name + " " + component.version)
+                        }
+                        return values.join("  •  ")
+                    }
+                    color: "#75ccec"
+                    font.pixelSize: 9
+                    Layout.alignment: Qt.AlignRight
+                }
+            }
+            HubButton {
+                objectName: "checkUpdatesButton"
+                text: backend.updateBusy ? "CHECKING…" : "CHECK UPDATES"
+                enabled: !backend.updateBusy
+                Layout.preferredWidth: 150
+                onClicked: backend.checkForUpdates()
             }
         }
 
@@ -131,6 +155,11 @@ ApplicationWindow {
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight
                             }
+                            Text {
+                                text: "v" + modelData.version
+                                color: root.textMuted
+                                font.pixelSize: 10
+                            }
                             Rectangle {
                                 implicitWidth: statusText.implicitWidth + 16
                                 implicitHeight: 25
@@ -176,6 +205,61 @@ ApplicationWindow {
     }
 
     Popup {
+        id: updatePopup
+        objectName: "hubUpdatePopup"
+        modal: true
+        focus: true
+        closePolicy: Popup.CloseOnEscape
+        x: (root.width - width) / 2
+        y: (root.height - height) / 2
+        width: Math.min(520, root.width * 0.76)
+        padding: 20
+        property string releaseVersion: ""
+        property string details: ""
+        background: Rectangle {
+            color: "#f00e1825"
+            radius: 10
+            border.width: 2
+            border.color: root.accent
+        }
+        contentItem: ColumnLayout {
+            spacing: 14
+            Text {
+                text: "BUNDLE UPDATE " + updatePopup.releaseVersion
+                color: root.textPrimary
+                font.pixelSize: 18
+                font.bold: true
+            }
+            Text {
+                text: updatePopup.details
+                color: root.textMuted
+                font.pixelSize: 12
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
+            Text {
+                text: "The updater will replace Game Tools Hub, Game Launcher Bot, and PW Account Hub together."
+                color: "#75ccec"
+                font.pixelSize: 11
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                HubButton { text: "CANCEL"; onClicked: updatePopup.close() }
+                HubButton {
+                    objectName: "installUpdateButton"
+                    text: "INSTALL UPDATE"
+                    onClicked: {
+                        updatePopup.close()
+                        backend.installPendingUpdate()
+                    }
+                }
+            }
+        }
+    }
+
+    Popup {
         id: alertPopup
         objectName: "hubAlertPopup"
         modal: true
@@ -207,6 +291,11 @@ ApplicationWindow {
             alertPopup.dialogTitle = title
             alertPopup.message = message
             alertPopup.open()
+        }
+        function onUpdateConfirmationRequested(version, details) {
+            updatePopup.releaseVersion = version
+            updatePopup.details = details
+            updatePopup.open()
         }
     }
 }

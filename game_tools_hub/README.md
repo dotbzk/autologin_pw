@@ -7,14 +7,14 @@ discovered from `modules/*/module.json` and run as isolated processes.
 ## Current modules
 
 - **Game Launcher Bot** — an adapter for the existing application in `../src`.
-- **PW Account Hub** — a planned account manager with isolated private browser
-  sessions. The reference binary under `../test` is research input only and is
-  never launched or packaged by this shell.
+- **PW Account Hub** — the recovered editable .NET account manager, published
+  under `PwHub/` with isolated private browser sessions.
 
 ## Design boundaries
 
 - The shell owns navigation, discovery, availability and process lifecycle.
-- Each tool owns its UI, data, dependencies, version and release process.
+- Each tool owns its UI, data, dependencies and component version.
+- Windows releases are installed atomically as one versioned bundle.
 - A module failure cannot crash another module.
 - Manifests cannot point outside the repository/application root.
 - Future cross-module communication must use a versioned local IPC contract;
@@ -22,9 +22,21 @@ discovered from `modules/*/module.json` and run as isolated processes.
 - Account cookies, tokens and browser data belong to PW Account Hub only and
   must never be stored in manifests or shell settings.
 
-## PW Account Hub plan
+## Updates
 
-PW Account Hub will keep one browser context per account. Each context will be
+The built Hub displays the installed version of every component and checks the
+latest GitHub Release through the shared updater. A release contains
+`release-manifest.json`, which lists the bundle version, component versions and
+their executable paths. Update installation is disabled while a launched module
+is still running.
+
+The legacy archive name `GameLauncherBot-win64.zip` is intentionally retained so
+older Game Launcher Bot installations can install Game Tools Hub and PW Account
+Hub with their first update.
+
+## PW Account Hub
+
+PW Account Hub keeps one browser context per account. Each context is
 private and isolated from every other account, with no shared cookie container.
 The implementation should expose account selection, page navigation and script
 execution through its own service boundary. The shell only starts the module.
@@ -37,7 +49,8 @@ From the repository root:
 python -m game_tools_hub
 ```
 
-On macOS this is a UI preview: Windows-only modules remain disabled.
+On macOS this is a UI preview: Windows-only modules and release installation
+remain disabled.
 
 ## Tests
 

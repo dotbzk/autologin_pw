@@ -13,6 +13,7 @@ VALID_LAUNCH_TYPES = {"external-process", "none"}
 class ModuleManifest:
     module_id: str
     display_name: str
+    version: str
     description: str
     short_name: str
     status: str
@@ -24,7 +25,7 @@ class ModuleManifest:
     manifest_path: Path
 
     @classmethod
-    def from_dict(cls, data, manifest_path, allowed_root):
+    def from_dict(cls, data, manifest_path, allowed_root, entry_mode="all"):
         manifest_path = Path(manifest_path).resolve()
         allowed_root = Path(allowed_root).resolve()
         module_id = str(data.get("id", ""))
@@ -40,7 +41,12 @@ class ModuleManifest:
         if launch_type not in VALID_LAUNCH_TYPES:
             raise ValueError(f"Invalid launch type for {module_id}: {launch_type}")
 
-        def resolve_entry(key):
+        if entry_mode not in {"all", "source", "windows"}:
+            raise ValueError(f"Invalid manifest entry mode: {entry_mode}")
+
+        def resolve_entry(key, mode):
+            if entry_mode not in {"all", mode}:
+                return None
             raw_value = launch.get(key)
             if not raw_value:
                 return None
@@ -60,14 +66,15 @@ class ModuleManifest:
         return cls(
             module_id=module_id,
             display_name=str(data.get("displayName") or module_id),
+            version=str(data.get("version") or "0.0.0"),
             description=str(data.get("description") or ""),
             short_name=str(data.get("shortName") or module_id[:2].upper()),
             status=status,
             platforms=platforms,
             capabilities=tuple(str(value) for value in data.get("capabilities", [])),
             launch_type=launch_type,
-            source_entry=resolve_entry("sourceEntry"),
-            windows_entry=resolve_entry("windowsEntry"),
+            source_entry=resolve_entry("sourceEntry", "source"),
+            windows_entry=resolve_entry("windowsEntry", "windows"),
             manifest_path=manifest_path,
         )
 
@@ -87,6 +94,7 @@ class ModuleManifest:
         return {
             "id": self.module_id,
             "name": self.display_name,
+            "version": self.version,
             "description": self.description,
             "shortName": self.short_name,
             "status": self.status,

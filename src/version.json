@@ -1,11 +1,11 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   "changes": [
-    "Fixed coordinate selection on scaled Windows displays by recording native physical cursor positions.",
-    "Added a Settings test for the Play button that activates VK Play and clicks the currently displayed coordinates.",
-    "Added a Current Account test that activates VK Play, reads the configured OCR area, and reports the detected account.",
-    "Added an Account Search test with an account-name prompt, real search and click verification, and current-account confirmation.",
-    "Coordinate tests now use unsaved values currently displayed in Settings, so new points and regions can be checked before saving.",
-    "Fixed the client list jumping back to the top after selecting or clearing an account."
+    "Added Game Tools Hub as the central launcher for Game Launcher Bot and PW Account Hub.",
+    "Changed the Windows release into a unified bundle containing all three applications.",
+    "Added component-aware update checks to Game Tools Hub.",
+    "The first Game Launcher Bot update now installs Game Tools Hub and PW Account Hub automatically.",
+    "Preserved Game Launcher Bot settings, accounts and logs together with PW Account Hub browser data during bundle updates.",
+    "Kept compatibility with existing Game Launcher Bot installations and the existing update asset name."
   ]
 }

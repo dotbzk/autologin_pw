@@ -15,12 +15,14 @@ import zipfile
 
 REPOSITORY = "dotbzk/autologin_pw"
 ASSET_NAME = "GameLauncherBot-win64.zip"
+MANIFEST_ASSET_NAME = "release-manifest.json"
 RELEASE_URL = f"https://api.github.com/repos/{REPOSITORY}/releases/latest"
 VERSION_PATTERN = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
 SHA256_PATTERN = re.compile(r"^sha256:([0-9a-fA-F]{64})$")
 MAX_ARCHIVE_SIZE = 1_500_000_000
 MAX_UNPACKED_SIZE = 3_000_000_000
 UPDATE_NOTICE = "update-notice.json"
+REQUIRED_COMPONENTS = {"gameToolsHub", "gameLauncherBot", "pwHub"}
 
 
 def version_tuple(value):
@@ -35,10 +37,41 @@ def installed_version(path):
         return json.load(version_file)["version"]
 
 
+def validate_release_manifest(data, expected_version=None):
+    if not isinstance(data, dict) or data.get("schemaVersion") != 1:
+        raise ValueError("Unsupported release manifest schema")
+    release_version = str(data.get("releaseVersion") or "")
+    version_tuple(release_version)
+    if expected_version and release_version != expected_version.lstrip("v"):
+        raise ValueError("Release manifest version does not match release tag")
+    components = data.get("components")
+    if not isinstance(components, dict) or not REQUIRED_COMPONENTS.issubset(components):
+        raise ValueError("Release manifest does not contain all required components")
+    for component_id in REQUIRED_COMPONENTS:
+        component = components[component_id]
+        if not isinstance(component, dict):
+            raise ValueError(f"Invalid component manifest: {component_id}")
+        version_tuple(str(component.get("version") or ""))
+        executable = str(component.get("executable") or "")
+        path = PurePosixPath(executable)
+        if (
+            not executable or executable.startswith("/") or "\\" in executable
+            or ":" in executable or ".." in path.parts
+        ):
+            raise ValueError(f"Unsafe component executable: {component_id}")
+    return data
+
+
+def installed_release_manifest(path):
+    with open(path, encoding="utf-8") as manifest_file:
+        return validate_release_manifest(json.load(manifest_file))
+
+
 def parse_release(data):
     version = data["tag_name"]
     version_tuple(version)
-    asset = next((item for item in data["assets"] if item["name"] == ASSET_NAME), None)
+    assets = data.get("assets") or []
+    asset = next((item for item in assets if item.get("name") == ASSET_NAME), None)
     if not asset:
         raise ValueError(f"Release {version} does not contain {ASSET_NAME}")
     digest = SHA256_PATTERN.fullmatch(asset.get("digest") or "")
@@ -48,8 +81,43 @@ def parse_release(data):
     parsed = urlparse(url)
     if parsed.scheme != "https" or parsed.hostname != "github.com":
         raise ValueError("Unexpected release download URL")
-    return {"version": version.lstrip("v"), "url": url, "sha256": digest.group(1).lower(),
-            "notes": (data.get("body") or "").strip()[:12000]}
+    manifest_asset = next(
+        (item for item in assets if item.get("name") == MANIFEST_ASSET_NAME), None
+    )
+    manifest_url = ""
+    manifest_sha256 = ""
+    if manifest_asset:
+        manifest_digest = SHA256_PATTERN.fullmatch(manifest_asset.get("digest") or "")
+        if not manifest_digest:
+            raise ValueError(f"Release {version} manifest has no SHA-256 digest")
+        manifest_url = manifest_asset.get("browser_download_url") or ""
+        parsed_manifest_url = urlparse(manifest_url)
+        if parsed_manifest_url.scheme != "https" or parsed_manifest_url.hostname != "github.com":
+            raise ValueError("Unexpected release manifest URL")
+        manifest_sha256 = manifest_digest.group(1).lower()
+    return {
+        "version": version.lstrip("v"),
+        "url": url,
+        "sha256": digest.group(1).lower(),
+        "notes": (data.get("body") or "").strip()[:12000],
+        "manifest_url": manifest_url,
+        "manifest_sha256": manifest_sha256,
+        "manifest": None,
+    }
+
+
+def download_release_manifest(url, sha256):
+    request = Request(url, headers={"User-Agent": "GameToolsHub"})
+    with urlopen(request, timeout=20) as response:
+        payload = response.read(1024 * 1024 + 1)
+    if len(payload) > 1024 * 1024:
+        raise ValueError("Release manifest is too large")
+    if hashlib.sha256(payload).hexdigest() != sha256:
+        raise ValueError("Release manifest SHA-256 does not match GitHub release")
+    try:
+        return json.loads(payload.decode("utf-8"))
+    except (UnicodeError, ValueError) as exc:
+        raise ValueError("Release manifest is not valid UTF-8 JSON") from exc
 
 
 def latest_release():
@@ -59,7 +127,15 @@ def latest_release():
     )
     try:
         with urlopen(request, timeout=20) as response:
-            return parse_release(json.load(response))
+            release = parse_release(json.load(response))
+        if release["manifest_url"]:
+            manifest = download_release_manifest(
+                release["manifest_url"], release["manifest_sha256"]
+            )
+            release["manifest"] = validate_release_manifest(
+                manifest, expected_version=release["version"]
+            )
+        return release
     except HTTPError as exc:
         if exc.code == 404:
             raise RuntimeError("No published release is available yet") from exc
@@ -71,7 +147,7 @@ def find_update(current_version):
     return release if version_tuple(release["version"]) > version_tuple(current_version) else None
 
 
-def start_updater(install_dir, release):
+def start_updater(install_dir, release, launch_executable="GameLauncherBot.exe"):
     install_dir = Path(install_dir).resolve()
     source = install_dir / "Updater.exe"
     if not source.is_file():
@@ -88,6 +164,7 @@ def start_updater(install_dir, release):
             "--version", release["version"],
             "--url", release["url"],
             "--sha256", release["sha256"],
+            "--launch-executable", launch_executable,
         ], cwd=temporary_dir, close_fds=True)
     except Exception:
         shutil.rmtree(temporary_dir, ignore_errors=True)
@@ -173,9 +250,28 @@ def preserve_user_data(previous, staged):
     if old_logs.is_dir():
         shutil.copytree(old_logs, staged / "logs", dirs_exist_ok=True)
 
+    previous_pw_hub = previous / "PwHub"
+    staged_pw_hub = staged / "PwHub"
+    if previous_pw_hub.is_dir() and staged_pw_hub.is_dir():
+        for directory_name in ("Cookies", "Fingerprints", "logs"):
+            old_directory = previous_pw_hub / directory_name
+            if old_directory.is_dir():
+                shutil.copytree(
+                    old_directory,
+                    staged_pw_hub / directory_name,
+                    dirs_exist_ok=True,
+                )
+        for filename in ("pwhub.db", "pwhub.db-shm", "pwhub.db-wal"):
+            old_file = previous_pw_hub / filename
+            if old_file.is_file():
+                shutil.copy2(old_file, staged_pw_hub / filename)
+        for old_file in previous_pw_hub.glob("appsettings*.json"):
+            if old_file.is_file():
+                shutil.copy2(old_file, staged_pw_hub / old_file.name)
+
 
 def install_release(archive_path, install_dir, expected_version, launch_app, progress=None,
-                    release_notes=""):
+                    release_notes="", launch_executable="GameLauncherBot.exe"):
     install_dir = Path(install_dir).resolve()
     if not install_dir.is_dir():
         raise ValueError("Installation directory does not exist")
@@ -187,12 +283,31 @@ def install_release(archive_path, install_dir, expected_version, launch_app, pro
         staged.mkdir()
         extract_release(archive_path, staged)
         if not all((staged / item).exists() for item in (
-            "GameLauncherBot.exe", "Updater.exe", "_internal", "configs/config.ini",
-            "accounts/accounts.ini", "version.json",
+            "GameToolsHub.exe", "GameLauncherBot.exe", "Updater.exe", "_internal",
+            "PwHub/Pw.Hub.exe", "configs/config.ini", "accounts/accounts.ini",
+            "version.json", "release-manifest.json",
         )):
             raise ValueError("Update archive is missing application files")
         if installed_version(staged / "version.json") != expected_version:
             raise ValueError("Update archive version does not match release")
+        manifest = installed_release_manifest(staged / "release-manifest.json")
+        if manifest["releaseVersion"] != expected_version:
+            raise ValueError("Update bundle version does not match release")
+        for component in manifest["components"].values():
+            component_path = PurePosixPath(component["executable"])
+            if not (staged / Path(*component_path.parts)).is_file():
+                raise ValueError(
+                    f"Update component is missing: {component.get('displayName', component_path)}"
+                )
+        launch_path = PurePosixPath(launch_executable)
+        if (
+            not launch_executable or launch_executable.startswith("/")
+            or "\\" in launch_executable or ":" in launch_executable
+            or ".." in launch_path.parts
+        ):
+            raise ValueError("Unsafe update launch executable")
+        if not (staged / Path(*launch_path.parts)).is_file():
+            raise ValueError("Update launch executable is missing")
         preserve_user_data(install_dir, staged)
         if not release_notes.strip():
             with open(staged / "version.json", encoding="utf-8") as version_file:
@@ -208,7 +323,7 @@ def install_release(archive_path, install_dir, expected_version, launch_app, pro
         os.replace(install_dir, backup)
         try:
             os.replace(staged, install_dir)
-            launch_app(install_dir / "GameLauncherBot.exe")
+            launch_app(install_dir / Path(*launch_path.parts))
             installed = True
         except Exception:
             try:

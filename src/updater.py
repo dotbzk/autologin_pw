@@ -85,6 +85,7 @@ def run_update(args, events):
             archive_path, args.install_dir, args.version, launch_app,
             progress=status,
             release_notes=release_notes,
+            launch_executable=args.launch_executable,
         )
         events.put(("done", "Update installed"))
     except Exception as exc:
@@ -103,10 +104,15 @@ def main():
     parser.add_argument("--version", required=True)
     parser.add_argument("--url", required=True)
     parser.add_argument("--sha256", required=True)
+    parser.add_argument(
+        "--launch-executable",
+        default="GameLauncherBot.exe",
+        choices=("GameLauncherBot.exe", "GameToolsHub.exe"),
+    )
     args = parser.parse_args()
 
     root = tk.Tk()
-    root.title("Game Launcher Bot Update")
+    root.title("Game Tools Update")
     root.geometry("460x155")
     root.resizable(False, False)
     root.attributes("-topmost", True)

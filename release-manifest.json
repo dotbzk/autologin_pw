@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "releaseVersion": "1.0.2",
+  "components": {
+    "gameToolsHub": {
+      "displayName": "Game Tools Hub",
+      "version": "0.2.0",
+      "executable": "GameToolsHub.exe"
+    },
+    "gameLauncherBot": {
+      "displayName": "Game Launcher Bot",
+      "version": "1.0.2",
+      "executable": "GameLauncherBot.exe"
+    },
+    "pwHub": {
+      "displayName": "PW Account Hub",
+      "version": "1.0.2",
+      "executable": "PwHub/Pw.Hub.exe"
+    }
+  }
+}

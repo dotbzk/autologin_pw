@@ -4,7 +4,9 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
+import shutil
 
+from game_tools_hub.backend import HubBackend
 from game_tools_hub.core.process_manager import ModuleProcessManager
 from game_tools_hub.core.registry import ModuleRegistry
 
@@ -13,6 +15,7 @@ def write_manifest(path, **overrides):
     data = {
         "id": "sample-tool",
         "displayName": "Sample Tool",
+        "version": "1.2.3",
         "shortName": "ST",
         "description": "A sample module.",
         "status": "ready",
@@ -36,6 +39,7 @@ class ModuleRegistryTests(unittest.TestCase):
             manifests = ModuleRegistry(root / "modules", root).discover()
             self.assertEqual(len(manifests), 1)
             self.assertEqual(manifests[0].module_id, "sample-tool")
+            self.assertEqual(manifests[0].version, "1.2.3")
             self.assertEqual(manifests[0].source_entry, (module / "tool.py").resolve())
 
     def test_rejects_entry_outside_application_root(self):
@@ -56,6 +60,25 @@ class ModuleRegistryTests(unittest.TestCase):
             write_manifest(root / "modules" / "two" / "module.json")
             with self.assertRaisesRegex(ValueError, "Duplicate module id"):
                 ModuleRegistry(root / "modules", root).discover()
+
+    def test_frozen_hub_resolves_entries_inside_installation(self):
+        package_root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as directory:
+            install_root = Path(directory)
+            shutil.copytree(package_root / "modules", install_root / "modules")
+            (install_root / "GameLauncherBot.exe").write_bytes(b"launcher")
+            (install_root / "PwHub").mkdir()
+            (install_root / "PwHub/Pw.Hub.exe").write_bytes(b"pw hub")
+            with patch("game_tools_hub.backend.sys.frozen", True, create=True):
+                backend = HubBackend(package_root, install_root=install_root)
+            self.assertEqual(
+                backend._manifests["game-launcher-bot"].windows_entry,
+                (install_root / "GameLauncherBot.exe").resolve(),
+            )
+            self.assertEqual(
+                backend._manifests["pw-hub"].windows_entry,
+                (install_root / "PwHub/Pw.Hub.exe").resolve(),
+            )
 
 
 class ModuleProcessManagerTests(unittest.TestCase):

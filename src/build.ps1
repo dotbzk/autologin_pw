@@ -12,6 +12,10 @@ $VenvDir = Join-Path $SourceDir ".venv"
 $VenvPython = Join-Path $VenvDir "Scripts\python.exe"
 $RequirementsFile = Join-Path $SourceDir "requirements-dev.txt"
 $TestsDir = Join-Path $SourceDir "tests"
+$HubDir = Join-Path $ProjectRoot "game_tools_hub"
+$HubTestsDir = Join-Path $HubDir "tests"
+$PwHubProject = Join-Path $ProjectRoot "pw_hub_recovered\src\Pw.Hub.csproj"
+$ReleaseManifest = Join-Path $ProjectRoot "release-manifest.json"
 $OutputDir = Join-Path $ProjectRoot "client"
 $BuildRoot = Join-Path $ProjectRoot "build"
 $BuildDir = Join-Path $BuildRoot "GameLauncherBot"
@@ -23,7 +27,9 @@ $BuildError = $null
 $PythonCacheDirs = @(
     (Join-Path $ProjectRoot "__pycache__"),
     (Join-Path $SourceDir "__pycache__"),
-    (Join-Path $TestsDir "__pycache__")
+    (Join-Path $TestsDir "__pycache__"),
+    (Join-Path $HubDir "__pycache__"),
+    (Join-Path $HubTestsDir "__pycache__")
 )
 
 Push-Location $ProjectRoot
@@ -54,6 +60,10 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "Tests failed."
     }
+    & $VenvPython -m unittest discover -s $HubTestsDir -v
+    if ($LASTEXITCODE -ne 0) {
+        throw "Game Tools Hub tests failed."
+    }
 
     Write-Host "Preparing the new build..."
     if (Test-Path $BuildDir) {
@@ -63,7 +73,7 @@ try {
         Remove-Item $StageRoot -Recurse -Force
     }
 
-    Write-Host "Building GameLauncherBot..."
+    Write-Host "Building Game Launcher Bot and Game Tools Hub..."
     & $VenvPython -m PyInstaller --clean --noconfirm --distpath $StageRoot --workpath $BuildDir $SpecFile
     if ($LASTEXITCODE -ne 0) {
         throw "PyInstaller build failed."
@@ -74,11 +84,20 @@ try {
     $IconDir = Join-Path $ConfigDir "ico"
     $ClassesDir = Join-Path $ConfigDir "classes"
     $AccountsDir = Join-Path $StagedOutput "accounts"
+    $ModulesDir = Join-Path $StagedOutput "modules"
+    $PwHubOutput = Join-Path $StagedOutput "PwHub"
     New-Item -ItemType Directory -Force $ConfigDir | Out-Null
     New-Item -ItemType Directory -Force $ThemeDir | Out-Null
     New-Item -ItemType Directory -Force $IconDir | Out-Null
     New-Item -ItemType Directory -Force $ClassesDir | Out-Null
     New-Item -ItemType Directory -Force $AccountsDir | Out-Null
+    New-Item -ItemType Directory -Force $ModulesDir | Out-Null
+
+    Write-Host "Publishing PW Account Hub..."
+    & dotnet publish $PwHubProject -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o $PwHubOutput
+    if ($LASTEXITCODE -ne 0) {
+        throw "PW Account Hub publish failed."
+    }
 
     Copy-Item (Join-Path $SourceDir "configs\config.ini") (Join-Path $ConfigDir "config.ini") -Force
     Copy-Item (Join-Path $SourceDir "configs\ico\app.png") (Join-Path $IconDir "app.png") -Force
@@ -87,6 +106,9 @@ try {
     Copy-Item (Join-Path $SourceDir "configs\classes\*") $ClassesDir -Force
     Copy-Item (Join-Path $SourceDir "accounts\accounts.ini") (Join-Path $AccountsDir "accounts.ini") -Force
     Copy-Item (Join-Path $SourceDir "version.json") (Join-Path $StagedOutput "version.json") -Force
+    Copy-Item $ReleaseManifest (Join-Path $StagedOutput "release-manifest.json") -Force
+    Copy-Item (Join-Path $ProjectRoot "pw_hub_recovered\version.json") (Join-Path $PwHubOutput "version.json") -Force
+    Copy-Item (Join-Path $HubDir "modules\*") $ModulesDir -Recurse -Force
 
     if (-not $FreshConfig -and (Test-Path $OutputDir)) {
         & $VenvPython -c "from src.update_support import preserve_user_data; import sys; preserve_user_data(sys.argv[1], sys.argv[2])" $OutputDir $StagedOutput
@@ -98,9 +120,14 @@ try {
     $Executable = Join-Path $StagedOutput "GameLauncherBot.exe"
     $RequiredFiles = @(
         $Executable,
+        (Join-Path $StagedOutput "GameToolsHub.exe"),
         (Join-Path $StagedOutput "Updater.exe"),
         (Join-Path $StagedOutput "MemoryCleaner.exe"),
         (Join-Path $StagedOutput "version.json"),
+        (Join-Path $StagedOutput "release-manifest.json"),
+        (Join-Path $PwHubOutput "Pw.Hub.exe"),
+        (Join-Path $ModulesDir "game_launcher_bot\module.json"),
+        (Join-Path $ModulesDir "pw_hub\module.json"),
         (Join-Path $ConfigDir "config.ini"),
         (Join-Path $IconDir "app.png"),
         (Join-Path $IconDir "app.ico"),
