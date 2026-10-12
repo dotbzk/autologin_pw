@@ -1,0 +1,9 @@
+{
+  "version": "0.1.0",
+  "changes": [
+    "Added the initial modular Game Tools Hub shell.",
+    "Added manifest-based discovery for independently versioned tools.",
+    "Added an isolated process adapter for the existing Game Launcher Bot.",
+    "Added the planned PW Account Hub module for private per-account browser sessions."
+  ]
+}

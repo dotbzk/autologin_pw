@@ -1,0 +1,62 @@
+# PW Account Hub — recovered source
+
+This directory contains a best-effort source reconstruction of `Pw.Hub.exe`
+1.0.2. It is separate from Game Launcher Bot and from the Game Tools Hub shell.
+
+The C# project was recovered from the managed `Pw.Hub.dll` embedded in the
+self-contained .NET application. Lua and JavaScript files were copied from the
+open `Scripts` directory distributed with the reference application.
+
+## Important limitations
+
+- This is decompiled code, not the original repository.
+- Original comments, solution structure, build scripts and most local variable
+  names are unavailable.
+- WPF views were recovered as compiled BAML resources. They are usable as
+  resources, but they are not editable XAML yet.
+- Cross-target compilation succeeds with the .NET 8 SDK. Runtime verification
+  still requires Windows and the WebView2 Runtime.
+- Do not commit generated account databases, cookies, fingerprints, tokens or
+  logs. They are excluded by `.gitignore`.
+
+## Recovered stack
+
+- .NET 8 / WPF / x64
+- Microsoft WebView2
+- Entity Framework Core with SQLite
+- NLua and KeraLua
+- AvalonEdit
+- Markdig
+- NotifyIconEx
+
+## Build
+
+On Windows with the .NET 8 SDK:
+
+```powershell
+dotnet restore .\src\Pw.Hub.csproj
+dotnet build .\src\Pw.Hub.csproj -c Debug
+```
+
+The project file now uses NuGet package references instead of temporary paths
+to DLLs extracted from the application bundle.
+
+Bundled scripts use lowercase English `snake_case` file names and English code
+comments. Russian text is retained only where runtime matching depends on the
+Russian labels or responses returned by `pwonline.ru`.
+
+The recovered project currently builds with zero errors and 23 compiler
+warnings. Most warnings describe fire-and-forget async calls or unused fields
+preserved by decompilation and should be reviewed before feature development.
+
+## Browser isolation found in the recovered code
+
+`WebCoreBrowser` supports two modes:
+
+- `SeparateProfile` creates a new WebView2 user-data folder;
+- `InPrivate` enables WebView2 private mode.
+
+Account switching saves the current cookies, creates or refreshes the browser
+session, loads the selected account cookies and validates the logged-in site
+account. A clean implementation should preserve this boundary while improving
+secret storage and testability.

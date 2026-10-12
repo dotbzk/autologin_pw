@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "pw-hub",
+  "displayName": "PW Account Hub",
+  "shortName": "PW",
+  "description": "Manage game accounts and open web pages in isolated private sessions.",
+  "status": "planned",
+  "platforms": ["win32"],
+  "capabilities": ["Account management", "Private browser sessions", "Automation scripts"],
+  "launch": {
+    "type": "none"
+  }
+}

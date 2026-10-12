@@ -1,0 +1,11 @@
+src/bin/
+src/obj/
+src/logs/
+src/Cookies/
+src/Fingerprints/
+src/pwhub.db
+src/pwhub.db-shm
+src/pwhub.db-wal
+src/appsettings*.json
+*.user
+*.suo

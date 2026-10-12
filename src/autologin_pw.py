@@ -385,6 +385,38 @@ class GameLauncher:
 
         return False
 
+    def detect_current_account(self):
+        """Read the current-account area once and match it against configured accounts."""
+        screenshot = pyautogui.screenshot(region=self.current_account_region)
+        screenshot = screenshot.resize(
+            (screenshot.width * 3, screenshot.height * 3)
+        )
+        lines = self.account_recognizer.recognize(screenshot)
+        recognized = ", ".join(
+            f"{line.text} ({line.confidence:.0%})"
+            for line in lines
+            if line.confidence >= self.ocr_min_confidence
+        ) or "nothing"
+
+        for account in self.accounts:
+            account_name = account["name"]
+            if find_matching_line(
+                account_name,
+                lines,
+                min_confidence=self.ocr_min_confidence,
+                fuzzy_threshold=self.ocr_fuzzy_threshold,
+            ):
+                return account_name, recognized
+            if find_exact_combined_match(
+                account_name,
+                lines,
+                min_confidence=self.ocr_min_confidence,
+                max_y_distance=54,
+            ):
+                return account_name, recognized
+
+        return "", recognized
+
     def wait_for_account_selected(self, account_name):
         attempts = max(1, int(self.selection_confirm_attempts))
 

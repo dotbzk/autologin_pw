@@ -274,6 +274,18 @@ point. Press Escape to cancel. All coordinate fields remain editable by hand.
 The application checks that points and OCR regions fit on the primary display
 before saving.
 
+The **TEST** buttons beside the Play point, account-search area, and current-account
+area use the values currently shown in Settings, including unsaved edits. The Play
+test activates VK Play and performs the configured click. The current-account test
+reports the configured account recognized in the selected area. The account-search
+test asks for an account name, opens the account list, searches and clicks the match,
+then confirms it through the current-account OCR area. These tests perform real mouse
+actions and can therefore start the game or switch the active account.
+
+On Windows, the screen picker stores native physical cursor coordinates. This keeps
+the selected point in the same coordinate space as the automation click when Windows
+display scaling is enabled.
+
 ## Interface artwork
 
 The desktop interface is implemented with PySide6 and QML. `src/configs/theme/ea.png`

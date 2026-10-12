@@ -382,4 +382,6 @@ __pycache__
 .venv-macos/
 logs/
 
+/test/pw/
+
 .DS_Store

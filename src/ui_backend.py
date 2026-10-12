@@ -1,4 +1,5 @@
 import configparser
+import ctypes
 import json
 import os
 from pathlib import Path
@@ -6,6 +7,7 @@ import re
 import shutil
 import sys
 import tempfile
+import time
 from datetime import datetime
 from threading import Thread
 
@@ -69,6 +71,30 @@ def _variant(value):
     return value.toVariant() if hasattr(value, "toVariant") else value
 
 
+class _NativePoint(ctypes.Structure):
+    _fields_ = (("x", ctypes.c_long), ("y", ctypes.c_long))
+
+
+def windows_cursor_position(user32=None):
+    """Return the cursor in the physical coordinate space used by Windows clicks."""
+    user32 = user32 or ctypes.windll.user32
+    point = _NativePoint()
+    getter = getattr(user32, "GetPhysicalCursorPos", None) or user32.GetCursorPos
+    if not getter(ctypes.byref(point)):
+        raise OSError("Windows could not read the cursor position")
+    return point.x, point.y
+
+
+def windows_primary_screen_bounds(user32=None):
+    """Return physical bounds for the primary Windows display."""
+    user32 = user32 or ctypes.windll.user32
+    width = int(user32.GetSystemMetrics(0))
+    height = int(user32.GetSystemMetrics(1))
+    if width <= 0 or height <= 0:
+        raise OSError("Windows could not read the primary display size")
+    return 0, 0, width, height
+
+
 class ScreenPicker(QWidget):
     picked = Signal(str, str, "QVariantMap")
     cancelled = Signal()
@@ -79,6 +105,8 @@ class ScreenPicker(QWidget):
         self.name = name or ""
         self.start_point = None
         self.end_point = None
+        self.start_screen_point = None
+        self.end_screen_point = None
         self.screen = QGuiApplication.primaryScreen()
         if not self.screen:
             raise RuntimeError("Primary screen is unavailable")
@@ -89,6 +117,19 @@ class ScreenPicker(QWidget):
         self.setCursor(Qt.CrossCursor)
         self.setGeometry(self.screen_geometry)
         self.setFocusPolicy(Qt.StrongFocus)
+
+    def _physical_point(self, local_point):
+        if sys.platform == "win32":
+            try:
+                return windows_cursor_position()
+            except (AttributeError, OSError):
+                pass
+        return (
+            round(self.screen_geometry.x() * self.scale)
+            + round(local_point.x() * self.scale),
+            round(self.screen_geometry.y() * self.scale)
+            + round(local_point.y() * self.scale),
+        )
 
     def paintEvent(self, _event):
         painter = QPainter(self)
@@ -102,36 +143,38 @@ class ScreenPicker(QWidget):
         if event.button() == Qt.LeftButton:
             self.start_point = event.position().toPoint()
             self.end_point = self.start_point
+            self.start_screen_point = self._physical_point(self.start_point)
+            self.end_screen_point = self.start_screen_point
             self.update()
 
     def mouseMoveEvent(self, event):
         if self.start_point:
             self.end_point = event.position().toPoint()
+            self.end_screen_point = self._physical_point(self.end_point)
             self.update()
 
     def mouseReleaseEvent(self, event):
         if event.button() != Qt.LeftButton or not self.start_point:
             return
         self.end_point = event.position().toPoint()
-        origin_x = round(self.screen_geometry.x() * self.scale)
-        origin_y = round(self.screen_geometry.y() * self.scale)
+        self.end_screen_point = self._physical_point(self.end_point)
         if self.name:
             values = {
-                f"{self.name}_x": origin_x + round(self.end_point.x() * self.scale),
-                f"{self.name}_y": origin_y + round(self.end_point.y() * self.scale),
+                f"{self.name}_x": self.end_screen_point[0],
+                f"{self.name}_y": self.end_screen_point[1],
             }
         else:
             x, y, width, height = rectangle_from_points(
-                (self.start_point.x(), self.start_point.y()),
-                (self.end_point.x(), self.end_point.y()),
+                self.start_screen_point,
+                self.end_screen_point,
             )
             if width < 5 or height < 5:
                 return
             values = {
-                "region_x": origin_x + round(x * self.scale),
-                "region_y": origin_y + round(y * self.scale),
-                "region_w": round(width * self.scale),
-                "region_h": round(height * self.scale),
+                "region_x": x,
+                "region_y": y,
+                "region_w": width,
+                "region_h": height,
             }
         self.picked.emit(self.section, self.name, values)
         self.close()
@@ -148,12 +191,14 @@ class AppBackend(QObject):
     groupsChanged = Signal()
     currentGroupChanged = Signal()
     accountsChanged = Signal()
+    accountSelectionChanging = Signal()
     logTextChanged = Signal()
     progressChanged = Signal()
     runningChanged = Signal()
     debugEnabledChanged = Signal()
     memoryCleanupEnabledChanged = Signal()
     readyChanged = Signal()
+    verificationBusyChanged = Signal()
 
     alertRequested = Signal(str, str, str)
     updateConfirmationRequested = Signal(str)
@@ -161,6 +206,7 @@ class AppBackend(QObject):
     summaryRequested = Signal(int, int, "QVariantList", str)
     settingPicked = Signal(str, str, str)
     screenPickingChanged = Signal(bool)
+    automationVerificationChanged = Signal(bool)
 
     _logRequested = Signal(str)
     _progressRequested = Signal(int)
@@ -170,6 +216,7 @@ class AppBackend(QObject):
     _closeCompleted = Signal(str)
     _updateResult = Signal(object, bool)
     _updateError = Signal(str, bool)
+    _verificationResult = Signal(str, str, str)
 
     def __init__(self):
         super().__init__()
@@ -190,6 +237,7 @@ class AppBackend(QObject):
         self._running = False
         self._debug_enabled = False
         self._ready = False
+        self._verification_busy = False
         self.stop_requested = False
         self.worker_thread = None
         self.update_check_running = False
@@ -214,6 +262,7 @@ class AppBackend(QObject):
         self._closeCompleted.connect(self._on_close_completed)
         self._updateResult.connect(self._show_update_result)
         self._updateError.connect(self._show_update_error)
+        self._verificationResult.connect(self._show_verification_result)
         self.reload_accounts()
 
     @Property(str, constant=True)
@@ -268,6 +317,10 @@ class AppBackend(QObject):
     def updateBusy(self):
         return self.update_check_running
 
+    @Property(bool, notify=verificationBusyChanged)
+    def verificationBusy(self):
+        return self._verification_busy
+
     def _set_ready(self, value):
         if self._ready != value:
             self._ready = value
@@ -277,6 +330,11 @@ class AppBackend(QObject):
         if self._running != value:
             self._running = value
             self.runningChanged.emit()
+
+    def _set_verification_busy(self, value):
+        if self._verification_busy != value:
+            self._verification_busy = value
+            self.verificationBusyChanged.emit()
 
     @Slot()
     def start(self):
@@ -346,18 +404,21 @@ class AppBackend(QObject):
     def toggleAccount(self, name):
         for account in self._accounts:
             if account["name"] == name:
+                self.accountSelectionChanging.emit()
                 account["selected"] = not account["selected"]
                 self.accountsChanged.emit()
                 return
 
     @Slot()
     def selectAll(self):
+        self.accountSelectionChanging.emit()
         for account in self._accounts:
             account["selected"] = True
         self.accountsChanged.emit()
 
     @Slot()
     def unselectAll(self):
+        self.accountSelectionChanging.emit()
         for account in self._accounts:
             account["selected"] = False
         self.accountsChanged.emit()
@@ -406,17 +467,25 @@ class AppBackend(QObject):
                 config[section][key] = "yes" if default else "no"
         result = []
         for section in config.sections():
-            result.append({"kind": "header", "section": section, "key": "", "label": f"[{section}]", "value": ""})
+            result.append({
+                "kind": "header", "section": section, "key": "",
+                "label": f"[{section}]", "value": "", "pickKind": "",
+                "pickName": "", "testKind": "",
+            })
             for key, value in config[section].items():
                 label, default = booleans.get((section, key), (key.replace("_", " "), False))
                 pick_kind = ""
                 pick_name = ""
+                test_kind = ""
                 if section == "COORDINATES" and key.endswith("_x"):
                     candidate = key[:-2]
                     if candidate in POINT_NAMES:
                         pick_kind, pick_name = "point", candidate
+                        if candidate == "play_button":
+                            test_kind = "play"
                 if section in REGION_SECTIONS and key == "region_x":
                     pick_kind = "region"
+                    test_kind = "search" if section == "SEARCH" else "current"
                 result.append({
                     "kind": "boolean" if (section, key) in booleans else "value",
                     "section": section,
@@ -426,23 +495,27 @@ class AppBackend(QObject):
                               if (section, key) in booleans else value),
                     "pickKind": pick_kind,
                     "pickName": pick_name,
+                    "testKind": test_kind,
                 })
         return result
 
-    @Slot("QVariantList")
-    def saveSettings(self, items):
-        items = _variant(items)
-        config = read_config_with_fallback(self.config_path)
+    @staticmethod
+    def _settings_values(items):
         values = {}
-        for item in items:
+        for item in _variant(items):
             item = _variant(item)
             if item.get("kind") == "header":
                 continue
-            section, key = item["section"], item["key"]
             value = item["value"]
             if isinstance(value, bool):
                 value = "yes" if value else "no"
-            values[(section, key)] = str(value)
+            values[(item["section"], item["key"])] = str(value)
+        return values
+
+    @Slot("QVariantList")
+    def saveSettings(self, items):
+        config = read_config_with_fallback(self.config_path)
+        values = self._settings_values(items)
         try:
             validate_screen_entries(values, self.screen_bounds())
             for (section, key), value in values.items():
@@ -473,6 +546,11 @@ class AppBackend(QObject):
                 os.remove(temporary_path)
 
     def screen_bounds(self):
+        if sys.platform == "win32":
+            try:
+                return windows_primary_screen_bounds()
+            except (AttributeError, OSError):
+                pass
         screen = QGuiApplication.primaryScreen()
         if not screen:
             raise RuntimeError("Primary screen is unavailable")
@@ -513,6 +591,156 @@ class AppBackend(QObject):
     def _on_picker_cancelled(self):
         self._picker = None
         self.screenPickingChanged.emit(False)
+
+    @Slot(str, str, "QVariantList")
+    def verifySetting(self, kind, query, items):
+        if kind not in {"play", "current", "search"}:
+            self.alertRequested.emit("Coordinate Test", "Unknown verification type.", "error")
+            return
+        if self._running:
+            self.alertRequested.emit(
+                "Coordinate Test", "Stop the current run before testing coordinates.", "warning"
+            )
+            return
+        if self._verification_busy:
+            return
+        if sys.platform != "win32":
+            self.alertRequested.emit(
+                "Coordinate Test", "Coordinate verification is available on Windows only.", "info"
+            )
+            return
+        query = query.strip()
+        if kind == "search" and not query:
+            self.alertRequested.emit("Account Search Test", "Enter an account name.", "warning")
+            return
+
+        try:
+            values = self._settings_values(items)
+            validate_screen_entries(values, self.screen_bounds())
+        except (KeyError, TypeError, ValueError, OSError) as exc:
+            self.alertRequested.emit("Coordinate Test", str(exc), "error")
+            return
+
+        self._set_verification_busy(True)
+        self.automationVerificationChanged.emit(True)
+        self.log(f"Starting coordinate test: {kind}")
+
+        def task():
+            try:
+                title, message, level = self._perform_setting_verification(
+                    kind, query, values
+                )
+            except Exception as exc:
+                title, message, level = "Coordinate Test", str(exc), "error"
+            self._verificationResult.emit(title, message, level)
+
+        Thread(target=task, daemon=True).start()
+
+    @staticmethod
+    def _number(values, section, key):
+        try:
+            return int(values[(section, key)].strip())
+        except (KeyError, ValueError) as exc:
+            raise ValueError(f"[{section}] {key} must be an integer") from exc
+
+    @staticmethod
+    def _load_automation_module():
+        import autologin_pw
+        return autologin_pw
+
+    def _perform_setting_verification(self, kind, query, values):
+        automation = self._load_automation_module()
+        launcher = automation.GameLauncher(
+            selected_accounts=None,
+            selected_group=None,
+            stop_flag=lambda: False,
+            log_func=self.log,
+            debug_log_func=self.debug_log,
+        )
+
+        launcher.play_button = (
+            self._number(values, "COORDINATES", "play_button_x"),
+            self._number(values, "COORDINATES", "play_button_y"),
+        )
+        launcher.dropdown = (
+            self._number(values, "COORDINATES", "dropdown_x"),
+            self._number(values, "COORDINATES", "dropdown_y"),
+        )
+        launcher.scroll_position = (
+            self._number(values, "COORDINATES", "scroll_x"),
+            self._number(values, "COORDINATES", "scroll_y"),
+        )
+        launcher.search_region = tuple(
+            self._number(values, "SEARCH", key)
+            for key in ("region_x", "region_y", "region_w", "region_h")
+        )
+        launcher.current_account_region = tuple(
+            self._number(values, "CURRENT_ACCOUNT", key)
+            for key in ("region_x", "region_y", "region_w", "region_h")
+        )
+
+        launcher.activate_launcher()
+        if kind == "play":
+            automation.pyautogui.click(*launcher.play_button)
+            x, y = launcher.play_button
+            return (
+                "Play Button Test",
+                f"VK Play was activated and the Play button was clicked at ({x}, {y}).",
+                "info",
+            )
+
+        if kind == "current":
+            account_name, recognized = launcher.detect_current_account()
+            if account_name:
+                return (
+                    "Current Account Test",
+                    f"Current account: {account_name}\n\nOCR: {recognized}",
+                    "info",
+                )
+            return (
+                "Current Account Test",
+                f"No configured account matched the current account area.\n\nOCR: {recognized}",
+                "warning",
+            )
+
+        automation.pyautogui.click(*launcher.dropdown)
+        time.sleep(launcher.wait_after_dropdown_delay)
+        automation.pyautogui.moveTo(*launcher.scroll_position, duration=0.2)
+        time.sleep(0.2)
+        for _ in range(max(0, int(launcher.scroll_up_attempts))):
+            launcher.scroll_account_list(launcher.scroll_up_amount)
+            time.sleep(launcher.scroll_up_attempts_delay)
+
+        found = launcher.find_account(query)
+        if not found:
+            return (
+                "Account Search Test",
+                f"Account '{query}' was not found in the configured search area.",
+                "warning",
+            )
+        automation.pyautogui.click(*found)
+        time.sleep(launcher.account_switch_delay)
+        confirmed = launcher.wait_for_account_selected(query)
+        x, y = found
+        if confirmed:
+            return (
+                "Account Search Test",
+                f"Account '{query}' was found, clicked at ({x}, {y}), and confirmed as current.",
+                "info",
+            )
+        return (
+            "Account Search Test",
+            f"Account '{query}' was clicked at ({x}, {y}), but current-account OCR did not confirm it.",
+            "warning",
+        )
+
+    @Slot(str, str, str)
+    def _show_verification_result(self, title, message, level):
+        self._set_verification_busy(False)
+        self.automationVerificationChanged.emit(False)
+        self.log(f"{title}: {message.replace(chr(10), ' ')}")
+        if not self.closing:
+            self.alertRequested.emit(title, message, level)
 
     @Slot(str, result="QVariantMap")
     def groupData(self, group):

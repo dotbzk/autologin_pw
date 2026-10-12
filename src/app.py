@@ -13,6 +13,14 @@ from ui_backend import AppBackend, bundled_path, resource_path
 
 def main():
     os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
+    if sys.platform == "win32":
+        try:
+            ctypes.windll.user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
+        except (AttributeError, OSError):
+            try:
+                ctypes.windll.user32.SetProcessDPIAware()
+            except (AttributeError, OSError):
+                pass
     QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
