@@ -4,7 +4,7 @@
 Game Tools Hub (shell)
 ├── module registry
 ├── process manager
-├── bundle update coordinator
+├── shared-package update coordinator
 ├── shared navigation and status UI
 └── module manifests
     ├── Game Launcher Bot adapter ──> existing independent process
@@ -25,13 +25,13 @@ The module lifecycle is intentionally small:
 3. start a ready tool in its own process;
 4. prevent accidental duplicate starts.
 
-## Release bundle
+## Release package
 
-`release-manifest.json` is the source of truth for the installed bundle and lists
-Game Tools Hub, Game Launcher Bot and PW Account Hub separately. The release ZIP
-contains all component executables. The shared updater verifies the archive,
-preserves user data, replaces the installation atomically and rolls back if the
-new shell cannot start.
+`release-manifest.json` is the source of truth for installed project versions and
+lists Game Tools Hub, Game Launcher Bot and PW Account Hub separately. Those
+versions are independent. The release ZIP contains all component executables.
+The shared updater verifies the archive, preserves user data, keeps the existing
+root directory and rolls back its contents if the new shell cannot start.
 
 The archive keeps the historical `GameLauncherBot-win64.zip` name so an older
 launcher can perform the migration without understanding the new manifest.

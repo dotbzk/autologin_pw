@@ -1,9 +1,8 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "changes": [
-    "Added component-aware update checks for the complete Windows tool bundle.",
-    "Added installation support for Game Launcher Bot and PW Account Hub.",
-    "Added version reporting for every installed component.",
-    "Added safe handoff to the shared updater and restart into Game Tools Hub."
+    "Separated component versions from the internal release package version.",
+    "Removed the package version from the user interface.",
+    "Improved failed module startup reporting."
   ]
 }

@@ -29,8 +29,6 @@ public class App : System.Windows.Application
 
 	private AuthService _authService;
 
-	private UpdateService _updateService;
-
 	private static Mutex _singleInstanceMutex;
 
 	private bool _contentLoaded;
@@ -71,7 +69,7 @@ public class App : System.Windows.Application
 			bool flag = (RuntimeOptions.DebugMode = (e?.Args ?? Array.Empty<string>()).Any((string a) => string.Equals(a, "--debug", StringComparison.OrdinalIgnoreCase) || string.Equals(a, "-d", StringComparison.OrdinalIgnoreCase)));
 			Log.Initialize(new LoggerConfig
 			{
-				LogsDirectory = Path.Combine(AppContext.BaseDirectory, "logs"),
+				LogsDirectory = StartupDiagnostics.GetLogsDirectory(),
 				MinimumLevel = (flag ? LogLevel.Debug : LogLevel.Information),
 				MaxQueueSize = 10000
 			});
@@ -106,7 +104,6 @@ public class App : System.Windows.Application
 			ServiceCollection services = new ServiceCollection();
 			services.AddSingleton<IWindowService, WindowService>();
 			services.AddSingleton<MainViewModel>();
-			services.AddSingleton<UpdateService>();
 			services.AddSingleton<AuthService>();
 			services.AddSingleton<IUpdatesCheckService, UpdatesCheckService>();
 			services.AddSingleton<IModulesSyncService, ModulesSyncService>();
@@ -133,14 +130,17 @@ public class App : System.Windows.Application
 			Icon = Icon.ExtractAssociatedIcon(Process.GetCurrentProcess().MainModule?.FileName)
 		};
 		_authService = Services.GetRequiredService<AuthService>();
-		_updateService = Services.GetRequiredService<UpdateService>();
-		NotifyIcon.AddMenu("Проверить авторизацию", OnClick);
-		NotifyIcon.AddMenu("Проверить обновления…", async delegate
+		NotifyIcon.AddMenu("Check authorization", OnClick);
+		NotifyIcon.AddMenu("Check for updates", delegate
 		{
-			await _updateService.CheckForUpdates(showNoUpdatesMessage: true);
+			System.Windows.MessageBox.Show(
+				"Updates are managed by Game Tools Hub.",
+				"PW Account Hub",
+				MessageBoxButton.OK,
+				MessageBoxImage.Information);
 		});
 		NotifyIcon.AddMenu("-");
-		NotifyIcon.AddMenu("Закрыть", delegate
+		NotifyIcon.AddMenu("Exit", delegate
 		{
 			System.Windows.Application.Current.Shutdown();
 		});
@@ -162,7 +162,6 @@ public class App : System.Windows.Application
 		{
 		}
 		System.Windows.Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
-		_updateService.CheckForUpdates();
 	}
 
 	private void NotifyIconOnMouseDoubleClick(object sender, MouseEventArgs e)
@@ -178,6 +177,7 @@ public class App : System.Windows.Application
 
 	private void App_OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
 	{
+		IReadOnlyList<string> startupLogs = StartupDiagnostics.WriteFailure("UI dispatcher", e.Exception);
 		try
 		{
 			Log.For<App>().Error("Unhandled UI exception", e.Exception);
@@ -196,7 +196,14 @@ public class App : System.Windows.Application
 		catch
 		{
 		}
-		System.Windows.MessageBox.Show(e.Exception.ToString());
+		string logMessage = startupLogs.Count > 0
+			? "\n\nDiagnostic log:\n" + string.Join("\n", startupLogs)
+			: string.Empty;
+		System.Windows.MessageBox.Show(
+			"PW Account Hub encountered an unexpected error.\n\n" + e.Exception + logMessage,
+			"PW Account Hub",
+			MessageBoxButton.OK,
+			MessageBoxImage.Error);
 	}
 
 	protected override void OnExit(ExitEventArgs e)
@@ -215,6 +222,7 @@ public class App : System.Windows.Application
 		catch
 		{
 		}
+		Log.Shutdown();
 		base.OnExit(e);
 	}
 
@@ -293,8 +301,24 @@ public class App : System.Windows.Application
 	[GeneratedCode("PresentationBuildTasks", "8.0.22.0")]
 	public static void Main()
 	{
-		App app = new App();
-		app.InitializeComponent();
-		app.Run();
+		try
+		{
+			App app = new App();
+			app.InitializeComponent();
+			app.Run();
+		}
+		catch (Exception ex)
+		{
+			Environment.ExitCode = 1;
+			IReadOnlyList<string> startupLogs = StartupDiagnostics.WriteFailure("Application bootstrap", ex);
+			string logMessage = startupLogs.Count > 0
+				? "\n\nDiagnostic log:\n" + string.Join("\n", startupLogs)
+				: string.Empty;
+			System.Windows.MessageBox.Show(
+				"PW Account Hub could not start.\n\n" + ex.Message + logMessage,
+				"PW Account Hub",
+				MessageBoxButton.OK,
+				MessageBoxImage.Error);
+		}
 	}
 }

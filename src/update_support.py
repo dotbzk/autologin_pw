@@ -270,6 +270,52 @@ def preserve_user_data(previous, staged):
                 shutil.copy2(old_file, staged_pw_hub / old_file.name)
 
 
+def _move_directory_contents(source, destination):
+    source = Path(source)
+    destination = Path(destination)
+    destination.mkdir(parents=True, exist_ok=True)
+    for item in source.iterdir():
+        os.replace(item, destination / item.name)
+
+
+def _copy_directory_contents(source, destination):
+    source = Path(source)
+    destination = Path(destination)
+    for item in source.iterdir():
+        target = destination / item.name
+        if item.is_dir():
+            shutil.copytree(item, target)
+        else:
+            shutil.copy2(item, target)
+
+
+def _clear_directory(directory):
+    for item in Path(directory).iterdir():
+        if item.is_dir() and not item.is_symlink():
+            shutil.rmtree(item)
+        else:
+            item.unlink()
+
+
+def reset_install_permissions(install_dir, platform=None):
+    """Restore inherited Windows ACLs after an update run with elevated rights."""
+    if (platform or os.name) != "nt":
+        return True
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    try:
+        result = subprocess.run(
+            ["icacls", str(Path(install_dir).resolve()), "/reset", "/T", "/C", "/Q"],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=120,
+            creationflags=flags,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return result.returncode == 0
+
+
 def install_release(archive_path, install_dir, expected_version, launch_app, progress=None,
                     release_notes="", launch_executable="GameLauncherBot.exe"):
     install_dir = Path(install_dir).resolve()
@@ -285,14 +331,14 @@ def install_release(archive_path, install_dir, expected_version, launch_app, pro
         if not all((staged / item).exists() for item in (
             "GameToolsHub.exe", "GameLauncherBot.exe", "Updater.exe", "_internal",
             "PwHub/Pw.Hub.exe", "configs/config.ini", "accounts/accounts.ini",
-            "version.json", "release-manifest.json",
+            "version.json", "launcher-version.json", "release-manifest.json",
         )):
             raise ValueError("Update archive is missing application files")
         if installed_version(staged / "version.json") != expected_version:
             raise ValueError("Update archive version does not match release")
         manifest = installed_release_manifest(staged / "release-manifest.json")
         if manifest["releaseVersion"] != expected_version:
-            raise ValueError("Update bundle version does not match release")
+            raise ValueError("Update package version does not match release")
         for component in manifest["components"].values():
             component_path = PurePosixPath(component["executable"])
             if not (staged / Path(*component_path.parts)).is_file():
@@ -315,21 +361,33 @@ def install_release(archive_path, install_dir, expected_version, launch_app, pro
                     f"• {change}" for change in json.load(version_file).get("changes", [])
                 )
         with open(staged / UPDATE_NOTICE, "w", encoding="utf-8") as output:
-            json.dump({"version": expected_version, "notes": release_notes[:12000]},
+            json.dump({
+                "version": expected_version,
+                "displayVersion": "GAME TOOLS UPDATE",
+                "notes": release_notes[:12000],
+            },
                       output, ensure_ascii=False)
 
         if progress:
             progress("Replacing application files")
-        os.replace(install_dir, backup)
+        # Keep the existing root directory so an elevated updater cannot replace
+        # its owner and ACL with those of an Administrator-owned staging folder.
+        backup_complete = False
         try:
-            os.replace(staged, install_dir)
+            _move_directory_contents(install_dir, backup)
+            backup_complete = True
+            _copy_directory_contents(staged, install_dir)
+            if not reset_install_permissions(install_dir):
+                raise RuntimeError("Cannot restore inherited installation permissions")
             launch_app(install_dir / Path(*launch_path.parts))
             installed = True
         except Exception:
             try:
-                if install_dir.exists():
-                    shutil.rmtree(install_dir)
-                os.replace(backup, install_dir)
+                if backup_complete:
+                    _clear_directory(install_dir)
+                if backup.exists():
+                    _move_directory_contents(backup, install_dir)
+                    backup.rmdir()
             except Exception as restore_error:
                 raise RuntimeError(
                     f"Update failed and rollback failed. Previous version is at {backup}"

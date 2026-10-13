@@ -12,8 +12,8 @@ open `Scripts` directory distributed with the reference application.
 - This is decompiled code, not the original repository.
 - Original comments, solution structure, build scripts and most local variable
   names are unavailable.
-- WPF views were recovered as compiled BAML resources. They are usable as
-  resources, but they are not editable XAML yet.
+- WPF views were recovered as compiled BAML resources and are packaged into the
+  WPF-generated resource container. They are usable, but not editable XAML yet.
 - Cross-target compilation succeeds with the .NET 8 SDK. Runtime verification
   still requires Windows and the WebView2 Runtime.
 - Do not commit generated account databases, cookies, fingerprints, tokens or
@@ -52,6 +52,15 @@ preserved by decompilation and should be reviewed before feature development.
 The unified Windows build publishes this project into `client/PwHub` and launches
 it through Game Tools Hub. Bundle updates preserve `pwhub.db`, cookies,
 fingerprints, logs, and local `appsettings*.json` files.
+
+Normal runtime logs are written to `PwHub\logs`. Failures before the main logger
+starts are appended to `PwHub\logs\startup-error.log`. If the installation
+directory is not writable, diagnostics fall back to
+`%LOCALAPPDATA%\GameToolsHub\PwHub\logs\startup-error.log`.
+
+The recovered legacy self-updater is intentionally disabled. PW Account Hub
+updates are checked and installed only by Game Tools Hub, avoiding a second
+PowerShell updater and duplicate elevation prompts.
 
 ## Browser isolation found in the recovered code
 

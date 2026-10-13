@@ -1,8 +1,9 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "changes": [
-    "Recovered an editable .NET 8 project from the reference application.",
-    "Restored account management, isolated browser sessions, automation scripts, and compiled WPF resources.",
-    "Standardized bundled script names and source comments in English."
+    "Fixed compiled WPF resource packaging for application startup.",
+    "Added startup crash diagnostics before the main logger is available.",
+    "Added a Local AppData log fallback when the installation directory is not writable.",
+    "Moved application updates exclusively to Game Tools Hub and disabled the legacy elevated updater."
   ]
 }

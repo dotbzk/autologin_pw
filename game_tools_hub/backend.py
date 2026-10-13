@@ -57,7 +57,7 @@ class HubBackend(QObject):
         self._manifests = {}
         self._version = self._read_version()
         self._release_manifest = self._read_release_manifest()
-        self._release_version = self._release_manifest.get("releaseVersion", "0.0.0")
+        self._package_version = self._release_manifest.get("releaseVersion", "0.0.0")
         self._update_busy = False
         self._pending_release = None
         self._updateResult.connect(self._show_update_result)
@@ -87,10 +87,6 @@ class HubBackend(QObject):
     @Property(str, constant=True)
     def version(self):
         return self._version
-
-    @Property(str, constant=True)
-    def releaseVersion(self):
-        return self._release_version
 
     @Property(bool, notify=updateBusyChanged)
     def updateBusy(self):
@@ -145,7 +141,20 @@ class HubBackend(QObject):
         except (OSError, RuntimeError, ValueError) as exc:
             self.alertRequested.emit(manifest.display_name, str(exc), "error")
             return False
+        QTimer.singleShot(1500, lambda: self._report_early_module_exit(module_id))
         return True
+
+    def _report_early_module_exit(self, module_id):
+        manifest = self._manifests.get(module_id)
+        if not manifest:
+            return
+        exit_code = self.process_manager.exit_code(module_id)
+        if exit_code is None or exit_code == 0:
+            return
+        message = f"The application exited during startup (code {exit_code})."
+        if manifest.diagnostic_log_hint:
+            message += "\n\n" + manifest.diagnostic_log_hint
+        self.alertRequested.emit(f"{manifest.display_name} failed to start", message, "error")
 
     def _set_update_busy(self, value):
         if self._update_busy != value:
@@ -167,7 +176,7 @@ class HubBackend(QObject):
 
         def task():
             try:
-                self._updateResult.emit(find_update(self._release_version))
+                self._updateResult.emit(find_update(self._package_version))
             except Exception as exc:
                 self._updateError.emit(str(exc))
 
@@ -179,7 +188,7 @@ class HubBackend(QObject):
         if not release:
             self.alertRequested.emit(
                 "Updates",
-                f"All components are up to date (bundle {self._release_version}).",
+                "All installed tools are up to date.",
                 "info",
             )
             return
@@ -206,9 +215,7 @@ class HubBackend(QObject):
                 name = remote.get("displayName", component_id)
                 changes.append(f"{name}: {local_version} → {remote_version}")
         if not changes:
-            changes.append(
-                f"Bundle maintenance update: {self._release_version} → {release['version']}"
-            )
+            changes.append("Shared updater and package files will be refreshed.")
         self._pending_release = release
         self.updateConfirmationRequested.emit(
             release["version"],
@@ -257,7 +264,7 @@ class HubBackend(QObject):
         if os.path.realpath(marker) != expected_marker:
             return
         try:
-            Path(marker).write_text(self._release_version, encoding="utf-8")
+            Path(marker).write_text(self._package_version, encoding="utf-8")
         except OSError:
             pass
 

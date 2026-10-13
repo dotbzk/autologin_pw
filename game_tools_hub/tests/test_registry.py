@@ -108,6 +108,15 @@ class ModuleProcessManagerTests(unittest.TestCase):
                 manager.start(manifest)
         popen.assert_called_once()
 
+    def test_reports_process_exit_code(self):
+        process = Mock()
+        process.poll.return_value = 17
+        manager = ModuleProcessManager(popen=Mock(return_value=process))
+        manifest = Mock(module_id="sample-tool", display_name="Sample Tool")
+        with patch.object(manager, "build_command", return_value=["tool.exe"]):
+            manager.start(manifest)
+        self.assertEqual(manager.exit_code("sample-tool"), 17)
+
 
 if __name__ == "__main__":
     unittest.main()

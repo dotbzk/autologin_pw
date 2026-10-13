@@ -19,6 +19,7 @@ class ModuleManifest:
     status: str
     platforms: tuple[str, ...]
     capabilities: tuple[str, ...]
+    diagnostic_log_hint: str
     launch_type: str
     source_entry: Path | None
     windows_entry: Path | None
@@ -62,6 +63,9 @@ class ModuleManifest:
         platforms = tuple(str(value) for value in data.get("platforms", []))
         if not platforms:
             raise ValueError(f"Module {module_id} must declare at least one platform")
+        diagnostics = data.get("diagnostics") or {}
+        if not isinstance(diagnostics, dict):
+            raise ValueError(f"Invalid diagnostics for {module_id}")
 
         return cls(
             module_id=module_id,
@@ -72,6 +76,7 @@ class ModuleManifest:
             status=status,
             platforms=platforms,
             capabilities=tuple(str(value) for value in data.get("capabilities", [])),
+            diagnostic_log_hint=str(diagnostics.get("logHint") or ""),
             launch_type=launch_type,
             source_entry=resolve_entry("sourceEntry", "source"),
             windows_entry=resolve_entry("windowsEntry", "windows"),

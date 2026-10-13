@@ -26,7 +26,12 @@ try:
     )
     from .background_memory import start_background_cleaner, stop_background_cleaner
     from .screen_settings import POINT_NAMES, REGION_SECTIONS, rectangle_from_points, validate_screen_entries
-    from .update_support import UPDATE_NOTICE, find_update, installed_version, start_updater
+    from .update_support import (
+        UPDATE_NOTICE,
+        find_update,
+        installed_version,
+        start_updater,
+    )
 except ImportError:
     from accounts_config import (
         AccountDefinition,
@@ -36,7 +41,12 @@ except ImportError:
     )
     from background_memory import start_background_cleaner, stop_background_cleaner
     from screen_settings import POINT_NAMES, REGION_SECTIONS, rectangle_from_points, validate_screen_entries
-    from update_support import UPDATE_NOTICE, find_update, installed_version, start_updater
+    from update_support import (
+        UPDATE_NOTICE,
+        find_update,
+        installed_version,
+        start_updater,
+    )
 
 
 def resource_path(relative_path):
@@ -222,7 +232,11 @@ class AppBackend(QObject):
         super().__init__()
         self.config_path = resource_path("configs/config.ini")
         self.accounts_path = resource_path("accounts/accounts.ini")
-        self.version_path = resource_path("version.json")
+        self.package_version_path = resource_path("version.json")
+        self.version_path = resource_path("launcher-version.json")
+        if not os.path.isfile(self.version_path):
+            self.version_path = self.package_version_path
+        self.package_version = installed_version(self.package_version_path)
         self.app_version = installed_version(self.version_path)
         config = read_config_with_fallback(self.config_path)
         self.class_options = list(config["LIST_OF_CLASSES"].keys()) if config.has_section("LIST_OF_CLASSES") else []
@@ -945,7 +959,7 @@ class AppBackend(QObject):
 
         def task():
             try:
-                self._updateResult.emit(find_update(self.app_version), automatic)
+                self._updateResult.emit(find_update(self.package_version), automatic)
             except Exception as exc:
                 self._updateError.emit(str(exc), automatic)
         Thread(target=task, daemon=True).start()
@@ -958,7 +972,7 @@ class AppBackend(QObject):
             return
         if not release:
             if not automatic:
-                self.alertRequested.emit("Update", f"Version {self.app_version} is up to date.", "info")
+                self.alertRequested.emit("Update", "All installed tools are up to date.", "info")
             return
         self._pending_release = release
         self.updateConfirmationRequested.emit(release["version"])
@@ -1008,14 +1022,18 @@ class AppBackend(QObject):
         if not has_notice and not os.environ.get("GAME_LAUNCHER_UPDATE_READY_FILE"):
             return
         try:
-            with open(notice_path if has_notice else self.version_path, encoding="utf-8") as notice_file:
+            with open(
+                notice_path if has_notice else self.package_version_path,
+                encoding="utf-8",
+            ) as notice_file:
                 notice = json.load(notice_file)
-            if notice.get("version") != self.app_version:
+            if notice.get("version") != self.package_version:
                 return
             notes = notice.get("notes") or "\n".join(
                 f"• {change}" for change in notice.get("changes", [])
             ) or "The release author did not provide change notes."
-            self.changelogRequested.emit(self.app_version, notes[:12000])
+            display_version = notice.get("displayVersion") or self.app_version
+            self.changelogRequested.emit(display_version, notes[:12000])
             if has_notice:
                 os.remove(notice_path)
         except (OSError, ValueError, TypeError) as exc:
@@ -1097,7 +1115,7 @@ class AppBackend(QObject):
             return
         try:
             with open(marker, "w", encoding="utf-8") as ready_file:
-                ready_file.write(self.app_version)
+                ready_file.write(self.package_version)
         except OSError:
             pass
 

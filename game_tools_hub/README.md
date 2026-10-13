@@ -14,7 +14,8 @@ discovered from `modules/*/module.json` and run as isolated processes.
 
 - The shell owns navigation, discovery, availability and process lifecycle.
 - Each tool owns its UI, data, dependencies and component version.
-- Windows releases are installed atomically as one versioned bundle.
+- Each project owns and increments its own displayed version.
+- Windows releases are distributed together with rollback protection.
 - A module failure cannot crash another module.
 - Manifests cannot point outside the repository/application root.
 - Future cross-module communication must use a versioned local IPC contract;
@@ -26,9 +27,13 @@ discovered from `modules/*/module.json` and run as isolated processes.
 
 The built Hub displays the installed version of every component and checks the
 latest GitHub Release through the shared updater. A release contains
-`release-manifest.json`, which lists the bundle version, component versions and
-their executable paths. Update installation is disabled while a launched module
-is still running.
+`release-manifest.json`, which lists independent component versions and their
+executable paths. Its package release number exists only for update transport and
+legacy compatibility; it is not an application version. Update installation is
+disabled while a launched module is still running.
+
+If PW Account Hub exits during startup, the shell reports its exit code and points
+to `PwHub\logs\startup-error.log` and the Local AppData fallback.
 
 The legacy archive name `GameLauncherBot-win64.zip` is intentionally retained so
 older Game Launcher Bot installations can install Game Tools Hub and PW Account

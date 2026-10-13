@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
@@ -55,9 +55,20 @@ class HubUiTests(unittest.TestCase):
         }
         backend._show_update_result({"version": "1.1.0", "manifest": manifest})
         self.assertEqual(requested[0][0], "1.1.0")
-        self.assertIn("Game Tools Hub: 0.2.0 → 0.3.0", requested[0][1])
+        self.assertIn("Game Tools Hub: 0.2.1 → 0.3.0", requested[0][1])
         self.assertIn("Game Launcher Bot: 1.0.2 → 1.1.0", requested[0][1])
-        self.assertIn("PW Account Hub: 1.0.2 → 1.1.0", requested[0][1])
+        self.assertIn("PW Account Hub: 1.0.3 → 1.1.0", requested[0][1])
+
+    def test_early_pw_hub_failure_reports_log_locations(self):
+        package_root = Path(__file__).resolve().parents[1]
+        process_manager = Mock()
+        process_manager.exit_code.return_value = 1
+        backend = HubBackend(package_root, process_manager=process_manager)
+        alerts = []
+        backend.alertRequested.connect(lambda *args: alerts.append(args))
+        backend._report_early_module_exit("pw-hub")
+        self.assertEqual(alerts[0][0], "PW Account Hub failed to start")
+        self.assertIn("startup-error.log", alerts[0][1])
 
     def test_install_update_restarts_into_game_tools_hub(self):
         package_root = Path(__file__).resolve().parents[1]

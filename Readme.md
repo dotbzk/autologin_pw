@@ -81,7 +81,7 @@ The build script will:
 3. Run the test suite
 4. Build Game Launcher Bot and Game Tools Hub with PyInstaller
 5. Publish PW Account Hub with the .NET 8 SDK
-6. Assemble all components, manifests, and editable configuration into one bundle
+6. Assemble all components, manifests, and editable configuration into one update package
 
 Build output:
 
@@ -104,30 +104,43 @@ settings. Use `-FreshConfig` to build with the Game Launcher Bot defaults from
 
 ## Updates
 
-The Windows release is a single bundle containing Game Tools Hub, Game Launcher
+The Windows release package contains Game Tools Hub, Game Launcher
 Bot and PW Account Hub. Existing Game Launcher Bot installations keep using the
 compatible `GameLauncherBot-win64.zip` asset name, so their first update installs
-the complete bundle automatically.
+all three projects automatically.
+
+Each project has its own version. Game Tools Hub reads the independent versions
+from `release-manifest.json`; changing PW Account Hub no longer changes the displayed
+Game Launcher Bot version. The package also has an internal release number used only
+for GitHub tags and compatibility with older updaters. It is not shown as an
+application version.
 
 Game Tools Hub is the central update UI after that first upgrade. **Check Updates**
 loads verified release metadata and compares the installed versions of all three
-components. Installation always replaces the complete bundle atomically and then
+components. Installation refreshes the complete package with rollback protection and then
 restarts Game Tools Hub. Running tools must be closed before installation.
 
 Game Launcher Bot keeps its own **Update** action for compatibility. It downloads
 the same complete bundle and restarts Game Launcher Bot. Account definitions, logs,
 custom class icons, PW Account Hub databases, cookies, fingerprints and local
-settings are preserved during replacement.
+settings are preserved during replacement. The updater keeps the existing installation
+directory instead of replacing it, then resets inherited Windows permissions. This
+prevents an elevated updater from leaving the application directory accessible only
+to administrators.
 
 The first build containing the updater must be installed manually, preferably
 outside the Git checkout. Future releases can then be installed from the
 application. To publish a release:
 
-1. Increase the version in `src/version.json` and commit it to `main`.
-2. Run `bash ./src/release.sh` from the project root. Add `--dry-run` to check
+1. Increase only the changed project versions: `src/launcher-version.json`,
+   `game_tools_hub/version.json`, and/or
+   `pw_hub_recovered/version.json`.
+2. Increase the internal package `version` in `src/version.json` and synchronize
+   `release-manifest.json`. This number is the compatible GitHub release tag.
+3. Run `bash ./src/release.sh` from the project root. Add `--dry-run` to check
    the version and commit without creating
    a tag.
-3. The script tags the current `origin/main`. The Windows CI build then
+4. The script tags the current `origin/main`. The Windows CI build then
    publishes `GameLauncherBot-win64.zip` and `release-manifest.json` to GitHub
    Releases.
 
@@ -151,8 +164,15 @@ without showing an error dialog; the **Update** button still supports manual che
 After updating, a small **What's new** window shows the release description once.
 Keep GitHub Release descriptions concise and user-facing. If no description is
 available, the bundled `changes` list in `src/version.json` is used. Update that
-list together with the version for each release; it also supports the first upgrade
+list together with the package release number; keep project-specific changes in each
+project's version file. This also supports the first upgrade
 from an older updater.
+
+PW Account Hub writes normal logs to `PwHub\logs`. If it fails before the main
+logger starts, inspect `PwHub\logs\startup-error.log`. When that directory is not
+writable, the fallback is
+`%LOCALAPPDATA%\GameToolsHub\PwHub\logs\startup-error.log`. Game Tools Hub also
+shows these paths when it detects an early PW Account Hub exit.
 
 ## Configure accounts
 
@@ -337,7 +357,7 @@ OCR models are included in the application build and do not need to be downloade
 
 ```text
 autologin_pw/
-├── release-manifest.json      # Versions and executable paths for the release bundle
+├── release-manifest.json      # Independent project versions and executable paths
 ├── game_tools_hub/            # Central launcher and component update UI
 ├── pw_hub_recovered/          # Editable recovered PW Account Hub source
 ├── src/
@@ -349,6 +369,7 @@ autologin_pw/
 │   ├── account_ocr.py         # OCR and account-name matching
 │   ├── background_memory.py   # Background memory-cleaner lifecycle and scheduler
 │   ├── build.ps1              # Windows build script
+│   ├── launcher-version.json  # Game Launcher Bot version and changelog
 │   ├── run-ui-macos.sh        # Safe macOS interface preview
 │   ├── app.spec               # PyInstaller configuration
 │   ├── requirements.txt       # Runtime dependencies
