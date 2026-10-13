@@ -2,12 +2,15 @@
   "schemaVersion": 1,
   "id": "pw-hub",
   "displayName": "PW Account Hub",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "shortName": "PW",
   "description": "Manage game accounts and open web pages in isolated private sessions.",
   "status": "ready",
   "platforms": ["win32"],
   "capabilities": ["Account management", "Private browser sessions", "Automation scripts"],
+  "diagnostics": {
+    "logHint": "Check PwHub\\logs\\startup-error.log or %LOCALAPPDATA%\\GameToolsHub\\PwHub\\logs\\startup-error.log."
+  },
   "launch": {
     "type": "external-process",
     "windowsEntry": "../../PwHub/Pw.Hub.exe"

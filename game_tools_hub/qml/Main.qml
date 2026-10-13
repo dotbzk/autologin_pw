@@ -73,7 +73,7 @@ ApplicationWindow {
             ColumnLayout {
                 spacing: 2
                 Text {
-                    text: "Hub v" + backend.version + "  •  Bundle v" + backend.releaseVersion
+                    text: "Game Tools Hub v" + backend.version
                     color: root.textMuted
                     font.pixelSize: 11
                     Layout.alignment: Qt.AlignRight
@@ -214,7 +214,6 @@ ApplicationWindow {
         y: (root.height - height) / 2
         width: Math.min(520, root.width * 0.76)
         padding: 20
-        property string releaseVersion: ""
         property string details: ""
         background: Rectangle {
             color: "#f00e1825"
@@ -225,7 +224,7 @@ ApplicationWindow {
         contentItem: ColumnLayout {
             spacing: 14
             Text {
-                text: "BUNDLE UPDATE " + updatePopup.releaseVersion
+                text: "AVAILABLE UPDATES"
                 color: root.textPrimary
                 font.pixelSize: 18
                 font.bold: true
@@ -238,7 +237,7 @@ ApplicationWindow {
                 Layout.fillWidth: true
             }
             Text {
-                text: "The updater will replace Game Tools Hub, Game Launcher Bot, and PW Account Hub together."
+                text: "Only project versions are shown. Shared package files are installed together for safe rollback."
                 color: "#75ccec"
                 font.pixelSize: 11
                 wrapMode: Text.Wrap
@@ -293,7 +292,6 @@ ApplicationWindow {
             alertPopup.open()
         }
         function onUpdateConfirmationRequested(version, details) {
-            updatePopup.releaseVersion = version
             updatePopup.details = details
             updatePopup.open()
         }

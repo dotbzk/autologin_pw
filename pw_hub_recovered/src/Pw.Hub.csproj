@@ -40,28 +40,28 @@
     <None Remove="windows/moduleslibrarywindow.baml" />
     <None Remove="windows/moduleargswindow.baml" />
     <None Remove="windows/loginregisterwindow.baml" />
-    <EmbeddedResource Include="pages/editsquadwindow.baml" LogicalName="pages/editsquadwindow.baml" />
-    <EmbeddedResource Include="assets/luaeditor/lua.xshd" LogicalName="assets/luaeditor/lua.xshd" />
-    <EmbeddedResource Include="windows/aiapikeywindow.baml" LogicalName="windows/aiapikeywindow.baml" />
-    <EmbeddedResource Include="windows/updateprogresswindow.baml" LogicalName="windows/updateprogresswindow.baml" />
-    <EmbeddedResource Include="pages/createaccountwindow.baml" LogicalName="pages/createaccountwindow.baml" />
-    <EmbeddedResource Include="windows/diffpreviewwindow.baml" LogicalName="windows/diffpreviewwindow.baml" />
-    <EmbeddedResource Include="pages/accountpage.baml" LogicalName="pages/accountpage.baml" />
-    <EmbeddedResource Include="windows/profileeditwindow.baml" LogicalName="windows/profileeditwindow.baml" />
-    <EmbeddedResource Include="windows/logswindow.baml" LogicalName="windows/logswindow.baml" />
-    <EmbeddedResource Include="windows/scriptlogwindow.baml" LogicalName="windows/scriptlogwindow.baml" />
-    <EmbeddedResource Include="pages/editaccountwindow.baml" LogicalName="pages/editaccountwindow.baml" />
-    <EmbeddedResource Include="windows/modulesapieditorwindow.baml" LogicalName="windows/modulesapieditorwindow.baml" />
-    <EmbeddedResource Include="controls/browserview.baml" LogicalName="controls/browserview.baml" />
-    <EmbeddedResource Include="windows/luaeditorwindow.baml" LogicalName="windows/luaeditorwindow.baml" />
-    <EmbeddedResource Include="windows/debugvariableswindow.baml" LogicalName="windows/debugvariableswindow.baml" />
-    <EmbeddedResource Include="pages/createsquadwindow.baml" LogicalName="pages/createsquadwindow.baml" />
-    <EmbeddedResource Include="assets/icon.png" LogicalName="assets/icon.png" />
-    <EmbeddedResource Include="mainwindow.baml" LogicalName="mainwindow.baml" />
-    <EmbeddedResource Include="app.baml" LogicalName="app.baml" />
-    <EmbeddedResource Include="windows/moduleslibrarywindow.baml" LogicalName="windows/moduleslibrarywindow.baml" />
-    <EmbeddedResource Include="windows/moduleargswindow.baml" LogicalName="windows/moduleargswindow.baml" />
-    <EmbeddedResource Include="windows/loginregisterwindow.baml" LogicalName="windows/loginregisterwindow.baml" />
+    <Resource Include="pages/editsquadwindow.baml" LogicalName="pages/editsquadwindow.baml" />
+    <Resource Include="assets/luaeditor/lua.xshd" LogicalName="assets/luaeditor/lua.xshd" />
+    <Resource Include="windows/aiapikeywindow.baml" LogicalName="windows/aiapikeywindow.baml" />
+    <Resource Include="windows/updateprogresswindow.baml" LogicalName="windows/updateprogresswindow.baml" />
+    <Resource Include="pages/createaccountwindow.baml" LogicalName="pages/createaccountwindow.baml" />
+    <Resource Include="windows/diffpreviewwindow.baml" LogicalName="windows/diffpreviewwindow.baml" />
+    <Resource Include="pages/accountpage.baml" LogicalName="pages/accountpage.baml" />
+    <Resource Include="windows/profileeditwindow.baml" LogicalName="windows/profileeditwindow.baml" />
+    <Resource Include="windows/logswindow.baml" LogicalName="windows/logswindow.baml" />
+    <Resource Include="windows/scriptlogwindow.baml" LogicalName="windows/scriptlogwindow.baml" />
+    <Resource Include="pages/editaccountwindow.baml" LogicalName="pages/editaccountwindow.baml" />
+    <Resource Include="windows/modulesapieditorwindow.baml" LogicalName="windows/modulesapieditorwindow.baml" />
+    <Resource Include="controls/browserview.baml" LogicalName="controls/browserview.baml" />
+    <Resource Include="windows/luaeditorwindow.baml" LogicalName="windows/luaeditorwindow.baml" />
+    <Resource Include="windows/debugvariableswindow.baml" LogicalName="windows/debugvariableswindow.baml" />
+    <Resource Include="pages/createsquadwindow.baml" LogicalName="pages/createsquadwindow.baml" />
+    <Resource Include="assets/icon.png" LogicalName="assets/icon.png" />
+    <Resource Include="mainwindow.baml" LogicalName="mainwindow.baml" />
+    <Resource Include="app.baml" LogicalName="app.baml" />
+    <Resource Include="windows/moduleslibrarywindow.baml" LogicalName="windows/moduleslibrarywindow.baml" />
+    <Resource Include="windows/moduleargswindow.baml" LogicalName="windows/moduleargswindow.baml" />
+    <Resource Include="windows/loginregisterwindow.baml" LogicalName="windows/loginregisterwindow.baml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="6.3.1.120" />

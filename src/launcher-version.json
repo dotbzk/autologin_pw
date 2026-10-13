@@ -1,0 +1,8 @@
+{
+  "version": "1.0.2",
+  "changes": [
+    "Added Game Tools Hub as the central launcher for Game Launcher Bot and PW Account Hub.",
+    "Added component-aware update checks through Game Tools Hub.",
+    "Preserved Game Launcher Bot settings, accounts, logs, and custom class icons during updates."
+  ]
+}

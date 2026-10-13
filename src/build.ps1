@@ -106,6 +106,7 @@ try {
     Copy-Item (Join-Path $SourceDir "configs\classes\*") $ClassesDir -Force
     Copy-Item (Join-Path $SourceDir "accounts\accounts.ini") (Join-Path $AccountsDir "accounts.ini") -Force
     Copy-Item (Join-Path $SourceDir "version.json") (Join-Path $StagedOutput "version.json") -Force
+    Copy-Item (Join-Path $SourceDir "launcher-version.json") (Join-Path $StagedOutput "launcher-version.json") -Force
     Copy-Item $ReleaseManifest (Join-Path $StagedOutput "release-manifest.json") -Force
     Copy-Item (Join-Path $ProjectRoot "pw_hub_recovered\version.json") (Join-Path $PwHubOutput "version.json") -Force
     Copy-Item (Join-Path $HubDir "modules\*") $ModulesDir -Recurse -Force
@@ -124,6 +125,7 @@ try {
         (Join-Path $StagedOutput "Updater.exe"),
         (Join-Path $StagedOutput "MemoryCleaner.exe"),
         (Join-Path $StagedOutput "version.json"),
+        (Join-Path $StagedOutput "launcher-version.json"),
         (Join-Path $StagedOutput "release-manifest.json"),
         (Join-Path $PwHubOutput "Pw.Hub.exe"),
         (Join-Path $ModulesDir "game_launcher_bot\module.json"),

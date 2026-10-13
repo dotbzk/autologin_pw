@@ -1,11 +1,10 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "changes": [
-    "Added Game Tools Hub as the central launcher for Game Launcher Bot and PW Account Hub.",
-    "Changed the Windows release into a unified bundle containing all three applications.",
-    "Added component-aware update checks to Game Tools Hub.",
-    "The first Game Launcher Bot update now installs Game Tools Hub and PW Account Hub automatically.",
-    "Preserved Game Launcher Bot settings, accounts and logs together with PW Account Hub browser data during bundle updates.",
-    "Kept compatibility with existing Game Launcher Bot installations and the existing update asset name."
+    "Separated the displayed versions of Game Tools Hub, Game Launcher Bot, and PW Account Hub.",
+    "Fixed recovered WPF resource packaging so PW Account Hub can start.",
+    "Added early PW Account Hub startup diagnostics with a Local AppData fallback.",
+    "Preserved the installation directory and restored inherited permissions during updates.",
+    "Disabled the legacy elevated PW Account Hub updater in favor of Game Tools Hub."
   ]
 }

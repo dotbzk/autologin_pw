@@ -787,7 +787,7 @@ ApplicationWindow {
         contentItem: ColumnLayout {
             spacing: 14
             Text { text: "UPDATE AVAILABLE"; color: root.textPrimary; font.pixelSize: 17; font.bold: true }
-            Text { text: "Version " + updateConfirm.updateVersion + " is available. Install and restart now?"; color: "#ffe1e4"; Layout.fillWidth: true; wrapMode: Text.Wrap }
+            Text { text: "Updates are available for the installed tools. Install and restart now?"; color: "#ffe1e4"; Layout.fillWidth: true; wrapMode: Text.Wrap }
             RowLayout {
                 Layout.alignment: Qt.AlignRight
                 GlowButton { text: "NOT NOW"; onClicked: updateConfirm.close() }

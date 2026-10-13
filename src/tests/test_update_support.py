@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import zipfile
 
 from src.update_support import (
@@ -15,6 +15,7 @@ from src.update_support import (
     parse_release,
     preserve_user_data,
     read_ini,
+    reset_install_permissions,
     start_updater,
     UPDATE_NOTICE,
     validate_release_manifest,
@@ -53,6 +54,7 @@ def write_bundle_archive(path, version):
         archive.writestr("Updater.exe", "updater")
         archive.writestr("PwHub/Pw.Hub.exe", "pw hub")
         archive.writestr("version.json", json.dumps({"version": version}))
+        archive.writestr("launcher-version.json", json.dumps({"version": "1.0.2"}))
         archive.writestr("release-manifest.json", json.dumps(release_manifest(version)))
         archive.writestr("configs/config.ini", "[UI]\nsize = 32\nnew_key = yes\n")
         archive.writestr("accounts/accounts.ini", "[ACCOUNT:default]\nview_name=default\n")
@@ -146,10 +148,15 @@ class UpdateSupportTests(unittest.TestCase):
             write_bundle_archive(archive_path, "1.2.0")
 
             launched = []
+            install_identity = install.stat().st_ino
             install_release(archive_path, install, "1.2.0", launched.append,
                             release_notes="Added background cleanup")
             notice = json.loads((install / UPDATE_NOTICE).read_text(encoding="utf-8"))
-            self.assertEqual(notice, {"version": "1.2.0", "notes": "Added background cleanup"})
+            self.assertEqual(notice, {
+                "version": "1.2.0",
+                "displayVersion": "GAME TOOLS UPDATE",
+                "notes": "Added background cleanup",
+            })
             self.assertEqual(launched, [(install / "GameLauncherBot.exe").resolve()])
             self.assertTrue((install / "GameToolsHub.exe").is_file())
             self.assertTrue((install / "PwHub" / "Pw.Hub.exe").is_file())
@@ -159,6 +166,7 @@ class UpdateSupportTests(unittest.TestCase):
             self.assertIn("mine", (install / "accounts" / "accounts.ini").read_text())
             self.assertTrue((install / "logs" / "old.txt").exists())
             self.assertEqual((install / "configs" / "classes" / "custom.png").read_bytes(), b"icon")
+            self.assertEqual(install.stat().st_ino, install_identity)
 
     def test_install_rolls_back_if_launch_fails(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -176,6 +184,20 @@ class UpdateSupportTests(unittest.TestCase):
                 install_release(archive_path, install, "1.2.0", fail)
             self.assertEqual((install / "GameLauncherBot.exe").read_text(), "old")
             self.assertFalse((install / UPDATE_NOTICE).exists())
+
+    def test_install_rolls_back_if_permissions_cannot_be_restored(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            install = root / "client"
+            install.mkdir()
+            (install / "GameLauncherBot.exe").write_text("old", encoding="utf-8")
+            archive_path = root / "release.zip"
+            write_bundle_archive(archive_path, "1.2.0")
+
+            with patch("src.update_support.reset_install_permissions", return_value=False), \
+                    self.assertRaisesRegex(RuntimeError, "permissions"):
+                install_release(archive_path, install, "1.2.0", Mock())
+            self.assertEqual((install / "GameLauncherBot.exe").read_text(), "old")
 
     def test_update_adds_new_preferences_and_keeps_user_choices(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -217,6 +239,20 @@ class UpdateSupportTests(unittest.TestCase):
                 "cookie",
             )
             self.assertTrue((staged / "PwHub/appsettings.user.json").is_file())
+
+    def test_permission_reset_is_skipped_outside_windows(self):
+        with patch("src.update_support.subprocess.run") as run:
+            self.assertTrue(reset_install_permissions("/tmp/client", platform="posix"))
+        run.assert_not_called()
+
+    def test_permission_reset_uses_inherited_windows_acls(self):
+        completed = Mock(returncode=0)
+        with patch("src.update_support.subprocess.run", return_value=completed) as run:
+            self.assertTrue(reset_install_permissions("client", platform="nt"))
+        command = run.call_args.args[0]
+        self.assertEqual(command[0], "icacls")
+        self.assertIn("/reset", command)
+        self.assertIn("/T", command)
 
     def test_updater_receives_unicode_release_notes(self):
         with tempfile.TemporaryDirectory() as directory:
