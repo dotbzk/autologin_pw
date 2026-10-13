@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "game-launcher-bot",
   "displayName": "Game Launcher Bot",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "shortName": "GL",
   "description": "Select accounts and launch Perfect World clients through VK Play.",
   "status": "ready",

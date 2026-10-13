@@ -1,8 +1,7 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "changes": [
-    "Added Game Tools Hub as the central launcher for Game Launcher Bot and PW Account Hub.",
-    "Added component-aware update checks through Game Tools Hub.",
-    "Preserved Game Launcher Bot settings, accounts, logs, and custom class icons during updates."
+    "Separated the displayed Game Launcher Bot version from the release package version.",
+    "Added permission repair when upgrading through the previous updater."
   ]
 }

@@ -406,6 +406,20 @@ class=tank
             self.backend.show_update_changelog()
         self.assertEqual(changelogs, [("1.2.0", "• New interface")])
 
+    def test_old_updater_handoff_repairs_permissions_before_ready_marker(self):
+        update_temp = self.root / "update-temp"
+        update_temp.mkdir()
+        marker = update_temp / "ready"
+        environment = {
+            "GAME_LAUNCHER_UPDATE_READY_FILE": str(marker),
+            "GAME_LAUNCHER_UPDATE_TEMP": str(update_temp),
+        }
+        with patch.dict(os.environ, environment, clear=True), \
+                patch.object(ui_backend, "reset_install_permissions", return_value=True) as reset:
+            self.backend.signal_update_ready()
+        reset.assert_called_once_with(str(self.root))
+        self.assertEqual(marker.read_text(encoding="utf-8"), "1.2.0")
+
 
 class QmlSmokeTests(unittest.TestCase):
     def test_background_artwork_has_real_transparency(self):

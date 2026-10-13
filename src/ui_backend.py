@@ -30,6 +30,7 @@ try:
         UPDATE_NOTICE,
         find_update,
         installed_version,
+        reset_install_permissions,
         start_updater,
     )
 except ImportError:
@@ -45,6 +46,7 @@ except ImportError:
         UPDATE_NOTICE,
         find_update,
         installed_version,
+        reset_install_permissions,
         start_updater,
     )
 
@@ -1112,6 +1114,11 @@ class AppBackend(QObject):
         if not marker or not temporary_dir:
             return
         if os.path.realpath(marker) != os.path.realpath(os.path.join(temporary_dir, "ready")):
+            return
+        if not reset_install_permissions(resource_path("")):
+            message = "Cannot restore inherited installation permissions."
+            self.log(message)
+            self.alertRequested.emit("Update", message, "error")
             return
         try:
             with open(marker, "w", encoding="utf-8") as ready_file:

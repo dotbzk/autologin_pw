@@ -1,10 +1,11 @@
 {
-  "version": "1.0.3",
+  "version": "1.0.4",
   "changes": [
     "Separated the displayed versions of Game Tools Hub, Game Launcher Bot, and PW Account Hub.",
     "Fixed recovered WPF resource packaging so PW Account Hub can start.",
     "Added early PW Account Hub startup diagnostics with a Local AppData fallback.",
     "Preserved the installation directory and restored inherited permissions during updates.",
-    "Disabled the legacy elevated PW Account Hub updater in favor of Game Tools Hub."
+    "Disabled the legacy elevated PW Account Hub updater in favor of Game Tools Hub.",
+    "Added a compatibility handoff that repairs permissions after installation by the previous updater."
   ]
 }
