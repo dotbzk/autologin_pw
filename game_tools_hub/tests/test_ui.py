@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
@@ -55,8 +56,8 @@ class HubUiTests(unittest.TestCase):
         }
         backend._show_update_result({"version": "1.1.0", "manifest": manifest})
         self.assertEqual(requested[0][0], "1.1.0")
-        self.assertIn("Game Tools Hub: 0.2.1 → 0.3.0", requested[0][1])
-        self.assertIn("Game Launcher Bot: 1.0.2 → 1.1.0", requested[0][1])
+        self.assertIn("Game Tools Hub: 0.2.2 → 0.3.0", requested[0][1])
+        self.assertIn("Game Launcher Bot: 1.0.3 → 1.1.0", requested[0][1])
         self.assertIn("PW Account Hub: 1.0.3 → 1.1.0", requested[0][1])
 
     def test_early_pw_hub_failure_reports_log_locations(self):
@@ -83,6 +84,22 @@ class HubUiTests(unittest.TestCase):
             launch_executable="GameToolsHub.exe",
         )
         quit_app.assert_called_once_with()
+
+    def test_old_updater_handoff_repairs_permissions_before_ready_marker(self):
+        package_root = Path(__file__).resolve().parents[1]
+        backend = HubBackend(package_root)
+        with tempfile.TemporaryDirectory() as directory:
+            update_temp = Path(directory)
+            marker = update_temp / "ready"
+            environment = {
+                "GAME_LAUNCHER_UPDATE_READY_FILE": str(marker),
+                "GAME_LAUNCHER_UPDATE_TEMP": str(update_temp),
+            }
+            with patch.dict(os.environ, environment, clear=True), \
+                    patch("game_tools_hub.backend.reset_install_permissions", return_value=True) as reset:
+                backend.signal_update_ready()
+            reset.assert_called_once_with(backend.install_root)
+            self.assertTrue(marker.is_file())
 
 
 if __name__ == "__main__":

@@ -1,8 +1,9 @@
 {
-  "version": "0.2.1",
+  "version": "0.2.2",
   "changes": [
     "Separated component versions from the internal release package version.",
     "Removed the package version from the user interface.",
-    "Improved failed module startup reporting."
+    "Improved failed module startup reporting.",
+    "Added permission repair after installation by the previous updater."
   ]
 }

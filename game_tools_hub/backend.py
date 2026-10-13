@@ -15,6 +15,7 @@ try:
     from src.update_support import (
         find_update,
         installed_release_manifest,
+        reset_install_permissions,
         start_updater,
         version_tuple,
     )
@@ -22,6 +23,7 @@ except ImportError:
     from update_support import (
         find_update,
         installed_release_manifest,
+        reset_install_permissions,
         start_updater,
         version_tuple,
     )
@@ -262,6 +264,13 @@ class HubBackend(QObject):
             return
         expected_marker = os.path.realpath(os.path.join(temporary_dir, "ready"))
         if os.path.realpath(marker) != expected_marker:
+            return
+        if not reset_install_permissions(self.install_root):
+            self.alertRequested.emit(
+                "Update",
+                "Cannot restore inherited installation permissions.",
+                "error",
+            )
             return
         try:
             Path(marker).write_text(self._package_version, encoding="utf-8")
