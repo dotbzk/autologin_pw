@@ -12,13 +12,13 @@ public class AccountServer
 
 	public string Name { get; set; } = string.Empty;
 
-	public string DefaultCharacterOptionId { get; set; }
+	public string? DefaultCharacterOptionId { get; set; }
 
 	public List<AccountCharacter> Characters { get; set; } = new List<AccountCharacter>();
 
-	public Account Account { get; set; }
+	public Account? Account { get; set; }
 
-	public string AccountId { get; set; }
+	public string? AccountId { get; set; }
 
 	[NotMapped]
 	public List<AccountCharacter> CharactersWithPlaceholder

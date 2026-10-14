@@ -1,9 +1,7 @@
 {
-  "version": "1.0.3",
+  "version": "1.0.4",
   "changes": [
-    "Fixed compiled WPF resource packaging for application startup.",
-    "Added startup crash diagnostics before the main logger is available.",
-    "Added a Local AppData log fallback when the installation directory is not writable.",
-    "Moved application updates exclusively to Game Tools Hub and disabled the legacy elevated updater."
+    "Fixed database initialization by aligning nullable account fields with the recovered Entity Framework migration snapshot.",
+    "Restored automatic creation and migration of the PW Hub SQLite database on first launch."
   ]
 }

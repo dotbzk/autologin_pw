@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "pw-hub",
   "displayName": "PW Account Hub",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "shortName": "PW",
   "description": "Manage game accounts and open web pages in isolated private sessions.",
   "status": "ready",
