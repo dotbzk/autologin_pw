@@ -1,6 +1,10 @@
 {
-  "version": "1.0.7",
+  "version": "1.0.8",
   "changes": [
-    "Fixed PW Hub Session Import connectivity when Chrome or Edge omits the extension origin header."
+    "Handled unavailable elevated memory-cleanup privileges as optional limitations instead of launch warnings.",
+    "Added a confirmation dialog for saving or discarding unsaved application settings.",
+    "Fixed coordinate test actions so temporarily hiding the launcher no longer exits the application.",
+    "Made coordinate tests prepare the required VK Play view before clicking, reading the current account, or searching the account list.",
+    "Converted the PW Account Hub interface, dialogs, logs, editor descriptions, and bundled script panels to English."
   ]
 }

@@ -68,7 +68,7 @@
         if (!el.getAttribute('role')) el.setAttribute('role', 'button');
         if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex','0');
         var txt = (el.textContent||'').trim();
-        if (!txt) el.textContent = 'Передать';
+        if (!txt) el.textContent = 'Transfer';
         return true;
       }catch(_){ return false; }
     }

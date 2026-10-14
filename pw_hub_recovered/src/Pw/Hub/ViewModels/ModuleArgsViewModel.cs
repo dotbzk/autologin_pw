@@ -8,7 +8,7 @@ namespace Pw.Hub.ViewModels;
 
 public class ModuleArgsViewModel : BaseViewModel
 {
-	private string _title = "Параметры модуля";
+	private string _title = "Module Parameters";
 
 	private ModuleDefinition _module;
 
@@ -34,7 +34,7 @@ public class ModuleArgsViewModel : BaseViewModel
 		set
 		{
 			_module = value;
-			Title = (string.IsNullOrWhiteSpace(value?.Name) ? "Параметры модуля" : value.Name);
+			Title = (string.IsNullOrWhiteSpace(value?.Name) ? "Module Parameters" : value.Name);
 		}
 	}
 

@@ -96,14 +96,14 @@ public sealed class AiDocService : IAiDocService, IDisposable
 		}
 		if (string.IsNullOrWhiteSpace(name))
 		{
-			return "Введите название модуля";
+			return "Enter a module name.";
 		}
-		string value = ((inputs == null || inputs.Count == 0) ? "(параметров нет)" : string.Join("\n", inputs.Select(((string Name, string Type, string Label) i) => $"- {i.Name} ({i.Type}) — {i.Label}")));
-		string value2 = (string.IsNullOrWhiteSpace(scriptFragment) ? "(скрипт ещё не задан)" : scriptFragment);
-		string value3 = (string.IsNullOrWhiteSpace(previousDescription) ? "(нет)" : previousDescription);
-		string value4 = (string.IsNullOrWhiteSpace(previousScriptFragment) ? "(нет)" : previousScriptFragment);
-		string content = "Ты помощник по документации. Пиши кратко и по делу на русском языке. Используй Markdown. Не придумывай функционал, которого нет. Если дан контекст предыдущей версии, добавь раздел 'История изменений' по сравнению с текущей версией.";
-		string content2 = $"Сгенерируй краткое описание модуля для каталога. Структура: 1) Краткое резюме (1-2 предложения), 2) Параметры, 3) Пример запуска (если уместно), 4) Предупреждения/требования, 5) История изменений (если есть предыдущая версия).\r\n\r\nНазвание: {name}\r\nВерсия: {version}\r\nПараметры:\r\n{value}\r\n\r\nТекущий скрипт (фрагмент):\r\n{value2}\r\n\r\nПредыдущее описание:\r\n{value3}\r\n\r\nПредыдущий скрипт (фрагмент):\r\n{value4}\r\n\r\nТребования к ответу:\r\n- Формат — Markdown, без лишних преамбул вроде \"Вот описание\".\r\n- Если параметров нет — явно напиши, что модуль не требует ввода.\r\n- Раздел 'История изменений' должен отражать отличия между предыдущей и текущей версиями (кратко: что улучшено, добавлено, удалено).\r\n- Не используй HTML.\r\n";
+		string value = ((inputs == null || inputs.Count == 0) ? "(no parameters)" : string.Join("\n", inputs.Select(((string Name, string Type, string Label) i) => $"- {i.Name} ({i.Type}) — {i.Label}")));
+		string value2 = (string.IsNullOrWhiteSpace(scriptFragment) ? "(script not defined yet)" : scriptFragment);
+		string value3 = (string.IsNullOrWhiteSpace(previousDescription) ? "(none)" : previousDescription);
+		string value4 = (string.IsNullOrWhiteSpace(previousScriptFragment) ? "(none)" : previousScriptFragment);
+		string content = "You are a documentation assistant. Write concise, useful English in Markdown. Do not invent functionality. When previous-version context is supplied, add a 'Change History' section comparing it with the current version.";
+		string content2 = $"Generate a concise module description for the catalog. Structure: 1) Brief summary (1-2 sentences), 2) Parameters, 3) Launch example when appropriate, 4) Warnings or requirements, 5) Change History when a previous version exists.\r\n\r\nName: {name}\r\nVersion: {version}\r\nParameters:\r\n{value}\r\n\r\nCurrent script (excerpt):\r\n{value2}\r\n\r\nPrevious description:\r\n{value3}\r\n\r\nPrevious script (excerpt):\r\n{value4}\r\n\r\nResponse requirements:\r\n- Use Markdown without unnecessary introductions such as \"Here is the description\".\r\n- If there are no parameters, state explicitly that the module requires no input.\r\n- The 'Change History' section must summarize what was improved, added, or removed between the previous and current versions.\r\n- Do not use HTML.\r\n";
 		ChatRequest value5 = new ChatRequest
 		{
 			model = model,
@@ -191,7 +191,7 @@ public sealed class AiDocService : IAiDocService, IDisposable
 		}
 		catch (Exception ex)
 		{
-			return "Ошибка AI: " + ex.Message;
+			return "AI error: " + ex.Message;
 		}
 	}
 

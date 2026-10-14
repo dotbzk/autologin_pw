@@ -1,7 +1,9 @@
 {
-  "version": "1.0.3",
+  "version": "1.0.4",
   "changes": [
-    "Separated the displayed Game Launcher Bot version from the release package version.",
-    "Added permission repair when upgrading through the previous updater."
+    "Handled unavailable elevated memory-cleanup privileges as optional limitations instead of launch warnings.",
+    "Added a confirmation dialog for saving or discarding unsaved application settings.",
+    "Fixed coordinate test actions so temporarily hiding the launcher no longer exits the application.",
+    "Made coordinate tests prepare the required VK Play view before clicking, reading the current account, or searching the account list."
   ]
 }

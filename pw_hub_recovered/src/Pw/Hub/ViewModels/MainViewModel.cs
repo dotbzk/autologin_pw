@@ -247,13 +247,13 @@ public class MainViewModel : BaseViewModel
 		{
 			if (parameter is Squad squad)
 			{
-				if (_dialogs.Confirm("Вы действительно хотите удалить отряд \"" + squad.Name + "\"?\nВсе аккаунты в этом отряде также будут удалены.", "Подтверждение удаления"))
+				if (_dialogs.Confirm("Delete squad \"" + squad.Name + "\"?\nAll accounts in this squad will also be deleted.", "Confirm Deletion"))
 				{
 					_accounts.DeleteSquadAsync(squad);
 					Reload();
 				}
 			}
-			else if (parameter is Account account && _dialogs.Confirm("Вы действительно хотите удалить аккаунт \"" + account.Name + "\"?", "Подтверждение удаления"))
+			else if (parameter is Account account && _dialogs.Confirm("Delete account \"" + account.Name + "\"?", "Confirm Deletion"))
 			{
 				_accounts.DeleteAccountAsync(account);
 				Reload();
@@ -417,9 +417,9 @@ public class MainViewModel : BaseViewModel
 				string text = string.Join(Environment.NewLine, list.Take(5));
 				if (list.Count > 5)
 				{
-					text += $" и ещё {list.Count - 5}";
+					text += $" and {list.Count - 5} more";
 				}
-				UpdatesText = "Доступны обновления для модулей: " + Environment.NewLine + " " + text;
+				UpdatesText = "Updates are available for these modules: " + Environment.NewLine + " " + text;
 				IsUpdatesPopupOpen = true;
 			}
 			else

@@ -77,13 +77,13 @@ public class ProfileEditWindow : Window, IComponentConnector
 	{
 		if (me != null && me.TelegramId.HasValue)
 		{
-			TelegramStatusText.Text = "Привязан: @" + (me.TelegramUsername ?? me.TelegramId.ToString());
+			TelegramStatusText.Text = "Linked: @" + (me.TelegramUsername ?? me.TelegramId.ToString());
 			LinkTelegramBtn.IsEnabled = false;
 			UnlinkTelegramBtn.IsEnabled = true;
 		}
 		else
 		{
-			TelegramStatusText.Text = "Не привязан";
+			TelegramStatusText.Text = "Not linked";
 			LinkTelegramBtn.IsEnabled = true;
 			UnlinkTelegramBtn.IsEnabled = false;
 		}
@@ -120,7 +120,7 @@ public class ProfileEditWindow : Window, IComponentConnector
 			ModulesApiClient.TelegramLinkInfo telegramLinkInfo = await _api.GenerateTelegramLinkAsync();
 			if (telegramLinkInfo == null)
 			{
-				MessageBox.Show("Не удалось получить ссылку для привязки Telegram.", "Telegram", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+				MessageBox.Show("Could not get a Telegram linking URL.", "Telegram", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 				return;
 			}
 			try
@@ -136,7 +136,7 @@ public class ProfileEditWindow : Window, IComponentConnector
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show("Ошибка: " + ex.Message, "Telegram", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show("Error: " + ex.Message, "Telegram", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 
@@ -147,7 +147,7 @@ public class ProfileEditWindow : Window, IComponentConnector
 			UserDto userDto = await _api.UnlinkTelegramAsync();
 			if (userDto == null)
 			{
-				MessageBox.Show("Не удалось отвязать Telegram.", "Telegram", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+				MessageBox.Show("Could not unlink Telegram.", "Telegram", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 			}
 			else
 			{
@@ -156,7 +156,7 @@ public class ProfileEditWindow : Window, IComponentConnector
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show("Ошибка: " + ex.Message, "Telegram", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show("Error: " + ex.Message, "Telegram", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 
@@ -175,7 +175,7 @@ public class ProfileEditWindow : Window, IComponentConnector
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show("Ошибка: " + ex.Message, "Смена аккаунта", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show("Error: " + ex.Message, "Switch Account", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 
@@ -192,7 +192,7 @@ public class ProfileEditWindow : Window, IComponentConnector
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show("Ошибка загрузки профиля: " + ex.Message, "Профиль", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show("Could not load the profile: " + ex.Message, "Profile", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 
@@ -201,23 +201,23 @@ public class ProfileEditWindow : Window, IComponentConnector
 		string text = (UsernameBox.Text ?? string.Empty).Trim();
 		if (text.Length < 3)
 		{
-			MessageBox.Show("Имя пользователя должно содержать не менее 3 символов", "Профиль", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+			MessageBox.Show("The username must contain at least 3 characters.", "Profile", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 			return;
 		}
 		try
 		{
 			if (await _api.UpdateUsernameAsync(text) == null)
 			{
-				MessageBox.Show("Не удалось сохранить имя. Возможно, имя занято.", "Профиль", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+				MessageBox.Show("Could not save the username. It may already be in use.", "Profile", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 			}
 			else
 			{
-				MessageBox.Show("Имя пользователя обновлено", "Профиль", MessageBoxButton.OK, MessageBoxImage.Asterisk);
+				MessageBox.Show("Username updated.", "Profile", MessageBoxButton.OK, MessageBoxImage.Asterisk);
 			}
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show("Ошибка: " + ex.Message, "Профиль", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show("Error: " + ex.Message, "Profile", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 
@@ -228,29 +228,29 @@ public class ProfileEditWindow : Window, IComponentConnector
 		string b = ConfirmPasswordBox.Password ?? string.Empty;
 		if (text.Length < 3)
 		{
-			MessageBox.Show("Новый пароль слишком короткий", "Смена пароля", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+			MessageBox.Show("The new password is too short.", "Change Password", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 			return;
 		}
 		if (!string.Equals(text, b, StringComparison.Ordinal))
 		{
-			MessageBox.Show("Пароли не совпадают", "Смена пароля", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+			MessageBox.Show("Passwords do not match.", "Change Password", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 			return;
 		}
 		try
 		{
 			if (!(await _api.ChangePasswordAsync(currentPassword, text)))
 			{
-				MessageBox.Show("Не удалось изменить пароль. Проверьте текущий пароль.", "Смена пароля", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+				MessageBox.Show("Could not change the password. Check the current password.", "Change Password", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 				return;
 			}
 			CurrentPasswordBox.Password = string.Empty;
 			NewPasswordBox.Password = string.Empty;
 			ConfirmPasswordBox.Password = string.Empty;
-			MessageBox.Show("Пароль изменён", "Смена пароля", MessageBoxButton.OK, MessageBoxImage.Asterisk);
+			MessageBox.Show("Password changed.", "Change Password", MessageBoxButton.OK, MessageBoxImage.Asterisk);
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show("Ошибка: " + ex.Message, "Смена пароля", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show("Error: " + ex.Message, "Change Password", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 

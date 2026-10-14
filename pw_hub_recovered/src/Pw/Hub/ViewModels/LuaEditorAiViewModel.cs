@@ -269,7 +269,7 @@ public class LuaEditorAiViewModel : BaseViewModel
 		catch
 		{
 		}
-		AddSystem("Новая сессия начата. Опишите задачу для AI.");
+		AddSystem("A new session has started. Describe the task for AI.");
 		RequeryCommands();
 	}
 
@@ -308,7 +308,7 @@ public class LuaEditorAiViewModel : BaseViewModel
 				}
 				if (string.IsNullOrWhiteSpace((aiConfigService.GetEffective().ApiKey ?? string.Empty).Trim()))
 				{
-					NotifySystem("AI API key не задан. Откройте настройки AI и введите ключ для продолжения.");
+					NotifySystem("The AI API key is not configured. Open AI Settings and enter a key to continue.");
 					return;
 				}
 			}
@@ -387,7 +387,7 @@ public class LuaEditorAiViewModel : BaseViewModel
 		}
 		catch (Exception ex)
 		{
-			AddAssistant("Ошибка: " + ex.Message);
+			AddAssistant("Error: " + ex.Message);
 		}
 		finally
 		{
@@ -468,7 +468,7 @@ public class LuaEditorAiViewModel : BaseViewModel
 		if (BraveMode && CanApply)
 		{
 			Apply();
-			AddSystem("AI brave: изменения автоматически применены к редактору.");
+			AddSystem("AI brave mode: changes were applied to the editor automatically.");
 		}
 	}
 

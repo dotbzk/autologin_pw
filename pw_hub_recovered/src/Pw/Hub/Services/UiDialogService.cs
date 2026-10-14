@@ -18,7 +18,7 @@ public class UiDialogService : IUiDialogService
 		}
 	}
 
-	public bool Confirm(string message, string caption = "Подтверждение")
+	public bool Confirm(string message, string caption = "Confirmation")
 	{
 		try
 		{
@@ -30,7 +30,7 @@ public class UiDialogService : IUiDialogService
 		}
 	}
 
-	public string? Prompt(string prompt, string caption = "Ввод", string? defaultValue = null)
+	public string? Prompt(string prompt, string caption = "Input", string? defaultValue = null)
 	{
 		return null;
 	}

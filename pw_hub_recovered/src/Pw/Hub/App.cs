@@ -15,6 +15,7 @@ using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using NotifyIconEx;
 using Pw.Hub.Infrastructure.Logging;
+using Pw.Hub.Infrastructure;
 using Pw.Hub.Models;
 using Pw.Hub.Services;
 using Pw.Hub.ViewModels;
@@ -60,6 +61,7 @@ public class App : System.Windows.Application
 		{
 		}
 		base.OnStartup(e);
+		EnglishUiLocalization.Enable();
 		try
 		{
 			Directory.SetCurrentDirectory(AppContext.BaseDirectory);

@@ -13,7 +13,7 @@ public class ScriptLogViewModel : BaseViewModel
 
 	private readonly DispatcherTimer _timer;
 
-	private string _title = "\ud83d\udcdd Логи выполнения";
+	private string _title = "\ud83d\udcdd Execution Logs";
 
 	private bool _isRunning = true;
 
@@ -21,7 +21,7 @@ public class ScriptLogViewModel : BaseViewModel
 
 	private int _percent;
 
-	private string _elapsedText = "⏱ Текущее время выполнения: 00:00";
+	private string _elapsedText = "⏱ Current execution time: 00:00";
 
 	private readonly StringBuilder _logBuilder = new StringBuilder();
 
@@ -209,20 +209,20 @@ public class ScriptLogViewModel : BaseViewModel
 	public void MarkCompleted(string finalMessage = null)
 	{
 		SetRunning(running: false);
-		ReportProgress(100, "Готово");
+		ReportProgress(100, "Done");
 		if (_logBuilder.Length > 0)
 		{
 			_logBuilder.AppendLine();
 		}
 		StringBuilder logBuilder = _logBuilder;
 		StringBuilder.AppendInterpolatedStringHandler handler = new StringBuilder.AppendInterpolatedStringHandler(18, 1, logBuilder);
-		handler.AppendLiteral("Время выполнения: ");
+		handler.AppendLiteral("Execution time: ");
 		handler.AppendFormatted(FormatElapsed(_stopwatch.Elapsed));
 		logBuilder.AppendLine(ref handler);
 		if (!string.IsNullOrWhiteSpace(finalMessage))
 		{
 			_logBuilder.AppendLine();
-			_logBuilder.AppendLine("=== Результат ===");
+			_logBuilder.AppendLine("=== Result ===");
 			_logBuilder.AppendLine(finalMessage);
 		}
 		LogText = _logBuilder.ToString();
@@ -230,7 +230,7 @@ public class ScriptLogViewModel : BaseViewModel
 
 	private void UpdateElapsed(bool final = false)
 	{
-		string text = (final ? "⏱ Итоговое время выполнения: " : "⏱ Текущее время выполнения: ");
+		string text = (final ? "⏱ Final execution time: " : "⏱ Current execution time: ");
 		ElapsedText = text + FormatElapsed(_stopwatch.Elapsed);
 	}
 

@@ -57,8 +57,8 @@ class HubUiTests(unittest.TestCase):
         backend._show_update_result({"version": "1.1.0", "manifest": manifest})
         self.assertEqual(requested[0][0], "1.1.0")
         self.assertIn("Game Tools Hub: 0.2.2 → 0.3.0", requested[0][1])
-        self.assertIn("Game Launcher Bot: 1.0.3 → 1.1.0", requested[0][1])
-        self.assertIn("PW Account Hub: 1.0.6 → 1.1.0", requested[0][1])
+        self.assertIn("Game Launcher Bot: 1.0.4 → 1.1.0", requested[0][1])
+        self.assertIn("PW Account Hub: 1.0.7 → 1.1.0", requested[0][1])
 
     def test_early_pw_hub_failure_reports_log_locations(self):
         package_root = Path(__file__).resolve().parents[1]

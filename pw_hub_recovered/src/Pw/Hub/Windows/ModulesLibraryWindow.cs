@@ -137,7 +137,7 @@ public class ModulesLibraryWindow : Window, IComponentConnector
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show(this, "Ошибка загрузки библиотеки: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show(this, "Could not load the library: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 
@@ -154,19 +154,19 @@ public class ModulesLibraryWindow : Window, IComponentConnector
 			string localVersion = GetLocalVersion(_selected.Id);
 			string text = _selected.Version ?? "1.0.0";
 			string text2 = (string.IsNullOrWhiteSpace(text) ? _selected.Name : (_selected.Name + "  v" + text));
-			text2 = text2 + " Автор: " + _selected.AuthorUsername;
+			text2 = text2 + " Author: " + _selected.AuthorUsername;
 			if (!string.IsNullOrWhiteSpace(localVersion))
 			{
 				string text3 = localVersion ?? string.Empty;
 				string text4 = text ?? string.Empty;
 				if (IsUpdateAvailable(text3, text4))
 				{
-					text2 = text2 + "  (локально v" + text3 + " — доступно v" + text4 + ")";
+					text2 = text2 + "  (local v" + text3 + " — available v" + text4 + ")";
 					UpdateButton.IsEnabled = true;
 				}
 				else
 				{
-					text2 = text2 + "  (локально v" + text3 + ")";
+					text2 = text2 + "  (local v" + text3 + ")";
 					UpdateButton.IsEnabled = false;
 				}
 			}
@@ -182,7 +182,7 @@ public class ModulesLibraryWindow : Window, IComponentConnector
 			UpdateButton.IsEnabled = false;
 		}
 		string text5 = _selected?.Description ?? string.Empty;
-		string html = (string.IsNullOrWhiteSpace(text5) ? "<i>Нет описания</i>" : Markdown.ToHtml(text5));
+		string html = (string.IsNullOrWhiteSpace(text5) ? "<i>No description</i>" : Markdown.ToHtml(text5));
 		TrySetHtml(html);
 		UpdateActionButtons();
 	}
@@ -297,7 +297,7 @@ public class ModulesLibraryWindow : Window, IComponentConnector
 			string localVersion = GetLocalVersion(_selected.Id);
 			if (string.IsNullOrWhiteSpace(localVersion) || !IsUpdateAvailable(localVersion, _selected.Version ?? "1.0.0"))
 			{
-				MessageBox.Show(this, "Обновление не требуется", "Модули", MessageBoxButton.OK, MessageBoxImage.Asterisk);
+				MessageBox.Show(this, "No update is required.", "Modules", MessageBoxButton.OK, MessageBoxImage.Asterisk);
 				return;
 			}
 			InstallModuleLocally(_selected);
@@ -306,7 +306,7 @@ public class ModulesLibraryWindow : Window, IComponentConnector
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show(this, "Не удалось обновить модуль: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show(this, "Could not update the module: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 
@@ -328,18 +328,18 @@ public class ModulesLibraryWindow : Window, IComponentConnector
 			}
 			if (num > 0)
 			{
-				MessageBox.Show(this, $"Обновлено модулей: {num}", "Обновление модулей", MessageBoxButton.OK, MessageBoxImage.Asterisk);
+				MessageBox.Show(this, $"Modules updated: {num}", "Module Update", MessageBoxButton.OK, MessageBoxImage.Asterisk);
 				RefreshOwnerModules();
 				await SearchAndBindAsync();
 			}
 			else
 			{
-				MessageBox.Show(this, "Нет модулей, требующих обновления", "Обновление модулей", MessageBoxButton.OK, MessageBoxImage.Asterisk);
+				MessageBox.Show(this, "No modules require an update.", "Module Update", MessageBoxButton.OK, MessageBoxImage.Asterisk);
 			}
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show(this, "Ошибка при обновлении модулей: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show(this, "Module update failed: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 
@@ -364,7 +364,7 @@ public class ModulesLibraryWindow : Window, IComponentConnector
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show(this, "Не удалось установить модуль: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show(this, "Could not install the module: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 
@@ -389,7 +389,7 @@ public class ModulesLibraryWindow : Window, IComponentConnector
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show(this, "Не удалось удалить модуль: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show(this, "Could not delete the module: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 

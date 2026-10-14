@@ -177,17 +177,17 @@ public class LuaIntegration
 		_lua = lua;
 		List<LuaApiRegistry.Entry> entries = new List<LuaApiRegistry.Entry>();
 		lua.RegisterFunction("Account_GetAccountCb", this, GetType().GetMethod("Account_GetAccountCb", new Type[1] { typeof(LuaFunction) }));
-		Add("Account_GetAccountCb", "v1", "Account", "Account_GetAccountCb(function(acc) ... end)", "Получить текущий аккаунт в callback(acc)", "Account_GetAccountCb(function(acc)\n    __CURSOR__\nend)");
+		Add("Account_GetAccountCb", "v1", "Account", "Account_GetAccountCb(function(acc) ... end)", "Get the current account in callback(acc)", "Account_GetAccountCb(function(acc)\n    __CURSOR__\nend)");
 		lua.RegisterFunction("Account_IsAuthorizedCb", this, GetType().GetMethod("Account_IsAuthorizedCb", new Type[1] { typeof(LuaFunction) }));
-		Add("Account_IsAuthorizedCb", "v1", "Account", "Account_IsAuthorizedCb(function(isAuth) ... end)", "Проверить авторизацию аккаунта", "Account_IsAuthorizedCb(function(isAuth)\n    __CURSOR__\nend)");
+		Add("Account_IsAuthorizedCb", "v1", "Account", "Account_IsAuthorizedCb(function(isAuth) ... end)", "Check account authorization", "Account_IsAuthorizedCb(function(isAuth)\n    __CURSOR__\nend)");
 		lua.RegisterFunction("Account_GetAccountsCb", this, GetType().GetMethod("Account_GetAccountsCb", new Type[1] { typeof(LuaFunction) }));
-		Add("Account_GetAccountsCb", "v1", "Account", "Account_GetAccountsCb(function(accounts) ... end)", "Список аккаунтов (таблица)", "Account_GetAccountsCb(function(accounts)\n    __CURSOR__\nend)");
+		Add("Account_GetAccountsCb", "v1", "Account", "Account_GetAccountsCb(function(accounts) ... end)", "Account list (table)", "Account_GetAccountsCb(function(accounts)\n    __CURSOR__\nend)");
 		lua.RegisterFunction("Account_ChangeAccountCb", this, GetType().GetMethod("Account_ChangeAccountCb", new Type[2]
 		{
 			typeof(string),
 			typeof(LuaFunction)
 		}));
-		Add("Account_ChangeAccountCb", "v1", "Account", "Account_ChangeAccountCb(accountId, function(ok) ... end)", "Сменить активный аккаунт", "Account_ChangeAccountCb(accountId, function(ok)\n    __CURSOR__\nend)");
+		Add("Account_ChangeAccountCb", "v1", "Account", "Account_ChangeAccountCb(accountId, function(ok) ... end)", "Switch the active account", "Account_ChangeAccountCb(accountId, function(ok)\n    __CURSOR__\nend)");
 		if (_browser != null)
 		{
 			lua.RegisterFunction("Browser_NavigateCb", this, GetType().GetMethod("Browser_NavigateCb", new Type[2]
@@ -195,28 +195,28 @@ public class LuaIntegration
 				typeof(string),
 				typeof(LuaFunction)
 			}));
-			Add("Browser_NavigateCb", "v1", "Browser", "Browser_NavigateCb(url, function() ... end)", "Открыть URL", "Browser_NavigateCb(url, function()\n    __CURSOR__\nend)");
+			Add("Browser_NavigateCb", "v1", "Browser", "Browser_NavigateCb(url, function() ... end)", "Open a URL", "Browser_NavigateCb(url, function()\n    __CURSOR__\nend)");
 			lua.RegisterFunction("Browser_ReloadCb", this, GetType().GetMethod("Browser_ReloadCb", new Type[1] { typeof(LuaFunction) }));
-			Add("Browser_ReloadCb", "v1", "Browser", "Browser_ReloadCb(function() ... end)", "Перезагрузить страницу", "Browser_ReloadCb(function()\n    __CURSOR__\nend)");
+			Add("Browser_ReloadCb", "v1", "Browser", "Browser_ReloadCb(function() ... end)", "Reload the page", "Browser_ReloadCb(function()\n    __CURSOR__\nend)");
 			lua.RegisterFunction("Browser_ExecuteScriptCb", this, GetType().GetMethod("Browser_ExecuteScriptCb", new Type[2]
 			{
 				typeof(string),
 				typeof(LuaFunction)
 			}));
-			Add("Browser_ExecuteScriptCb", "v1", "Browser", "Browser_ExecuteScriptCb(jsCode, function(result) ... end)", "Выполнить JS и вернуть результат", "Browser_ExecuteScriptCb(jsCode, function(result)\n    __CURSOR__\nend)");
+			Add("Browser_ExecuteScriptCb", "v1", "Browser", "Browser_ExecuteScriptCb(jsCode, function(result) ... end)", "Execute JavaScript and return the result", "Browser_ExecuteScriptCb(jsCode, function(result)\n    __CURSOR__\nend)");
 			lua.RegisterFunction("Browser_ElementExistsCb", this, GetType().GetMethod("Browser_ElementExistsCb", new Type[2]
 			{
 				typeof(string),
 				typeof(LuaFunction)
 			}));
-			Add("Browser_ElementExistsCb", "v1", "Browser", "Browser_ElementExistsCb(selector, function(exists) ... end)", "Проверить наличие элемента", "Browser_ElementExistsCb(selector, function(exists)\n    __CURSOR__\nend)");
+			Add("Browser_ElementExistsCb", "v1", "Browser", "Browser_ElementExistsCb(selector, function(exists) ... end)", "Check whether an element exists", "Browser_ElementExistsCb(selector, function(exists)\n    __CURSOR__\nend)");
 			lua.RegisterFunction("Browser_WaitForElementCb", this, GetType().GetMethod("Browser_WaitForElementCb", new Type[3]
 			{
 				typeof(string),
 				typeof(int),
 				typeof(LuaFunction)
 			}));
-			Add("Browser_WaitForElementCb", "v1", "Browser", "Browser_WaitForElementCb(selector, timeoutMs, function(found) ... end)", "Ждать появления элемента", "Browser_WaitForElementCb(selector, timeoutMs, function(found)\n    __CURSOR__\nend)");
+			Add("Browser_WaitForElementCb", "v1", "Browser", "Browser_WaitForElementCb(selector, timeoutMs, function(found) ... end)", "Wait for an element", "Browser_WaitForElementCb(selector, timeoutMs, function(found)\n    __CURSOR__\nend)");
 		}
 		try
 		{
@@ -225,40 +225,40 @@ public class LuaIntegration
 				typeof(object),
 				typeof(LuaFunction)
 			}));
-			Add("BrowserV2_Create", "v2", "BrowserV2", "BrowserV2_Create(options, function(handle) ... end)", "Создать новый браузер и вернуть дескриптор", "BrowserV2_Create({}, function(handle)\n    __CURSOR__\nend)");
+			Add("BrowserV2_Create", "v2", "BrowserV2", "BrowserV2_Create(options, function(handle) ... end)", "Create a browser and return its handle", "BrowserV2_Create({}, function(handle)\n    __CURSOR__\nend)");
 			lua.RegisterFunction("BrowserV2_Close", this, GetType().GetMethod("BrowserV2_Close", new Type[2]
 			{
 				typeof(int),
 				typeof(LuaFunction)
 			}));
-			Add("BrowserV2_Close", "v2", "BrowserV2", "BrowserV2_Close(handle, function(ok) ... end)", "Закрыть созданный браузер", "BrowserV2_Close(handle, function(ok)\n    __CURSOR__\nend)");
+			Add("BrowserV2_Close", "v2", "BrowserV2", "BrowserV2_Close(handle, function(ok) ... end)", "Close a created browser", "BrowserV2_Close(handle, function(ok)\n    __CURSOR__\nend)");
 			lua.RegisterFunction("BrowserV2_Navigate", this, GetType().GetMethod("BrowserV2_Navigate", new Type[3]
 			{
 				typeof(int),
 				typeof(string),
 				typeof(LuaFunction)
 			}));
-			Add("BrowserV2_Navigate", "v2", "BrowserV2", "BrowserV2_Navigate(handle, url, function(ok) ... end)", "Открыть URL в указанном браузере", "BrowserV2_Navigate(handle, url, function(ok)\n    __CURSOR__\nend)");
+			Add("BrowserV2_Navigate", "v2", "BrowserV2", "BrowserV2_Navigate(handle, url, function(ok) ... end)", "Open a URL in the specified browser", "BrowserV2_Navigate(handle, url, function(ok)\n    __CURSOR__\nend)");
 			lua.RegisterFunction("BrowserV2_Reload", this, GetType().GetMethod("BrowserV2_Reload", new Type[2]
 			{
 				typeof(int),
 				typeof(LuaFunction)
 			}));
-			Add("BrowserV2_Reload", "v2", "BrowserV2", "BrowserV2_Reload(handle, function(ok) ... end)", "Перезагрузить страницу", "BrowserV2_Reload(handle, function(ok)\n    __CURSOR__\nend)");
+			Add("BrowserV2_Reload", "v2", "BrowserV2", "BrowserV2_Reload(handle, function(ok) ... end)", "Reload the page", "BrowserV2_Reload(handle, function(ok)\n    __CURSOR__\nend)");
 			lua.RegisterFunction("BrowserV2_ExecuteScript", this, GetType().GetMethod("BrowserV2_ExecuteScript", new Type[3]
 			{
 				typeof(int),
 				typeof(string),
 				typeof(LuaFunction)
 			}));
-			Add("BrowserV2_ExecuteScript", "v2", "BrowserV2", "BrowserV2_ExecuteScript(handle, jsCode, function(result) ... end)", "Выполнить JS в браузере v2", "BrowserV2_ExecuteScript(handle, jsCode, function(result)\n    __CURSOR__\nend)");
+			Add("BrowserV2_ExecuteScript", "v2", "BrowserV2", "BrowserV2_ExecuteScript(handle, jsCode, function(result) ... end)", "Execute JavaScript in a v2 browser", "BrowserV2_ExecuteScript(handle, jsCode, function(result)\n    __CURSOR__\nend)");
 			lua.RegisterFunction("BrowserV2_ElementExists", this, GetType().GetMethod("BrowserV2_ElementExists", new Type[3]
 			{
 				typeof(int),
 				typeof(string),
 				typeof(LuaFunction)
 			}));
-			Add("BrowserV2_ElementExists", "v2", "BrowserV2", "BrowserV2_ElementExists(handle, selector, function(exists) ... end)", "Проверить наличие элемента", "BrowserV2_ElementExists(handle, selector, function(exists)\n    __CURSOR__\nend)");
+			Add("BrowserV2_ElementExists", "v2", "BrowserV2", "BrowserV2_ElementExists(handle, selector, function(exists) ... end)", "Check whether an element exists", "BrowserV2_ElementExists(handle, selector, function(exists)\n    __CURSOR__\nend)");
 			lua.RegisterFunction("BrowserV2_WaitForElement", this, GetType().GetMethod("BrowserV2_WaitForElement", new Type[4]
 			{
 				typeof(int),
@@ -266,40 +266,40 @@ public class LuaIntegration
 				typeof(int),
 				typeof(LuaFunction)
 			}));
-			Add("BrowserV2_WaitForElement", "v2", "BrowserV2", "BrowserV2_WaitForElement(handle, selector, timeoutMs, function(found) ... end)", "Ждать появления элемента", "BrowserV2_WaitForElement(handle, selector, timeoutMs, function(found)\n    __CURSOR__\nend)");
+			Add("BrowserV2_WaitForElement", "v2", "BrowserV2", "BrowserV2_WaitForElement(handle, selector, timeoutMs, function(found) ... end)", "Wait for an element", "BrowserV2_WaitForElement(handle, selector, timeoutMs, function(found)\n    __CURSOR__\nend)");
 			lua.RegisterFunction("BrowserV2_ChangeAccount", this, GetType().GetMethod("BrowserV2_ChangeAccount", new Type[3]
 			{
 				typeof(int),
 				typeof(string),
 				typeof(LuaFunction)
 			}));
-			Add("BrowserV2_ChangeAccount", "v2", "BrowserV2", "BrowserV2_ChangeAccount(handle, accountId, function(ok) ... end)", "Сменить аккаунт для указанного браузера v2", "BrowserV2_ChangeAccount(handle, accountId, function(ok)\n    __CURSOR__\nend)");
+			Add("BrowserV2_ChangeAccount", "v2", "BrowserV2", "BrowserV2_ChangeAccount(handle, accountId, function(ok) ... end)", "Switch the account in the specified v2 browser", "BrowserV2_ChangeAccount(handle, accountId, function(ok)\n    __CURSOR__\nend)");
 			lua.RegisterFunction("BrowserV2_GetCurrentAccount", this, GetType().GetMethod("BrowserV2_GetCurrentAccount", new Type[2]
 			{
 				typeof(int),
 				typeof(LuaFunction)
 			}));
-			Add("BrowserV2_GetCurrentAccount", "v2", "BrowserV2", "BrowserV2_GetCurrentAccount(handle, function(acc) ... end)", "Вернуть Lua‑таблицу текущего аккаунта", "BrowserV2_GetCurrentAccount(handle, function(acc)\n    __CURSOR__\nend)");
+			Add("BrowserV2_GetCurrentAccount", "v2", "BrowserV2", "BrowserV2_GetCurrentAccount(handle, function(acc) ... end)", "Return the current account as a Lua table", "BrowserV2_GetCurrentAccount(handle, function(acc)\n    __CURSOR__\nend)");
 		}
 		catch
 		{
 		}
 		lua.RegisterFunction("Print", this, GetType().GetMethod("Print"));
-		Add("Print", "v1", "Helpers", "Print(value)", "Вывести текст в лог редактора", "Print('text')");
+		Add("Print", "v1", "Helpers", "Print(value)", "Write text to the editor log", "Print('text')");
 		lua.RegisterFunction("DelayCb", this, GetType().GetMethod("DelayCb", new Type[2]
 		{
 			typeof(int),
 			typeof(LuaFunction)
 		}));
-		Add("DelayCb", "v1", "Helpers", "DelayCb(ms, function() ... end)", "Задержка с колбэком", "DelayCb(1000, function()\n    __CURSOR__\nend)");
+		Add("DelayCb", "v1", "Helpers", "DelayCb(ms, function() ... end)", "Delay with a callback", "DelayCb(1000, function()\n    __CURSOR__\nend)");
 		lua.RegisterFunction("ReportProgress", this, GetType().GetMethod("ReportProgress", new Type[1] { typeof(int) }));
-		Add("ReportProgress", "v1", "Helpers", "ReportProgress(percent)", "Обновить прогресс выполнения", "ReportProgress(50)");
+		Add("ReportProgress", "v1", "Helpers", "ReportProgress(percent)", "Update execution progress", "ReportProgress(50)");
 		lua.RegisterFunction("ReportProgressMsg", this, GetType().GetMethod("ReportProgressMsg", new Type[2]
 		{
 			typeof(int),
 			typeof(string)
 		}));
-		Add("ReportProgressMsg", "v1", "Helpers", "ReportProgressMsg(percent, message)", "Обновить прогресс с сообщением", "ReportProgressMsg(25, 'Старт')");
+		Add("ReportProgressMsg", "v1", "Helpers", "ReportProgressMsg(percent, message)", "Update progress with a message", "ReportProgressMsg(25, 'Start')");
 		lua.RegisterFunction("Net_PostJsonCb", this, GetType().GetMethod("NetPostJsonSb", new Type[4]
 		{
 			typeof(string),
@@ -307,13 +307,13 @@ public class LuaIntegration
 			typeof(string),
 			typeof(LuaFunction)
 		}));
-		Add("Net_PostJsonCb", "v1", "Net", "Net_PostJsonCb(url, jsonBody, contentType, function(res) ... end)", "HTTP POST JSON, вернуть ответ в res", "Net_PostJsonCb(url, json, 'application/json', function(res)\n    __CURSOR__\nend)");
+		Add("Net_PostJsonCb", "v1", "Net", "Net_PostJsonCb(url, jsonBody, contentType, function(res) ... end)", "Send an HTTP POST with JSON and return the response in res", "Net_PostJsonCb(url, json, 'application/json', function(res)\n    __CURSOR__\nend)");
 		lua.RegisterFunction("Telegram_SendMessageCb", this, GetType().GetMethod("Telegram_SendMessageCb", new Type[2]
 		{
 			typeof(string),
 			typeof(LuaFunction)
 		}));
-		Add("Telegram_SendMessageCb", "v1", "Telegram", "Telegram_SendMessageCb(text, function(ok) ... end)", "Отправить сообщение в Telegram", "Telegram_SendMessageCb('текст', function(ok)\n    __CURSOR__\nend)");
+		Add("Telegram_SendMessageCb", "v1", "Telegram", "Telegram_SendMessageCb(text, function(ok) ... end)", "Send a Telegram message", "Telegram_SendMessageCb('text', function(ok)\n    __CURSOR__\nend)");
 		try
 		{
 			LuaApiRegistry.ReplaceAll(entries);
@@ -345,7 +345,7 @@ public class LuaIntegration
 		_progressSink = sink;
 	}
 
-	[LuaApiFunction(Name = "Print", Version = "v1", Category = "Helpers", Signature = "Print(value)", Description = "Вывести текст в лог редактора", Snippet = "Print('text')")]
+	[LuaApiFunction(Name = "Print", Version = "v1", Category = "Helpers", Signature = "Print(value)", Description = "Write text to the editor log", Snippet = "Print('text')")]
 	public void Print(string text)
 	{
 		try
@@ -384,7 +384,7 @@ public class LuaIntegration
 		MessageBox.Show("[Lua] " + text);
 	}
 
-	[LuaApiFunction(Name = "DelayCb", Version = "v1", Category = "Helpers", Signature = "DelayCb(ms, function() ... end)", Description = "Задержка с колбэком", Snippet = "DelayCb(1000, function()\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "DelayCb", Version = "v1", Category = "Helpers", Signature = "DelayCb(ms, function() ... end)", Description = "Delay with a callback", Snippet = "DelayCb(1000, function()\n    __CURSOR__\nend)")]
 	public void DelayCb(int ms, LuaFunction callback)
 	{
 		try
@@ -427,7 +427,7 @@ public class LuaIntegration
 		}
 	}
 
-	[LuaApiFunction(Name = "ReportProgress", Version = "v1", Category = "Helpers", Signature = "ReportProgress(percent)", Description = "Обновить прогресс выполнения", Snippet = "ReportProgress(50)")]
+	[LuaApiFunction(Name = "ReportProgress", Version = "v1", Category = "Helpers", Signature = "ReportProgress(percent)", Description = "Update execution progress", Snippet = "ReportProgress(50)")]
 	public void ReportProgress(int percent)
 	{
 		try
@@ -465,7 +465,7 @@ public class LuaIntegration
 		}
 	}
 
-	[LuaApiFunction(Name = "ReportProgressMsg", Version = "v1", Category = "Helpers", Signature = "ReportProgressMsg(percent, message)", Description = "Обновить прогресс с сообщением", Snippet = "ReportProgressMsg(25, 'Старт')")]
+	[LuaApiFunction(Name = "ReportProgressMsg", Version = "v1", Category = "Helpers", Signature = "ReportProgressMsg(percent, message)", Description = "Update progress with a message", Snippet = "ReportProgressMsg(25, 'Start')")]
 	public void ReportProgressMsg(int percent, string message)
 	{
 		try
@@ -703,7 +703,7 @@ public class LuaIntegration
 		}
 	}
 
-	[LuaApiFunction(Name = "Account_GetAccountCb", Version = "v1", Category = "Account", Signature = "Account_GetAccountCb(function(acc) ... end)", Description = "Получить текущий аккаунт в callback(acc)", Snippet = "Account_GetAccountCb(function(acc)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "Account_GetAccountCb", Version = "v1", Category = "Account", Signature = "Account_GetAccountCb(function(acc) ... end)", Description = "Get the current account in callback(acc)", Snippet = "Account_GetAccountCb(function(acc)\n    __CURSOR__\nend)")]
 	public void Account_GetAccountCb(LuaFunction callback)
 	{
 		RunLifetimeTracker.BeginOp(_runId);
@@ -730,7 +730,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "Account_IsAuthorizedCb", Version = "v1", Category = "Account", Signature = "Account_IsAuthorizedCb(function(isAuth) ... end)", Description = "Проверить авторизацию аккаунта", Snippet = "Account_IsAuthorizedCb(function(isAuth)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "Account_IsAuthorizedCb", Version = "v1", Category = "Account", Signature = "Account_IsAuthorizedCb(function(isAuth) ... end)", Description = "Check account authorization", Snippet = "Account_IsAuthorizedCb(function(isAuth)\n    __CURSOR__\nend)")]
 	public void Account_IsAuthorizedCb(LuaFunction callback)
 	{
 		RunLifetimeTracker.BeginOp(_runId);
@@ -757,7 +757,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "Account_GetAccountsCb", Version = "v1", Category = "Account", Signature = "Account_GetAccountsCb(function(accounts) ... end)", Description = "Список аккаунтов (таблица)", Snippet = "Account_GetAccountsCb(function(accounts)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "Account_GetAccountsCb", Version = "v1", Category = "Account", Signature = "Account_GetAccountsCb(function(accounts) ... end)", Description = "Account list (table)", Snippet = "Account_GetAccountsCb(function(accounts)\n    __CURSOR__\nend)")]
 	public void Account_GetAccountsCb(LuaFunction callback)
 	{
 		RunLifetimeTracker.BeginOp(_runId);
@@ -952,7 +952,7 @@ public class LuaIntegration
 		return luaTable;
 	}
 
-	[LuaApiFunction(Name = "Account_ChangeAccountCb", Version = "v1", Category = "Account", Signature = "Account_ChangeAccountCb(accountId, function(ok) ... end)", Description = "Сменить активный аккаунт", Snippet = "Account_ChangeAccountCb(accountId, function(ok)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "Account_ChangeAccountCb", Version = "v1", Category = "Account", Signature = "Account_ChangeAccountCb(accountId, function(ok) ... end)", Description = "Switch the active account", Snippet = "Account_ChangeAccountCb(accountId, function(ok)\n    __CURSOR__\nend)")]
 	public void Account_ChangeAccountCb(string accountId, LuaFunction callback)
 	{
 		RunLifetimeTracker.BeginOp(_runId);
@@ -1022,7 +1022,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "Browser_NavigateCb", Version = "v1", Category = "Browser", Signature = "Browser_NavigateCb(url, function() ... end)", Description = "Открыть URL", Snippet = "Browser_NavigateCb(url, function()\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "Browser_NavigateCb", Version = "v1", Category = "Browser", Signature = "Browser_NavigateCb(url, function() ... end)", Description = "Open a URL", Snippet = "Browser_NavigateCb(url, function()\n    __CURSOR__\nend)")]
 	public void Browser_NavigateCb(string url, LuaFunction callback)
 	{
 		RunLifetimeTracker.BeginOp(_runId);
@@ -1048,7 +1048,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "Browser_ReloadCb", Version = "v1", Category = "Browser", Signature = "Browser_ReloadCb(function() ... end)", Description = "Перезагрузить страницу", Snippet = "Browser_ReloadCb(function()\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "Browser_ReloadCb", Version = "v1", Category = "Browser", Signature = "Browser_ReloadCb(function() ... end)", Description = "Reload the page", Snippet = "Browser_ReloadCb(function()\n    __CURSOR__\nend)")]
 	public void Browser_ReloadCb(LuaFunction callback)
 	{
 		RunLifetimeTracker.BeginOp(_runId);
@@ -1074,7 +1074,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "Browser_ExecuteScriptCb", Version = "v1", Category = "Browser", Signature = "Browser_ExecuteScriptCb(jsCode, function(result) ... end)", Description = "Выполнить JS и вернуть результат", Snippet = "Browser_ExecuteScriptCb(jsCode, function(result)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "Browser_ExecuteScriptCb", Version = "v1", Category = "Browser", Signature = "Browser_ExecuteScriptCb(jsCode, function(result) ... end)", Description = "Execute JavaScript and return the result", Snippet = "Browser_ExecuteScriptCb(jsCode, function(result)\n    __CURSOR__\nend)")]
 	public void Browser_ExecuteScriptCb(string script, LuaFunction callback)
 	{
 		RunLifetimeTracker.BeginOp(_runId);
@@ -1101,7 +1101,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "Browser_ElementExistsCb", Version = "v1", Category = "Browser", Signature = "Browser_ElementExistsCb(selector, function(exists) ... end)", Description = "Проверить наличие элемента", Snippet = "Browser_ElementExistsCb(selector, function(exists)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "Browser_ElementExistsCb", Version = "v1", Category = "Browser", Signature = "Browser_ElementExistsCb(selector, function(exists) ... end)", Description = "Check whether an element exists", Snippet = "Browser_ElementExistsCb(selector, function(exists)\n    __CURSOR__\nend)")]
 	public void Browser_ElementExistsCb(string selector, LuaFunction callback)
 	{
 		RunLifetimeTracker.BeginOp(_runId);
@@ -1127,7 +1127,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "Browser_WaitForElementCb", Version = "v1", Category = "Browser", Signature = "Browser_WaitForElementCb(selector, timeoutMs, function(found) ... end)", Description = "Ждать появления элемента", Snippet = "Browser_WaitForElementCb(selector, timeoutMs, function(found)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "Browser_WaitForElementCb", Version = "v1", Category = "Browser", Signature = "Browser_WaitForElementCb(selector, timeoutMs, function(found) ... end)", Description = "Wait for an element", Snippet = "Browser_WaitForElementCb(selector, timeoutMs, function(found)\n    __CURSOR__\nend)")]
 	public void Browser_WaitForElementCb(string selector, int timeoutMs, LuaFunction callback)
 	{
 		RunLifetimeTracker.BeginOp(_runId);
@@ -1153,7 +1153,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "Telegram_SendMessageCb", Version = "v1", Category = "Telegram", Signature = "Telegram_SendMessageCb(text, function(ok) ... end)", Description = "Отправить сообщение в Telegram", Snippet = "Telegram_SendMessageCb('текст', function(ok)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "Telegram_SendMessageCb", Version = "v1", Category = "Telegram", Signature = "Telegram_SendMessageCb(text, function(ok) ... end)", Description = "Send a Telegram message", Snippet = "Telegram_SendMessageCb('text', function(ok)\n    __CURSOR__\nend)")]
 	public void Telegram_SendMessageCb(string text, LuaFunction callback)
 	{
 		try
@@ -1200,7 +1200,7 @@ public class LuaIntegration
 		}
 	}
 
-	[LuaApiFunction(Name = "Net_PostJsonCb", Version = "v1", Category = "Net", Signature = "Net_PostJsonCb(url, jsonBody, contentType, function(res) ... end)", Description = "HTTP POST JSON, вернуть ответ в res", Snippet = "Net_PostJsonCb(url, json, 'application/json', function(res)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "Net_PostJsonCb", Version = "v1", Category = "Net", Signature = "Net_PostJsonCb(url, jsonBody, contentType, function(res) ... end)", Description = "Send an HTTP POST with JSON and return the response in res", Snippet = "Net_PostJsonCb(url, json, 'application/json', function(res)\n    __CURSOR__\nend)")]
 	public void NetPostJsonSb(string url, string jsonBody, string contentType, LuaFunction callback)
 	{
 		HttpClient client = new HttpClient();
@@ -1356,7 +1356,7 @@ public class LuaIntegration
 		}
 	}
 
-	[LuaApiFunction(Name = "BrowserV2_Create", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_Create(options, function(handle) ... end)", Description = "Создать новый браузер и вернуть дескриптор", Snippet = "BrowserV2_Create({}, function(handle)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "BrowserV2_Create", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_Create(options, function(handle) ... end)", Description = "Create a browser and return its handle", Snippet = "BrowserV2_Create({}, function(handle)\n    __CURSOR__\nend)")]
 	public void BrowserV2_Create(object options, LuaFunction callback)
 	{
 		BrowserManager browserManager = GetBrowserManager();
@@ -1421,7 +1421,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "BrowserV2_Close", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_Close(handle, function(ok) ... end)", Description = "Закрыть созданный браузер", Snippet = "BrowserV2_Close(handle, function(ok)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "BrowserV2_Close", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_Close(handle, function(ok) ... end)", Description = "Close a created browser", Snippet = "BrowserV2_Close(handle, function(ok)\n    __CURSOR__\nend)")]
 	public void BrowserV2_Close(int handle, LuaFunction callback)
 	{
 		BrowserManager browserManager = GetBrowserManager();
@@ -1462,7 +1462,7 @@ public class LuaIntegration
 		CallLuaVoid(callback, flag);
 	}
 
-	[LuaApiFunction(Name = "BrowserV2_Navigate", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_Navigate(handle, url, function(ok) ... end)", Description = "Открыть URL в указанном браузере", Snippet = "BrowserV2_Navigate(handle, url, function(ok)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "BrowserV2_Navigate", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_Navigate(handle, url, function(ok) ... end)", Description = "Open a URL in the specified browser", Snippet = "BrowserV2_Navigate(handle, url, function(ok)\n    __CURSOR__\nend)")]
 	public void BrowserV2_Navigate(int handle, string url, LuaFunction callback)
 	{
 		BrowserManager browserManager = GetBrowserManager();
@@ -1494,7 +1494,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "BrowserV2_Reload", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_Reload(handle, function(ok) ... end)", Description = "Перезагрузить страницу", Snippet = "BrowserV2_Reload(handle, function(ok)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "BrowserV2_Reload", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_Reload(handle, function(ok) ... end)", Description = "Reload the page", Snippet = "BrowserV2_Reload(handle, function(ok)\n    __CURSOR__\nend)")]
 	public void BrowserV2_Reload(int handle, LuaFunction callback)
 	{
 		BrowserManager browserManager = GetBrowserManager();
@@ -1526,7 +1526,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "BrowserV2_ExecuteScript", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_ExecuteScript(handle, jsCode, function(result) ... end)", Description = "Выполнить JS в браузере v2", Snippet = "BrowserV2_ExecuteScript(handle, jsCode, function(result)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "BrowserV2_ExecuteScript", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_ExecuteScript(handle, jsCode, function(result) ... end)", Description = "Execute JavaScript in a v2 browser", Snippet = "BrowserV2_ExecuteScript(handle, jsCode, function(result)\n    __CURSOR__\nend)")]
 	public void BrowserV2_ExecuteScript(int handle, string script, LuaFunction callback)
 	{
 		BrowserManager browserManager = GetBrowserManager();
@@ -1559,7 +1559,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "BrowserV2_ElementExists", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_ElementExists(handle, selector, function(exists) ... end)", Description = "Проверить наличие элемента", Snippet = "BrowserV2_ElementExists(handle, selector, function(exists)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "BrowserV2_ElementExists", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_ElementExists(handle, selector, function(exists) ... end)", Description = "Check whether an element exists", Snippet = "BrowserV2_ElementExists(handle, selector, function(exists)\n    __CURSOR__\nend)")]
 	public void BrowserV2_ElementExists(int handle, string selector, LuaFunction callback)
 	{
 		BrowserManager browserManager = GetBrowserManager();
@@ -1591,7 +1591,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "BrowserV2_WaitForElement", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_WaitForElement(handle, selector, timeoutMs, function(found) ... end)", Description = "Ждать появления элемента", Snippet = "BrowserV2_WaitForElement(handle, selector, timeoutMs, function(found)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "BrowserV2_WaitForElement", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_WaitForElement(handle, selector, timeoutMs, function(found) ... end)", Description = "Wait for an element", Snippet = "BrowserV2_WaitForElement(handle, selector, timeoutMs, function(found)\n    __CURSOR__\nend)")]
 	public void BrowserV2_WaitForElement(int handle, string selector, int timeoutMs, LuaFunction callback)
 	{
 		BrowserManager browserManager = GetBrowserManager();
@@ -1623,7 +1623,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "BrowserV2_ChangeAccount", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_ChangeAccount(handle, accountId, function(ok) ... end)", Description = "Сменить аккаунт для указанного браузера v2", Snippet = "BrowserV2_ChangeAccount(handle, accountId, function(ok)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "BrowserV2_ChangeAccount", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_ChangeAccount(handle, accountId, function(ok) ... end)", Description = "Switch the account in the specified v2 browser", Snippet = "BrowserV2_ChangeAccount(handle, accountId, function(ok)\n    __CURSOR__\nend)")]
 	public void BrowserV2_ChangeAccount(int handle, string accountId, LuaFunction callback)
 	{
 		BrowserManager browserManager = GetBrowserManager();
@@ -1655,7 +1655,7 @@ public class LuaIntegration
 		});
 	}
 
-	[LuaApiFunction(Name = "BrowserV2_GetCurrentAccount", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_GetCurrentAccount(handle, function(acc) ... end)", Description = "Вернуть Lua‑таблицу текущего аккаунта", Snippet = "BrowserV2_GetCurrentAccount(handle, function(acc)\n    __CURSOR__\nend)")]
+	[LuaApiFunction(Name = "BrowserV2_GetCurrentAccount", Version = "v2", Category = "BrowserV2", Signature = "BrowserV2_GetCurrentAccount(handle, function(acc) ... end)", Description = "Return the current account as a Lua table", Snippet = "BrowserV2_GetCurrentAccount(handle, function(acc)\n    __CURSOR__\nend)")]
 	public void BrowserV2_GetCurrentAccount(int handle, LuaFunction callback)
 	{
 		BrowserManager browserManager = GetBrowserManager();

@@ -30,6 +30,10 @@ def main():
         )
 
     app = QApplication(sys.argv)
+    # Coordinate tests temporarily hide the only application window while they
+    # interact with VK Play. Keep the event loop alive until requestClose()
+    # explicitly finishes the normal shutdown sequence.
+    app.setQuitOnLastWindowClosed(False)
     app.setApplicationName("Game Launcher Bot")
     app.setOrganizationName("GameLauncherBot")
     icon_path = resource_path("configs/ico/app.ico")

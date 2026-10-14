@@ -11,7 +11,7 @@ namespace Pw.Hub.ViewModels;
 
 public class DebugVariablesViewModel : INotifyPropertyChanged
 {
-	private string _title = "Переменные";
+	private string _title = "Variables";
 
 	public string Title
 	{
@@ -46,7 +46,7 @@ public class DebugVariablesViewModel : INotifyPropertyChanged
 
 	public void SetData(int line, IDictionary<string, object> locals, IDictionary<string, object> globals)
 	{
-		Title = $"Остановлено на строке {line}";
+		Title = $"Paused at line {line}";
 		Locals.Clear();
 		Globals.Clear();
 		foreach (DebugVarNode item in BuildNodes(locals))
