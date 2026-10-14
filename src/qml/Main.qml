@@ -25,7 +25,10 @@ ApplicationWindow {
 
     onClosing: function(event) {
         event.accepted = false
-        backend.requestClose()
+        if (settingsPopup.visible)
+            settingsPopup.requestApplicationClose()
+        else
+            backend.requestClose()
     }
 
     component GlowButton: Button {
@@ -604,13 +607,20 @@ ApplicationWindow {
     Popup {
         id: settingsPopup
         objectName: "settingsPopup"
-        modal: true; focus: true; closePolicy: Popup.CloseOnEscape
+        modal: true; focus: true; closePolicy: Popup.NoAutoClose
         x: (root.width - width) / 2; y: (root.height - height) / 2
         width: root.width * 0.88; height: root.height * 0.84; padding: 18
+        property bool loading: false
+        property bool dirty: false
+        property bool closeApplicationAfterDecision: false
         function openEditor() {
+            loading = true
             settingsModel.clear()
             let rows = backend.settingsData()
             for (let i = 0; i < rows.length; ++i) settingsModel.append(rows[i])
+            loading = false
+            dirty = false
+            closeApplicationAfterDecision = false
             open()
         }
         function settingRows() {
@@ -625,6 +635,45 @@ ApplicationWindow {
                 backend.verifySetting(kind, "", settingRows())
             }
         }
+        function updateValue(index, value) {
+            if (settingsModel.get(index).value === value)
+                return
+            settingsModel.setProperty(index, "value", value)
+            if (!loading)
+                dirty = true
+        }
+        function requestClose() {
+            requestCloseFor(false)
+        }
+        function requestApplicationClose() {
+            requestCloseFor(true)
+        }
+        function requestCloseFor(closeApplication) {
+            closeApplicationAfterDecision = closeApplication
+            if (accountSearchPopup.visible)
+                accountSearchPopup.close()
+            if (dirty) {
+                unsavedSettingsPopup.open()
+                return
+            }
+            close()
+            if (closeApplication)
+                backend.requestClose()
+        }
+        function finishClose(saveChanges) {
+            if (saveChanges && !backend.saveSettings(settingRows())) {
+                closeApplicationAfterDecision = false
+                unsavedSettingsPopup.close()
+                return
+            }
+            let closeApplication = closeApplicationAfterDecision
+            closeApplicationAfterDecision = false
+            dirty = false
+            unsavedSettingsPopup.close()
+            close()
+            if (closeApplication)
+                backend.requestClose()
+        }
         background: Rectangle { color: "#f00b080a"; radius: 10; border.width: 2; border.color: root.accentSoft }
         ListModel { id: settingsModel; dynamicRoles: true }
         contentItem: ColumnLayout {
@@ -632,7 +681,7 @@ ApplicationWindow {
             RowLayout {
                 Layout.fillWidth: true
                 Text { text: "SETTINGS"; color: root.textPrimary; font.pixelSize: 18; font.bold: true; Layout.fillWidth: true }
-                GlowButton { text: "×"; Layout.preferredWidth: 34; onClicked: settingsPopup.close() }
+                GlowButton { text: "×"; Layout.preferredWidth: 34; onClicked: settingsPopup.requestClose() }
             }
             Rectangle {
                 Layout.fillWidth: true; Layout.fillHeight: true
@@ -668,14 +717,14 @@ ApplicationWindow {
                                 visible: settingRow.kind === "value"
                                 Layout.fillWidth: true
                                 text: settingRow.value
-                                onTextChanged: settingsModel.setProperty(settingRow.index, "value", text)
+                                onTextChanged: settingsPopup.updateValue(settingRow.index, text)
                             }
                             StyledCheckBox {
                                 visible: settingRow.kind === "boolean"
                                 Layout.fillWidth: true
                                 text: settingRow.label
                                 checked: settingRow.value === true
-                                onToggled: settingsModel.setProperty(settingRow.index, "value", checked)
+                                onToggled: settingsPopup.updateValue(settingRow.index, checked)
                             }
                             GlowButton {
                                 visible: settingRow.pickKind !== ""
@@ -685,6 +734,7 @@ ApplicationWindow {
                                 onClicked: backend.pickScreenTarget(settingRow.section, settingRow.pickName)
                             }
                             GlowButton {
+                                objectName: settingRow.testKind === "" ? "" : "testSettingButton_" + settingRow.testKind
                                 visible: settingRow.testKind !== ""
                                 text: "TEST"
                                 Layout.preferredWidth: 66
@@ -704,11 +754,60 @@ ApplicationWindow {
                 }
                 Item { Layout.fillWidth: true }
                 GlowButton {
+                    text: "CANCEL"
+                    enabled: !backend.verificationBusy
+                    onClicked: settingsPopup.requestClose()
+                }
+                GlowButton {
                     text: "SAVE"
                     enabled: !backend.verificationBusy
                     onClicked: {
-                        backend.saveSettings(settingsPopup.settingRows())
+                        if (backend.saveSettings(settingsPopup.settingRows()))
+                            settingsPopup.dirty = false
                     }
+                }
+            }
+        }
+    }
+
+    Shortcut {
+        sequence: "Escape"
+        enabled: settingsPopup.visible && !unsavedSettingsPopup.visible && !accountSearchPopup.visible
+        onActivated: settingsPopup.requestClose()
+    }
+
+    Popup {
+        id: unsavedSettingsPopup
+        objectName: "unsavedSettingsPopup"
+        modal: true; focus: true; closePolicy: Popup.NoAutoClose
+        x: (root.width - width) / 2; y: (root.height - height) / 2
+        width: Math.min(root.width * 0.72, 520); padding: 18
+        background: Rectangle { color: "#f00b080a"; radius: 9; border.width: 2; border.color: root.accentSoft }
+        contentItem: ColumnLayout {
+            spacing: 14
+            Text { text: "UNSAVED SETTINGS"; color: root.textPrimary; font.pixelSize: 17; font.bold: true }
+            Text {
+                text: "Your settings have changed. Save them before closing?"
+                color: "#ffe1e4"; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                GlowButton {
+                    text: "KEEP EDITING"
+                    onClicked: {
+                        settingsPopup.closeApplicationAfterDecision = false
+                        unsavedSettingsPopup.close()
+                    }
+                }
+                StopButton {
+                    id: discardSettingsButton
+                    objectName: "discardSettingsButton"
+                    text: "DISCARD"
+                    onClicked: settingsPopup.finishClose(false)
+                }
+                GlowButton {
+                    text: "SAVE"
+                    onClicked: settingsPopup.finishClose(true)
                 }
             }
         }
@@ -732,7 +831,7 @@ ApplicationWindow {
             spacing: 12
             Text { text: "TEST ACCOUNT SEARCH"; color: root.textPrimary; font.pixelSize: 17; font.bold: true }
             Text {
-                text: "Enter the account to find. VK Play will be activated, the account list will be searched, and the matching account will be clicked."
+                text: "Enter the account to find. VK Play will be activated, the account list will be opened first, and then OCR will search and click the matching account."
                 color: "#ffe1e4"; font.pixelSize: 12; Layout.fillWidth: true; wrapMode: Text.Wrap
             }
             StyledField {

@@ -66,7 +66,7 @@ public class LoginRegisterWindow : Window, IComponentConnector
 			string password = PasswordBox.Password ?? string.Empty;
 			if (await _api.RegisterAsync(username, password) == null)
 			{
-				ErrorText.Text = "Регистрация не удалась";
+				ErrorText.Text = "Registration failed.";
 				ErrorBorder.Visibility = Visibility.Visible;
 				return;
 			}
@@ -91,7 +91,7 @@ public class LoginRegisterWindow : Window, IComponentConnector
 			string password = PasswordBox.Password ?? string.Empty;
 			if (await _api.LoginAsync(username, password) == null)
 			{
-				ErrorText.Text = "Вход не удался";
+				ErrorText.Text = "Sign-in failed.";
 				ErrorBorder.Visibility = Visibility.Visible;
 				return;
 			}

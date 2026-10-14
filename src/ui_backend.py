@@ -528,7 +528,7 @@ class AppBackend(QObject):
             values[(item["section"], item["key"])] = str(value)
         return values
 
-    @Slot("QVariantList")
+    @Slot("QVariantList", result=bool)
     def saveSettings(self, items):
         config = read_config_with_fallback(self.config_path)
         values = self._settings_values(items)
@@ -541,11 +541,12 @@ class AppBackend(QObject):
             self._write_config(config)
         except (OSError, ValueError, configparser.Error) as exc:
             self.alertRequested.emit("Settings", str(exc), "error")
-            return
+            return False
         self._memory_cleanup_enabled = config.getboolean("MEMORY_CLEANUP", "enabled", fallback=False)
         self.memoryCleanupEnabledChanged.emit()
         self.log("Config saved")
         self.alertRequested.emit("Settings", "Settings saved.", "info")
+        return True
 
     def _write_config(self, config):
         temporary_path = None
@@ -695,17 +696,18 @@ class AppBackend(QObject):
             for key in ("region_x", "region_y", "region_w", "region_h")
         )
 
-        launcher.activate_launcher()
         if kind == "play":
+            launcher.prepare_launcher_main_view()
             automation.pyautogui.click(*launcher.play_button)
             x, y = launcher.play_button
             return (
                 "Play Button Test",
-                f"VK Play was activated and the Play button was clicked at ({x}, {y}).",
+                f"VK Play main view was prepared and the Play button was clicked at ({x}, {y}).",
                 "info",
             )
 
         if kind == "current":
+            launcher.prepare_launcher_main_view()
             account_name, recognized = launcher.detect_current_account()
             if account_name:
                 return (
@@ -719,13 +721,12 @@ class AppBackend(QObject):
                 "warning",
             )
 
-        automation.pyautogui.click(*launcher.dropdown)
-        time.sleep(launcher.wait_after_dropdown_delay)
-        automation.pyautogui.moveTo(*launcher.scroll_position, duration=0.2)
-        time.sleep(0.2)
-        for _ in range(max(0, int(launcher.scroll_up_attempts))):
-            launcher.scroll_account_list(launcher.scroll_up_amount)
-            time.sleep(launcher.scroll_up_attempts_delay)
+        if not launcher.open_account_list():
+            return (
+                "Account Search Test",
+                "The account-list test was stopped before OCR search started.",
+                "warning",
+            )
 
         found = launcher.find_account(query)
         if not found:
@@ -741,7 +742,8 @@ class AppBackend(QObject):
         if confirmed:
             return (
                 "Account Search Test",
-                f"Account '{query}' was found, clicked at ({x}, {y}), and confirmed as current.",
+                f"The account list was opened first. Account '{query}' was found, "
+                f"clicked at ({x}, {y}), and confirmed as current.",
                 "info",
             )
         return (

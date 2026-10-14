@@ -316,11 +316,11 @@ try {
         header = document.createElement('div');
         header.style = 'display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#EDE4D6;border-bottom:1px solid #E2D8C9;cursor:move;user-select:none;';
         var hTitle = document.createElement('div');
-        hTitle.innerHTML = 'У<span class="lower">правление</span>';
+        hTitle.innerHTML = 'M<span class="lower">anagement</span>';
         hTitle.style = 'font-weight:700;color:#2c4a8d;font-size:13px;letter-spacing:0.2px;';
         var toggleBtn = document.createElement('button');
         toggleBtn.innerText = '−';
-        toggleBtn.title = 'Свернуть';
+        toggleBtn.title = 'Collapse';
         toggleBtn.style = 'border:none;background:#D2C0BE;color:#333;border-radius:12px;padding:1px 6px;cursor:pointer;font-size:12px;line-height:16px;';
 
         contentWrap = document.createElement('div');
@@ -339,8 +339,8 @@ try {
         compact = document.createElement('div');
         compact.id = 'promo_popup_compact';
         compact.style = 'display:none; margin:4px; padding:4px 10px; background:#EDE4D6; color:#2c4a8d; font-weight:700; font-size:12px; border-radius:14px; cursor:move; user-select:none; box-shadow: inset 0 0 0 1px #E2D8C9; width:max-content;';
-        compact.title = 'Развернуть панель управления';
-        compact.innerText = 'Управление';
+        compact.title = 'Expand the management panel';
+        compact.innerText = 'Management';
 
         contentWrap.appendChild(container);
         header.appendChild(hTitle);
@@ -371,8 +371,8 @@ try {
             compact = document.createElement('div');
             compact.id = 'promo_popup_compact';
             compact.style = 'display:none; margin:4px; padding:4px 10px; background:#EDE4D6; color:#2c4a8d; font-weight:700; font-size:12px; border-radius:14px; cursor:move; user-select:none; box-shadow: inset 0 0 0 1px #E2D8C9; width:max-content;';
-            compact.title = 'Развернуть панель управления';
-            compact.innerText = 'Управление';
+            compact.title = 'Expand the management panel';
+            compact.innerText = 'Management';
             popup.appendChild(compact);
         }
         var tbtn = getToggleBtn();
@@ -644,13 +644,13 @@ try {
         buttonContainer.style = 'display:flex; flex-direction:column; gap:6px; margin-top:2px;';
 
         var panelTitle = document.createElement('div');
-        panelTitle.textContent = 'Быстрый выбор предметов';
+        panelTitle.textContent = 'Quick Item Selection';
         panelTitle.style = 'font-size:11px; text-transform:uppercase; letter-spacing:0.6px; color:#7a6a54; margin:0 0 2px 2px;';
         buttonContainer.append(panelTitle);
 
         // Helpers: selection by label
         var selectAll = document.createElement('button');
-        selectAll.innerText = 'Выбрать все';
+        selectAll.innerText = 'Select All';
         selectAll.id = 'selectAllBtn';
         selectAll.style = pillBtnCss;
         selectAll.onclick = function() {
@@ -663,7 +663,7 @@ try {
         };
 
         var clearAll = document.createElement('button');
-        clearAll.innerText = 'Убрать все';
+        clearAll.innerText = 'Clear All';
         clearAll.id = 'clearAllBtn';
         clearAll.style = pillBtnCss;
         clearAll.onclick = function() {
@@ -796,8 +796,8 @@ try {
                     secItems.id = 'promo_items_section_items';
                     secItems.style = 'display:flex; flex-direction:column; gap:8px;';
                     var secItemsTitle = document.createElement('div');
-                    secItemsTitle.textContent = 'Предметы';
-                    secItemsTitle.title = 'Отображение всех предметов с возможностью выбора';
+                    secItemsTitle.textContent = 'Items';
+                    secItemsTitle.title = 'Show all selectable items';
                     secItemsTitle.style = 'color:#2c4a8d; font-weight:700;';
                     var gridHost = document.createElement('div');
                     gridHost.id = 'promo_items_grid';
@@ -809,8 +809,8 @@ try {
                     secChests.id = 'promo_items_section_chests';
                     secChests.style = 'display:flex; flex-direction:column; gap:8px;';
                     var secChestsTitle = document.createElement('div');
-                    secChestsTitle.textContent = 'Сундуки';
-                    secChestsTitle.title = 'Кликабельные сундуки — переход по ссылке активации';
+                    secChestsTitle.textContent = 'Chests';
+                    secChestsTitle.title = 'Click a chest to open its activation link';
                     secChestsTitle.style = 'color:#2c4a8d; font-weight:700;';
                     var chestsHost = document.createElement('div');
                     chestsHost.id = 'promo_chests_grid';
@@ -1050,7 +1050,7 @@ try {
                                 try{
                                     var html = '<div style="font-weight:700; margin-bottom:4px;">'+(m.name||'')+'</div>' + ((m.desc||'').toString());
                                     if (m.expiryText){
-                                        html += '<div style="margin-top:4px; color:#8b0000;">Сгорит: '+m.expiryText+'</div>';
+                                        html += '<div style="margin-top:4px; color:#8b0000;">Expires: '+m.expiryText+'</div>';
                                     }
                                     tip.innerHTML = html;
                                     tip.style.display='block';
@@ -1071,12 +1071,12 @@ try {
                         if (__promoItemsGroupByType){
                             all.forEach(function(m){
                                 var key = (m.type || '').toString();
-                                if (!key) key = 'Прочее';
+                                if (!key) key = 'Other';
                                 if (!groups[key]){ groups[key] = []; order.push(key); }
                                 groups[key].push(m);
                             });
                         } else {
-                            var keyAll = 'Все предметы';
+                            var keyAll = 'All Items';
                             groups[keyAll] = all.slice(0);
                             order.push(keyAll);
                         }
@@ -1124,7 +1124,7 @@ try {
                             sortBar.style = 'display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:12px; color:#444;';
 
                             var sortLabel = document.createElement('span');
-                            sortLabel.textContent = 'Сортировка:';
+                            sortLabel.textContent = 'Sort:';
                             sortBar.appendChild(sortLabel);
 
                             function mkSortBtn(text, mode){
@@ -1140,9 +1140,9 @@ try {
                                 return b;
                             }
 
-                            sortBar.appendChild(mkSortBtn('как на сайте', 'default'));
-                            sortBar.appendChild(mkSortBtn('по названию', 'name'));
-                            sortBar.appendChild(mkSortBtn('по дате сгорания', 'expiry'));
+                            sortBar.appendChild(mkSortBtn('site order', 'default'));
+                            sortBar.appendChild(mkSortBtn('name', 'name'));
+                            sortBar.appendChild(mkSortBtn('expiration date', 'expiry'));
 
                             var sep = document.createElement('span');
                             sep.textContent = '·';
@@ -1161,7 +1161,7 @@ try {
                                 }catch(_){ }
                             });
                             var groupText = document.createElement('span');
-                            groupText.textContent = 'Группировать по типу';
+                            groupText.textContent = 'Group by type';
                             groupLabel.appendChild(groupChk);
                             groupLabel.appendChild(groupText);
                             sortBar.appendChild(groupLabel);
@@ -1208,8 +1208,8 @@ try {
                                 return b;
                             }
 
-                            groupActions.appendChild(mkGroupBtn('Выбрать все', 'select'));
-                            groupActions.appendChild(mkGroupBtn('Убрать все', 'unselect'));
+                            groupActions.appendChild(mkGroupBtn('Select All', 'select'));
+                            groupActions.appendChild(mkGroupBtn('Clear All', 'unselect'));
                             headerRow.appendChild(groupActions);
 
                             groupsHost.appendChild(headerRow);
@@ -1281,7 +1281,7 @@ try {
                                 try{
                                     var html = '<div style="font-weight:700; margin-bottom:4px;">'+(m.name||'')+'</div>' + ((m.desc||'').toString());
                                     if (m.expiryText){
-                                        html += '<div style="margin-top:4px; color:#8b0000;">Сгорит: '+m.expiryText+'</div>';
+                                        html += '<div style="margin-top:4px; color:#8b0000;">Expires: '+m.expiryText+'</div>';
                                     }
                                     tip.innerHTML = html;
                                     tip.style.display='block';
@@ -1344,9 +1344,9 @@ try {
         (function(){
             try{
                 var row = document.createElement('div'); row.style = rowCss;
-                var label = document.createElement('div'); label.textContent = 'Режим отображения:'; label.style = 'min-width:max-content; color:#2c4a8d; font-weight:700;';
-                var btnList = document.createElement('button'); btnList.id='viewModeListBtn'; btnList.textContent='Список'; btnList.style=pillBtnCss;
-                var btnGrid = document.createElement('button'); btnGrid.id='viewModeGridBtn'; btnGrid.textContent='Плитка'; btnGrid.style=pillBtnCss;
+                var label = document.createElement('div'); label.textContent = 'View:'; label.style = 'min-width:max-content; color:#2c4a8d; font-weight:700;';
+                var btnList = document.createElement('button'); btnList.id='viewModeListBtn'; btnList.textContent='List'; btnList.style=pillBtnCss;
+                var btnGrid = document.createElement('button'); btnGrid.id='viewModeGridBtn'; btnGrid.textContent='Grid'; btnGrid.style=pillBtnCss;
 
                 function setActive(mode){ try{ if (mode==='grid'){ btnGrid.style.backgroundColor='#C5B0AE'; btnList.style.backgroundColor='#D2C0BE'; } else { btnList.style.backgroundColor='#C5B0AE'; btnGrid.style.backgroundColor='#D2C0BE'; } }catch(_){ } }
                 async function save(mode){ try{ if (window.appConfig && window.appConfig.set) { await window.appConfig.set('promo_items_view_mode', mode); } else { try{ localStorage.setItem('promo_items_view_mode', mode); }catch(__){} } }catch(_){ } }
@@ -1379,18 +1379,18 @@ try {
         }
 
         // Row 0: Global actions (in one row with label, like other sections)
-        var rGlobal = mkRow('Быстрые действия');
+        var rGlobal = mkRow('Quick Actions');
         rGlobal.row.append(selectAll);
         rGlobal.row.append(clearAll);
 
-        var rAmu = mkRow('Расходка');
-        try{ rAmu.label.title = 'Будут выбраны/убраны:\n— Амулеты (бронза/серебро/золото/платина)\n— Идолы (бронза/серебро/золото/платина)\n— Королевское особое печенье\n— Королевские особые пирожки'; }catch(e){}
-        var selectAmulets = mkBtn('Выбрать', 'selectAmuletsBtn', function(){
+        var rAmu = mkRow('Consumables');
+        try{ rAmu.label.title = 'Select or clear amulets, idols, royal cookies, and royal pies.'; }catch(e){}
+        var selectAmulets = mkBtn('Select', 'selectAmuletsBtn', function(){
             selectByLabelTextRegexes([/платино.* амул.*/, /золот.* амул.*/, /серебр.* амул.*/, /бронзов.* амул.*/]);
             selectByLabelTextRegexes([/платино.* идол.*/, /золот.* идол.*/, /серебр.* идол.*/, /бронзов.* идол.*/]);
             selectByLabelTexts(['Королевское особое печенье', 'Королевские особые пирожки']);
         });
-        var unselectAmulets = mkBtn('Убрать', 'unselectAmuletsBtn', function(){
+        var unselectAmulets = mkBtn('Clear', 'unselectAmuletsBtn', function(){
             unselectByLabelPatterns([/платино.* амул.*/, /золот.* амул.*/, /серебр.* амул.*/, /бронзов.* амул.*/]);
             unselectByLabelPatterns([/платино.* идол.*/, /золот.* идол.*/, /серебр.* идол.*/, /бронзов.* идол.*/]);
             unselectByLabelTexts(['Королевское особое печенье', 'Королевские особые пирожки']);
@@ -1398,16 +1398,16 @@ try {
         rAmu.row.append(selectAmulets);
         rAmu.row.append(unselectAmulets);
 
-        var rPass = mkRow('Проходки');
-        try{ rPass.label.title = 'Будут выбраны/убраны:\n— Самоцвет грез'; }catch(e){}
-        var selectPass = mkBtn('Выбрать', 'selectPassBtn', function(){ selectByLabelTexts(['Самоцвет грез']); });
-        var unselectPass = mkBtn('Убрать', 'unselectPassBtn', function(){ unselectByLabelTexts(['Самоцвет грез']); });
+        var rPass = mkRow('Passes');
+        try{ rPass.label.title = 'Select or clear Dream Gems.'; }catch(e){}
+        var selectPass = mkBtn('Select', 'selectPassBtn', function(){ selectByLabelTexts(['Самоцвет грез']); });
+        var unselectPass = mkBtn('Clear', 'unselectPassBtn', function(){ unselectByLabelTexts(['Самоцвет грез']); });
         rPass.row.append(selectPass);
         rPass.row.append(unselectPass);
 
-        var rSub = mkRow('Подарки за подписку');
-        try{ rSub.label.title = 'Будут выбраны/убраны:\n— Талон на золотой амулет\n— Талон на золотого идола\n— Дар из прошлого x2\n— Королевское особое печенье x200\n— Королевские особые пирожки x200'; }catch(e){}
-        var selectSubGifts = mkBtn('Выбрать', 'selectSubGiftsBtn', function(){
+        var rSub = mkRow('Subscription Gifts');
+        try{ rSub.label.title = 'Select or clear subscription reward items.'; }catch(e){}
+        var selectSubGifts = mkBtn('Select', 'selectSubGiftsBtn', function(){
             selectByLabelTexts([
                 'Талон на золотой амулет',
                 'Талон на золотого идола',
@@ -1416,7 +1416,7 @@ try {
                 'Королевские особые пирожки x200'
             ]);
         });
-        var removeSubGifts = mkBtn('Убрать', 'removeSubGiftsBtn', function(){
+        var removeSubGifts = mkBtn('Clear', 'removeSubGiftsBtn', function(){
             unselectByLabelTexts([
                 'Талон на золотой амулет',
                 'Талон на золотого идола',
@@ -1428,12 +1428,12 @@ try {
         rSub.row.append(selectSubGifts);
         rSub.row.append(removeSubGifts);
 
-        var rDzPills = mkRow('Пилюли ДЗ');
-        try{ rDzPills.label.title = 'Будут выбраны/убраны:\n— Небесная пилюля'; }catch(e){}
-        var selectDzPills = mkBtn('Выбрать', 'selectDzPillsBtn', function(){
+        var rDzPills = mkRow('Daily Quest Pills');
+        try{ rDzPills.label.title = 'Select or clear Celestial Pills.'; }catch(e){}
+        var selectDzPills = mkBtn('Select', 'selectDzPillsBtn', function(){
             selectByLabelTexts(['Небесная пилюля']);
         });
-        var unselectDzPills = mkBtn('Убрать', 'unselectDzPillsBtn', function(){
+        var unselectDzPills = mkBtn('Clear', 'unselectDzPillsBtn', function(){
             unselectByLabelTexts(['Небесная пилюля']);
         });
         rDzPills.row.append(selectDzPills);
@@ -1443,13 +1443,13 @@ try {
         var inputCustomSearch = document.createElement('input');
         inputCustomSearch.type = 'text';
         inputCustomSearch.id = 'customSearchInput';
-        inputCustomSearch.placeholder = 'Введите название предмета...';
+        inputCustomSearch.placeholder = 'Enter an item name...';
         inputCustomSearch.style = 'padding:4px 8px; border-radius:10px; border:1px solid #C6B9A4; font-size:12px; line-height:18px; outline:none; flex:1; background:#FBF7EF; color:#333;';
-        var selectCustom = mkBtn('Выбрать', 'selectCustomBtn', function(){
+        var selectCustom = mkBtn('Select', 'selectCustomBtn', function(){
             var query = (inputCustomSearch.value||'').trim();
             if (query.length>0) selectByLabelText(query);
         });
-        var unselectCustom = mkBtn('Убрать', 'unselectCustomBtn', function(){
+        var unselectCustom = mkBtn('Clear', 'unselectCustomBtn', function(){
             var query = (inputCustomSearch.value||'').trim();
             if (query.length>0) unselectByLabelText(query);
         });

@@ -11,6 +11,7 @@ PROCESS_SET_QUOTA = 0x0100
 TOKEN_ADJUST_PRIVILEGES = 0x0020
 TOKEN_QUERY = 0x0008
 SE_PRIVILEGE_ENABLED = 0x00000002
+ERROR_NOT_ALL_ASSIGNED = 1300
 SystemMemoryListInformation = 80
 MemoryPurgeStandbyList = 4
 
@@ -32,6 +33,7 @@ class MemoryCleanupResult:
     before: MemorySnapshot | None = None
     after: MemorySnapshot | None = None
     errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     @property
     def success(self):
@@ -53,6 +55,8 @@ class MemoryCleanupResult:
             )
         if self.errors:
             parts.append("errors=" + "; ".join(self.errors))
+        if self.warnings:
+            parts.append("warnings=" + "; ".join(self.warnings))
         return ", ".join(parts)
 
 
@@ -185,7 +189,7 @@ def _enable_privilege(dlls, privilege_name):
         TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
         ctypes.byref(token),
     ):
-        return False, _format_last_error(f"OpenProcessToken({privilege_name})")
+        return False, _format_last_error(f"OpenProcessToken({privilege_name})"), False
 
     try:
         luid = LUID()
@@ -194,9 +198,10 @@ def _enable_privilege(dlls, privilege_name):
             privilege_name,
             ctypes.byref(luid),
         ):
-            return False, _format_last_error(f"LookupPrivilegeValueW({privilege_name})")
+            return False, _format_last_error(f"LookupPrivilegeValueW({privilege_name})"), False
 
         privileges = TOKEN_PRIVILEGES(1, luid, SE_PRIVILEGE_ENABLED)
+        ctypes.set_last_error(0)
         if not dlls["advapi32"].AdjustTokenPrivileges(
             token,
             False,
@@ -205,13 +210,23 @@ def _enable_privilege(dlls, privilege_name):
             None,
             None,
         ):
-            return False, _format_last_error(f"AdjustTokenPrivileges({privilege_name})")
+            return False, _format_last_error(f"AdjustTokenPrivileges({privilege_name})"), False
 
         last_error = ctypes.get_last_error()
+        if last_error == ERROR_NOT_ALL_ASSIGNED:
+            return (
+                False,
+                f"{privilege_name} is unavailable with the current Windows permissions",
+                True,
+            )
         if last_error:
-            return False, f"AdjustTokenPrivileges({privilege_name}): {ctypes.WinError(last_error)}"
+            return (
+                False,
+                f"AdjustTokenPrivileges({privilege_name}): {ctypes.WinError(last_error)}",
+                False,
+            )
 
-        return True, None
+        return True, None, False
     finally:
         dlls["kernel32"].CloseHandle(token)
 
@@ -257,24 +272,28 @@ def _trim_process_working_sets(dlls, include_current=False):
 
 
 def _trim_file_cache(dlls):
-    enabled, error = _enable_privilege(dlls, "SeIncreaseQuotaPrivilege")
+    enabled, error, permission_limited = _enable_privilege(
+        dlls, "SeIncreaseQuotaPrivilege"
+    )
     if not enabled:
-        return False, error
+        return False, error, permission_limited
 
     if dlls["kernel32"].SetSystemFileCacheSize(
         ctypes.c_size_t(-1),
         ctypes.c_size_t(-1),
         0,
     ):
-        return True, None
+        return True, None, False
 
-    return False, _format_last_error("SetSystemFileCacheSize")
+    return False, _format_last_error("SetSystemFileCacheSize"), False
 
 
 def _purge_standby_list(dlls):
-    enabled, error = _enable_privilege(dlls, "SeProfileSingleProcessPrivilege")
+    enabled, error, permission_limited = _enable_privilege(
+        dlls, "SeProfileSingleProcessPrivilege"
+    )
     if not enabled:
-        return False, error
+        return False, error, permission_limited
 
     command = ctypes.c_int(MemoryPurgeStandbyList)
     status = dlls["ntdll"].NtSetSystemInformation(
@@ -283,9 +302,13 @@ def _purge_standby_list(dlls):
         ctypes.sizeof(command),
     )
     if status == 0:
-        return True, None
+        return True, None, False
 
-    return False, f"NtSetSystemInformation(MemoryPurgeStandbyList): status=0x{status & 0xFFFFFFFF:08x}"
+    return (
+        False,
+        f"NtSetSystemInformation(MemoryPurgeStandbyList): status=0x{status & 0xFFFFFFFF:08x}",
+        False,
+    )
 
 
 def cleanup_memory(
@@ -315,14 +338,14 @@ def cleanup_memory(
         result.errors.extend(errors)
 
     if trim_file_cache:
-        result.file_cache_trimmed, error = _trim_file_cache(dlls)
+        result.file_cache_trimmed, error, permission_limited = _trim_file_cache(dlls)
         if error:
-            result.errors.append(error)
+            (result.warnings if permission_limited else result.errors).append(error)
 
     if purge_standby_list:
-        result.standby_list_purged, error = _purge_standby_list(dlls)
+        result.standby_list_purged, error, permission_limited = _purge_standby_list(dlls)
         if error:
-            result.errors.append(error)
+            (result.warnings if permission_limited else result.errors).append(error)
 
     result.after = get_memory_snapshot()
     return result

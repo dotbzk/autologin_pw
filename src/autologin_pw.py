@@ -281,6 +281,32 @@ class GameLauncher:
             self.debug("Launcher is not active; restoring foreground")
             self.activate_launcher()
 
+    def prepare_launcher_main_view(self):
+        """Activate VK Play and close overlays that can cover the main controls."""
+        self.activate_launcher()
+        self.debug("Preparing VK Play main view")
+        pyautogui.press("esc")
+        time.sleep(0.2)
+        self.ensure_launcher_active()
+
+    def open_account_list(self):
+        """Open and rewind the account list before an OCR search."""
+        self.prepare_launcher_main_view()
+        self.debug("Opening the VK Play account list")
+        pyautogui.click(*self.dropdown)
+        time.sleep(self.wait_after_dropdown_delay)
+        self.ensure_launcher_active()
+
+        pyautogui.moveTo(*self.scroll_position, duration=0.2)
+        time.sleep(0.2)
+        for _ in range(self.scroll_up_attempts):
+            if self.should_stop():
+                return False
+            self.scroll_account_list(self.scroll_up_amount)
+            time.sleep(self.scroll_up_attempts_delay)
+
+        return not self.should_stop()
+
     def find_account(self, account_name):
         for attempt in range(self.search_attempts):
 
@@ -586,19 +612,17 @@ class GameLauncher:
 
                 if not self.is_account_selected(name):
                     try:
-                        self.ensure_launcher_active()
-                        pyautogui.click(*self.dropdown)
-                        time.sleep(self.wait_after_dropdown_delay)
-
-                        pyautogui.moveTo(*self.scroll_position, duration=0.2)
-                        time.sleep(0.2)
-                        for _ in range(self.scroll_up_attempts):
-                            self.scroll_account_list(self.scroll_up_amount)
-                            time.sleep(self.scroll_up_attempts_delay)
+                        account_list_opened = self.open_account_list()
                     except Exception as exc:
                         self.log(f"⚠️ Account list activation failed: {exc}")
                         next_pending.append((acc, "account list error"))
                         continue
+
+                    if not account_list_opened:
+                        next_pending.extend(
+                            (item, "stopped") for item in pending[index:]
+                        )
+                        break
 
                     found = self.find_account(name)
 
@@ -631,7 +655,7 @@ class GameLauncher:
                     break
 
                 try:
-                    self.ensure_launcher_active()
+                    self.prepare_launcher_main_view()
                 except Exception as exc:
                     self.log(f"⚠️ Launcher lost foreground before Play: {exc}")
                     next_pending.append((acc, "launcher foreground error"))

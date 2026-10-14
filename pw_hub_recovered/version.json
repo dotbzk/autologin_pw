@@ -1,6 +1,7 @@
 {
-  "version": "1.0.6",
+  "version": "1.0.7",
   "changes": [
-    "Fixed browser extension pairing and session import when Chrome or Edge omits the extension origin header."
+    "Converted the complete PW Account Hub interface, dialogs, messages, logs, editor descriptions, and bundled script panels to English.",
+    "Added runtime English localization for recovered WPF resources while preserving Russian PW Online matching strings required by automation."
   ]
 }

@@ -675,7 +675,7 @@
           })();
         }
 
-        markBusy(btn, true, 'Идёт перевод…');
+        markBusy(btn, true, 'Transferring…');
         promoLog('start', { action: action });
 
         function handleSuccess(meta){
@@ -717,7 +717,7 @@
           } else {
             try{ promoLog('err_http', meta); }catch(__){}
             markBusy(btn, false);
-            try{ alert('Не удалось выполнить перевод. Повторите попытку.'); }catch(__){}
+            try{ alert('The transfer failed. Please try again.'); }catch(__){}
           }
         }).catch(function(err){
           try{ promoLog('fallback_success', { message: (err && (err.message||err)) || 'unknown' }); }catch(__){}

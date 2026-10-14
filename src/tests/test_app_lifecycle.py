@@ -177,7 +177,7 @@ class=tank
         self.assertEqual(auto["kind"], "boolean")
         auto["value"] = False
         with patch.object(self.backend, "screen_bounds", return_value=(0, 0, 100, 100)):
-            self.backend.saveSettings(rows)
+            self.assertTrue(self.backend.saveSettings(rows))
         config = configparser.ConfigParser()
         config.read(self.root / "configs/config.ini")
         self.assertFalse(config.getboolean("UPDATES", "auto_check"))
@@ -222,7 +222,7 @@ class=tank
         self.assertEqual(values[("COORDINATES", "play_button_x")], "71")
         self.assertEqual(values[("COORDINATES", "play_button_y")], "72")
 
-    def test_play_coordinate_verification_activates_and_clicks(self):
+    def test_play_coordinate_verification_prepares_main_view_and_clicks(self):
         values = self.backend._settings_values(self.backend.settingsData())
         values[("COORDINATES", "play_button_x")] = "61"
         values[("COORDINATES", "play_button_y")] = "62"
@@ -235,7 +235,7 @@ class=tank
             title, message, level = self.backend._perform_setting_verification(
                 "play", "", values
             )
-        launcher.activate_launcher.assert_called_once_with()
+        launcher.prepare_launcher_main_view.assert_called_once_with()
         automation.pyautogui.click.assert_called_once_with(61, 62)
         self.assertEqual(title, "Play Button Test")
         self.assertIn("(61, 62)", message)
@@ -250,7 +250,7 @@ class=tank
             title, message, level = self.backend._perform_setting_verification(
                 "current", "", values
             )
-        launcher.activate_launcher.assert_called_once_with()
+        launcher.prepare_launcher_main_view.assert_called_once_with()
         self.assertEqual(title, "Current Account Test")
         self.assertIn("Current account: mage_one", message)
         self.assertEqual(level, "info")
@@ -263,6 +263,7 @@ class=tank
         launcher.scroll_up_amount = 10
         launcher.scroll_up_attempts_delay = 0
         launcher.account_switch_delay = 0
+        launcher.open_account_list.return_value = True
         launcher.find_account.return_value = (75, 76)
         launcher.wait_for_account_selected.return_value = True
         automation = SimpleNamespace(GameLauncher=Mock(return_value=launcher), pyautogui=Mock())
@@ -273,12 +274,27 @@ class=tank
             )
         self.assertEqual(
             automation.pyautogui.click.call_args_list,
-            [unittest.mock.call(20, 20), unittest.mock.call(75, 76)],
+            [unittest.mock.call(75, 76)],
         )
+        launcher.open_account_list.assert_called_once_with()
         launcher.find_account.assert_called_once_with("mage_one")
         launcher.wait_for_account_selected.assert_called_once_with("mage_one")
         self.assertIn("confirmed as current", message)
         self.assertEqual((title, level), ("Account Search Test", "info"))
+
+    def test_account_search_verification_stops_before_ocr_when_list_does_not_open(self):
+        values = self.backend._settings_values(self.backend.settingsData())
+        launcher = Mock()
+        launcher.open_account_list.return_value = False
+        automation = SimpleNamespace(GameLauncher=Mock(return_value=launcher), pyautogui=Mock())
+        with patch.object(self.backend, "_load_automation_module", return_value=automation):
+            title, message, level = self.backend._perform_setting_verification(
+                "search", "mage_one", values
+            )
+        launcher.open_account_list.assert_called_once_with()
+        launcher.find_account.assert_not_called()
+        self.assertIn("stopped before OCR", message)
+        self.assertEqual((title, level), ("Account Search Test", "warning"))
 
     def test_screen_picker_hides_and_restores_the_launcher(self):
         visibility = []
@@ -429,6 +445,12 @@ class QmlSmokeTests(unittest.TestCase):
         self.assertTrue(image.hasAlphaChannel())
         self.assertEqual(image.pixelColor(0, 0).alpha(), 0)
 
+    def test_application_stays_alive_while_coordinate_test_hides_window(self):
+        app_source = (Path(__file__).resolve().parents[1] / "app.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("app.setQuitOnLastWindowClosed(False)", app_source)
+
     def test_main_qml_loads_and_exposes_all_primary_controls(self):
         backend = AppBackend()
         backend._set_ready(True)
@@ -475,6 +497,7 @@ class QmlSmokeTests(unittest.TestCase):
         )
         manage = root.findChild(object, "managePopup")
         settings = root.findChild(object, "settingsPopup")
+        unsaved_settings = root.findChild(object, "unsavedSettingsPopup")
         alert = root.findChild(object, "alertPopup")
         QMetaObject.invokeMethod(root.findChild(object, "manageGroupsButton"), "click")
         QT_APP.processEvents()
@@ -485,7 +508,17 @@ class QmlSmokeTests(unittest.TestCase):
         QMetaObject.invokeMethod(root.findChild(object, "advancedSettingsButton"), "click")
         QT_APP.processEvents()
         self.assertTrue(settings.property("visible"))
-        QMetaObject.invokeMethod(settings, "close")
+        settings.setProperty("dirty", True)
+        QMetaObject.invokeMethod(settings, "requestClose")
+        QT_APP.processEvents()
+        self.assertTrue(settings.property("visible"))
+        self.assertTrue(unsaved_settings.property("visible"))
+        QMetaObject.invokeMethod(
+            root.findChild(object, "discardSettingsButton"), "click"
+        )
+        QT_APP.processEvents()
+        self.assertFalse(settings.property("visible"))
+        self.assertFalse(unsaved_settings.property("visible"))
         QMetaObject.invokeMethod(root.findChild(object, "settingsButton"), "click")
         QT_APP.processEvents()
         QMetaObject.invokeMethod(root.findChild(object, "updateButton"), "click")

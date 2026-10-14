@@ -61,7 +61,7 @@ public class UpdateService
 		{
 			if (showNoUpdatesMessage)
 			{
-				ShowMessage("Не удалось проверить обновления.\n" + ex.Message, "Обновление", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+				ShowMessage("Could not check for updates.\n" + ex.Message, "Update", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 			}
 			return;
 		}
@@ -69,7 +69,7 @@ public class UpdateService
 		{
 			if (showNoUpdatesMessage)
 			{
-				ShowMessage("Некорректный манифест обновления", "Обновление", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+				ShowMessage("The update manifest is invalid.", "Update", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 			}
 			return;
 		}
@@ -78,7 +78,7 @@ public class UpdateService
 		{
 			if (showNoUpdatesMessage)
 			{
-				ShowMessage("Не удалось распознать версию в манифесте", "Обновление", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+				ShowMessage("Could not parse the version in the update manifest.", "Update", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 			}
 			return;
 		}
@@ -86,19 +86,19 @@ public class UpdateService
 		{
 			if (showNoUpdatesMessage)
 			{
-				ShowMessage($"У вас установлена последняя версия ({currentVersion}).", "Обновление", MessageBoxButton.OK, MessageBoxImage.Asterisk);
+				ShowMessage($"You already have the latest version ({currentVersion}).", "Update", MessageBoxButton.OK, MessageBoxImage.Asterisk);
 			}
 			return;
 		}
-		string value = (string.IsNullOrWhiteSpace(manifest.ReleaseNotes) ? string.Empty : ("\n\nИзменения:\n" + manifest.ReleaseNotes));
-		MessageBoxResult messageBoxResult = ShowMessage($"Доступна новая версия {result}. Текущая версия: {currentVersion}.{value}\n\nСкачать и установить сейчас?", "Доступно обновление", manifest.Mandatory ? MessageBoxButton.OKCancel : MessageBoxButton.YesNo, MessageBoxImage.Asterisk);
+		string value = (string.IsNullOrWhiteSpace(manifest.ReleaseNotes) ? string.Empty : ("\n\nChanges:\n" + manifest.ReleaseNotes));
+		MessageBoxResult messageBoxResult = ShowMessage($"Version {result} is available. Current version: {currentVersion}.{value}\n\nDownload and install it now?", "Update Available", manifest.Mandatory ? MessageBoxButton.OKCancel : MessageBoxButton.YesNo, MessageBoxImage.Asterisk);
 		if (!(manifest.Mandatory ? (messageBoxResult == MessageBoxResult.OK) : (messageBoxResult == MessageBoxResult.Yes)))
 		{
 			return;
 		}
 		if (string.IsNullOrWhiteSpace(manifest.Url))
 		{
-			ShowMessage("В манифесте не указан URL для загрузки", "Обновление", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+			ShowMessage("The manifest does not contain a download URL.", "Update", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 			return;
 		}
 		Window owner = null;
@@ -112,8 +112,8 @@ public class UpdateService
 				progress.Owner = owner;
 				owner.IsEnabled = false;
 			}
-			progress.SetTitle("Загрузка обновления...");
-			progress.SetStatus("Подключение...");
+			progress.SetTitle("Downloading update...");
+			progress.SetStatus("Connecting...");
 			progress.Show();
 		});
 		try
@@ -161,14 +161,14 @@ public class UpdateService
 						{
 							double value2 = (double)totalRead / 1024.0 / 1024.0;
 							double value3 = (double)contentLength.Value / 1024.0 / 1024.0;
-							progress?.SetStatus($"Загрузка... {Math.Round(num2)}% ({value2:0.#} / {value3:0.#} МБ)");
+							progress?.SetStatus($"Downloading... {Math.Round(num2)}% ({value2:0.#} / {value3:0.#} MB)");
 							sw.Restart();
 						}
 					}
 					else if (sw.ElapsedMilliseconds > 300)
 					{
 						double value4 = (double)totalRead / 1024.0 / 1024.0;
-						progress?.SetStatus($"Загрузка... {value4:0.#} МБ");
+						progress?.SetStatus($"Downloading... {value4:0.#} MB");
 						sw.Restart();
 					}
 				}
@@ -178,8 +178,8 @@ public class UpdateService
 			string appDir = (string.IsNullOrWhiteSpace(text2) ? AppContext.BaseDirectory : Path.GetDirectoryName(text2));
 			if (text == ".zip")
 			{
-				progress?.SetTitle("Установка обновления...");
-				progress?.SetStatus("Распаковка файлов...");
+				progress?.SetTitle("Installing update...");
+				progress?.SetStatus("Extracting files...");
 				progress?.SetIndeterminate(indeterminate: true);
 				string text3 = Path.Combine(tempDir, "extracted");
 				if (Directory.Exists(text3))
@@ -187,7 +187,7 @@ public class UpdateService
 					Directory.Delete(text3, recursive: true);
 				}
 				ZipFile.ExtractToDirectory(target, text3);
-				progress?.SetStatus("Подготовка к замене файлов...");
+				progress?.SetStatus("Preparing to replace files...");
 				CloseProgress();
 				RunUpdaterScriptAndShutdown(text3, appDir, text2, replaceExeOnly: false);
 				return;
@@ -195,8 +195,8 @@ public class UpdateService
 			string text4 = fileName.ToLowerInvariant();
 			if (text == ".msi" || (text == ".exe" && (text4.Contains("setup") || text4.Contains("install") || text4.Contains("installer") || text4.Contains("setup-"))))
 			{
-				progress?.SetTitle("Установка обновления...");
-				progress?.SetStatus("Запуск установщика...");
+				progress?.SetTitle("Installing update...");
+				progress?.SetStatus("Starting installer...");
 				CloseProgress();
 				Process.Start(new ProcessStartInfo
 				{
@@ -210,15 +210,15 @@ public class UpdateService
 				});
 				return;
 			}
-			progress?.SetTitle("Установка обновления...");
-			progress?.SetStatus("Подготовка установки...");
+			progress?.SetTitle("Installing update...");
+			progress?.SetStatus("Preparing installation...");
 			CloseProgress();
 			RunUpdaterScriptAndShutdown(target, appDir, text2, replaceExeOnly: true);
 		}
 		catch (Exception ex2)
 		{
 			CloseProgress();
-			ShowMessage("Не удалось скачать или установить обновление.\n" + ex2.Message, "Обновление", MessageBoxButton.OK, MessageBoxImage.Hand);
+			ShowMessage("Could not download or install the update.\n" + ex2.Message, "Update", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 		void CloseProgress()
 		{
@@ -254,32 +254,32 @@ public class UpdateService
 			stringBuilder.AppendLine("$LogDir = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath 'PwHubUpdate'");
 			stringBuilder.AppendLine("$LogPath = Join-Path -Path $LogDir -ChildPath 'update.log'");
 			stringBuilder.AppendLine("New-Item -ItemType Directory -Force -Path $LogDir | Out-Null");
-			stringBuilder.AppendLine("try { $ts = Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff'; Add-Content -LiteralPath $LogPath -Value \"[$ts] Bootstrap: скрипт запущен\" -Encoding UTF8 } catch {} ");
+			stringBuilder.AppendLine("try { $ts = Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff'; Add-Content -LiteralPath $LogPath -Value \"[$ts] Bootstrap: script started\" -Encoding UTF8 } catch {} ");
 			stringBuilder.AppendLine("function Write-Log([string]$msg){ try { $ts = Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff'; $line = \"[$ts] $msg\"; Write-Host $line; Add-Content -LiteralPath $LogPath -Value $line -Encoding UTF8 } catch {} }");
 			stringBuilder.AppendLine("try { Start-Transcript -Path $LogPath -Append -Force | Out-Null } catch {} ");
-			stringBuilder.AppendLine("Write-Log '== Старт обновления =='");
-			stringBuilder.AppendLine("Write-Log \"Параметры: NewPayloadPath=[$NewPayloadPath], AppDir=[$AppDir], AppExePath=[$AppExePath], ProcId=[$ProcId], ReplaceExeOnly=[$ReplaceExeOnly]\"");
+			stringBuilder.AppendLine("Write-Log '== Update started =='");
+			stringBuilder.AppendLine("Write-Log \"Parameters: NewPayloadPath=[$NewPayloadPath], AppDir=[$AppDir], AppExePath=[$AppExePath], ProcId=[$ProcId], ReplaceExeOnly=[$ReplaceExeOnly]\"");
 			stringBuilder.AppendLine("function Ensure-Elevation {\n  try {\n    $testFile = Join-Path -Path $AppDir -ChildPath ('write_test_' + [guid]::NewGuid().ToString() + '.tmp')\n    Set-Content -LiteralPath $testFile -Value 'test' -Encoding UTF8\n    Remove-Item -LiteralPath $testFile -Force -ErrorAction SilentlyContinue\n    return $true\n  } catch {\n    return $false\n  }\n}");
-			stringBuilder.AppendLine("if (-not (Ensure-Elevation)) {\n  Write-Log 'Требуются права администратора. Запрашиваем повышение привилегий...'\n  $args = @('-NoProfile','-ExecutionPolicy','Bypass','-File', $PSCommandPath, '-NewPayloadPath', $NewPayloadPath, '-AppDir', $AppDir, '-AppExePath', $AppExePath, '-ProcId', $ProcId.ToString())\n  if ($ReplaceExeOnly) { $args += '-ReplaceExeOnly' }\n  Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $args\n  exit 0\n}");
-			stringBuilder.AppendLine("Write-Log 'Ожидание завершения работы приложения...'");
-			stringBuilder.AppendLine("try { $p = Get-Process -Id $ProcId -ErrorAction SilentlyContinue; while ($p) { Start-Sleep -Milliseconds 200; $p = Get-Process -Id $ProcId -ErrorAction SilentlyContinue } } catch { Write-Log ('Ошибка ожидания процесса: ' + $_) }");
+			stringBuilder.AppendLine("if (-not (Ensure-Elevation)) {\n  Write-Log 'Administrator permissions are required. Requesting elevation...'\n  $args = @('-NoProfile','-ExecutionPolicy','Bypass','-File', $PSCommandPath, '-NewPayloadPath', $NewPayloadPath, '-AppDir', $AppDir, '-AppExePath', $AppExePath, '-ProcId', $ProcId.ToString())\n  if ($ReplaceExeOnly) { $args += '-ReplaceExeOnly' }\n  Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList $args\n  exit 0\n}");
+			stringBuilder.AppendLine("Write-Log 'Waiting for the application to exit...'");
+			stringBuilder.AppendLine("try { $p = Get-Process -Id $ProcId -ErrorAction SilentlyContinue; while ($p) { Start-Sleep -Milliseconds 200; $p = Get-Process -Id $ProcId -ErrorAction SilentlyContinue } } catch { Write-Log ('Process wait error: ' + $_) }");
 			stringBuilder.AppendLine("Start-Sleep -Milliseconds 200");
 			stringBuilder.AppendLine("try {");
 			stringBuilder.AppendLine("  if ($ReplaceExeOnly) {");
-			stringBuilder.AppendLine("    Write-Log 'Замена исполняемого файла...' ");
-			stringBuilder.AppendLine("    $attempts = 0; while ($true) { try { Copy-Item -LiteralPath $NewPayloadPath -Destination $AppExePath -Force; Write-Log 'EXE заменен.'; break } catch { $attempts++; Write-Log ('Попытка копирования неудачна: ' + $_.Exception.Message); if ($attempts -ge 10) { throw }; Start-Sleep -Milliseconds 200 } } ");
+			stringBuilder.AppendLine("    Write-Log 'Replacing executable...' ");
+			stringBuilder.AppendLine("    $attempts = 0; while ($true) { try { Copy-Item -LiteralPath $NewPayloadPath -Destination $AppExePath -Force; Write-Log 'EXE replaced.'; break } catch { $attempts++; Write-Log ('Copy attempt failed: ' + $_.Exception.Message); if ($attempts -ge 10) { throw }; Start-Sleep -Milliseconds 200 } } ");
 			stringBuilder.AppendLine("  } else {");
-			stringBuilder.AppendLine("    Write-Log 'Копирование новых файлов...' ");
+			stringBuilder.AppendLine("    Write-Log 'Copying new files...' ");
 			stringBuilder.AppendLine("    $items = Get-ChildItem -LiteralPath $NewPayloadPath -Force ");
-			stringBuilder.AppendLine("    foreach ($it in $items) { try { Write-Log (\"Копируем: \" + $it.FullName); Copy-Item -LiteralPath $it.FullName -Destination $AppDir -Recurse -Force } catch { Write-Log ('Ошибка копирования ' + $it.FullName + ': ' + $_.Exception.Message); throw } }");
+			stringBuilder.AppendLine("    foreach ($it in $items) { try { Write-Log (\"Copying: \" + $it.FullName); Copy-Item -LiteralPath $it.FullName -Destination $AppDir -Recurse -Force } catch { Write-Log ('Copy error for ' + $it.FullName + ': ' + $_.Exception.Message); throw } }");
 			stringBuilder.AppendLine("  }");
-			stringBuilder.AppendLine("  try { Unblock-File -LiteralPath $AppExePath } catch { Write-Log ('Unblock-File ошибка: ' + $_.Exception.Message) } ");
-			stringBuilder.AppendLine("  Write-Log 'Запуск приложения...'");
+			stringBuilder.AppendLine("  try { Unblock-File -LiteralPath $AppExePath } catch { Write-Log ('Unblock-File error: ' + $_.Exception.Message) } ");
+			stringBuilder.AppendLine("  Write-Log 'Starting application...'");
 			stringBuilder.AppendLine("  Start-Process -FilePath $AppExePath -WorkingDirectory $AppDir | Out-Null");
-			stringBuilder.AppendLine("  Write-Log 'Готово. Выход.'");
+			stringBuilder.AppendLine("  Write-Log 'Done. Exiting.'");
 			stringBuilder.AppendLine("  try { Stop-Transcript | Out-Null } catch {} ");
 			stringBuilder.AppendLine("  exit 0");
-			stringBuilder.AppendLine("} catch { Write-Log ('ФАТАЛЬНАЯ ОШИБКА: ' + $_.Exception.ToString()); try { Stop-Transcript | Out-Null } catch {}; Write-Host 'Нажмите Enter, чтобы закрыть окно...'; Read-Host | Out-Null; exit 1 }");
+			stringBuilder.AppendLine("} catch { Write-Log ('FATAL ERROR: ' + $_.Exception.ToString()); try { Stop-Transcript | Out-Null } catch {}; Write-Host 'Press Enter to close this window...'; Read-Host | Out-Null; exit 1 }");
 			File.WriteAllText(text2, stringBuilder.ToString(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
 			try
 			{
@@ -331,7 +331,7 @@ public class UpdateService
 			}
 			if (!flag)
 			{
-				ShowMessage("Не удалось запустить окно обновления PowerShell.\\n" + ex?.Message, "Обновление", MessageBoxButton.OK, MessageBoxImage.Hand);
+			ShowMessage("Could not open the PowerShell update window.\\n" + ex?.Message, "Update", MessageBoxButton.OK, MessageBoxImage.Hand);
 				return;
 			}
 			Application.Current.Dispatcher.Invoke(delegate
@@ -341,7 +341,7 @@ public class UpdateService
 		}
 		catch (Exception ex4)
 		{
-			ShowMessage("Не удалось подготовить установку обновления.\n" + ex4.Message, "Обновление", MessageBoxButton.OK, MessageBoxImage.Hand);
+			ShowMessage("Could not prepare update installation.\n" + ex4.Message, "Update", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 

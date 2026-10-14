@@ -539,7 +539,7 @@ public class MainWindow : Window, IComponentConnector
 					}
 					if (StatusBarText != null)
 					{
-						StatusBarText.Text = (isChanging ? "Смена аккаунта..." : string.Empty);
+						StatusBarText.Text = (isChanging ? "Switching account..." : string.Empty);
 					}
 				}
 				catch
@@ -835,7 +835,7 @@ public class MainWindow : Window, IComponentConnector
 			MethodInfo method = typeof(LuaIntegration).GetMethod("GetAccountAsyncCallback", new Type[1] { typeof(LuaFunction) });
 			if (method == null)
 			{
-				MessageBox.Show("Не удалось найти метод интеграции Lua.");
+				MessageBox.Show("Could not find the Lua integration method.");
 				return;
 			}
 			lua.RegisterFunction("GetAccountAsyncCallback", target, method);
@@ -844,7 +844,7 @@ public class MainWindow : Window, IComponentConnector
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show("Ошибка Lua: " + ex.Message);
+			MessageBox.Show("Lua error: " + ex.Message);
 		}
 	}
 

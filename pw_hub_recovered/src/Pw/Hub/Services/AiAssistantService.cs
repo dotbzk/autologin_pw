@@ -86,7 +86,7 @@ public class AiAssistantService : IAiAssistantService, IDisposable
 		{
 			return new AiAssistantResponse
 			{
-				AssistantText = "Пустой запрос"
+				AssistantText = "Empty request"
 			};
 		}
 		try
@@ -101,18 +101,18 @@ public class AiAssistantService : IAiAssistantService, IDisposable
 		}
 		EnsureSystemPriming();
 		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.AppendLine("=== ТЕКУЩИЙ КОД ===");
+		stringBuilder.AppendLine("=== CURRENT CODE ===");
 		stringBuilder.AppendLine("```lua");
 		stringBuilder.AppendLine(currentCode ?? string.Empty);
 		stringBuilder.AppendLine("```");
 		stringBuilder.AppendLine();
 		if (!string.IsNullOrWhiteSpace(manualChangesDiff))
 		{
-			stringBuilder.AppendLine("=== РУЧНЫЕ ПРАВКИ (с момента последнего обращения к AI) ===");
+			stringBuilder.AppendLine("=== MANUAL EDITS (since the previous AI request) ===");
 			stringBuilder.AppendLine(manualChangesDiff);
 			stringBuilder.AppendLine();
 		}
-		stringBuilder.AppendLine("=== ЗАПРОС ===");
+		stringBuilder.AppendLine("=== REQUEST ===");
 		stringBuilder.AppendLine(prompt);
 		_messages.Add(new AiMessage
 		{
@@ -212,11 +212,11 @@ public class AiAssistantService : IAiAssistantService, IDisposable
 		}
 		catch (Exception ex)
 		{
-			text4 = "Ошибка запроса к AI: " + ex.Message;
+			text4 = "AI request error: " + ex.Message;
 		}
 		if (string.IsNullOrEmpty(text4))
 		{
-			text4 = "(пустой ответ)";
+			text4 = "(empty response)";
 		}
 		string text5 = ExtractLuaCodeBlock(text4);
 		string text6 = ExtractSummaryFromAssistant(text4);
@@ -229,7 +229,7 @@ public class AiAssistantService : IAiAssistantService, IDisposable
 			}
 			catch
 			{
-				diffLines = new List<string> { "Не удалось построить diff" };
+				diffLines = new List<string> { "Could not build the diff" };
 			}
 		}
 		string summary = (string.IsNullOrWhiteSpace(text6) ? BuildSummary(diffLines) : text6);
@@ -260,60 +260,60 @@ public class AiAssistantService : IAiAssistantService, IDisposable
 			{
 			}
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine("Ты - эксперт по Lua скриптам для автоматизации игровых процессов.\nПиши корректный, рабочий код на Lua 5.1 под среду PW Hub.");
+			stringBuilder.AppendLine("You are an expert in Lua scripts for game-process automation.\nWrite correct, working Lua 5.1 code for the PW Hub environment.");
 			stringBuilder.AppendLine();
-			stringBuilder.AppendLine("ФОРМАТ ОТВЕТА:");
-			stringBuilder.AppendLine("1) Краткое резюме изменений (1–2 предложения)");
-			stringBuilder.AppendLine("2) Пустая строка");
-			stringBuilder.AppendLine("3) Весь итоговый код в блоке ```lua ... ```");
+			stringBuilder.AppendLine("RESPONSE FORMAT:");
+			stringBuilder.AppendLine("1) A brief summary of changes (1–2 sentences)");
+			stringBuilder.AppendLine("2) A blank line");
+			stringBuilder.AppendLine("3) The complete final code in a ```lua ... ``` block");
 			stringBuilder.AppendLine();
-			stringBuilder.AppendLine("Никаких дополнительных разделов после кода.");
+			stringBuilder.AppendLine("Do not add any sections after the code.");
 			stringBuilder.AppendLine();
 			if (!string.IsNullOrWhiteSpace(text))
 			{
-				stringBuilder.AppendLine("ДОСТУПНОЕ LUA API (v1/v2) — актуально, сформировано из кода:");
+				stringBuilder.AppendLine("AVAILABLE LUA API (v1/v2) — generated from the current code:");
 				stringBuilder.AppendLine(text.Trim());
 			}
 			else
 			{
-				stringBuilder.AppendLine("ДОСТУПНОЕ API (все функции асинхронные с callback):");
+				stringBuilder.AppendLine("AVAILABLE API (all functions are asynchronous and use callbacks):");
 				stringBuilder.AppendLine();
-				stringBuilder.AppendLine("=== РАБОТА С АККАУНТАМИ ===");
-				stringBuilder.AppendLine("Account_GetAccountCb(cb) — текущий аккаунт");
-				stringBuilder.AppendLine("Account_GetAccountsCb(cb) — все аккаунты (таблица)");
-				stringBuilder.AppendLine("Account_IsAuthorizedCb(cb) — проверка авторизации");
-				stringBuilder.AppendLine("Account_ChangeAccountCb(accountId, cb) — сменить аккаунт");
+				stringBuilder.AppendLine("=== ACCOUNT OPERATIONS ===");
+				stringBuilder.AppendLine("Account_GetAccountCb(cb) — get the current account");
+				stringBuilder.AppendLine("Account_GetAccountsCb(cb) — get all accounts (table)");
+				stringBuilder.AppendLine("Account_IsAuthorizedCb(cb) — check authorization");
+				stringBuilder.AppendLine("Account_ChangeAccountCb(accountId, cb) — switch account");
 				stringBuilder.AppendLine();
-				stringBuilder.AppendLine("=== РАБОТА С БРАУЗЕРОМ ===");
-				stringBuilder.AppendLine("Browser_NavigateCb(url, cb) — перейти по URL");
-				stringBuilder.AppendLine("Browser_ReloadCb(cb) — перезагрузить");
-				stringBuilder.AppendLine("Browser_ExecuteScriptCb(jsCode, cb) — выполнить JS");
-				stringBuilder.AppendLine("Browser_ElementExistsCb(selector, cb) — проверить наличие элемента");
-				stringBuilder.AppendLine("Browser_WaitForElementCb(selector, timeoutMs, cb) — ожидать элемент");
+				stringBuilder.AppendLine("=== BROWSER OPERATIONS ===");
+				stringBuilder.AppendLine("Browser_NavigateCb(url, cb) — navigate to a URL");
+				stringBuilder.AppendLine("Browser_ReloadCb(cb) — reload the page");
+				stringBuilder.AppendLine("Browser_ExecuteScriptCb(jsCode, cb) — execute JavaScript");
+				stringBuilder.AppendLine("Browser_ElementExistsCb(selector, cb) — check whether an element exists");
+				stringBuilder.AppendLine("Browser_WaitForElementCb(selector, timeoutMs, cb) — wait for an element");
 				stringBuilder.AppendLine();
-				stringBuilder.AppendLine("=== ВСПОМОГАТЕЛЬНЫЕ ===");
+				stringBuilder.AppendLine("=== HELPERS ===");
 				stringBuilder.AppendLine("Print(text), DelayCb(ms, cb), ReportProgress(p), ReportProgressMsg(p, msg), Complete(result)");
 				stringBuilder.AppendLine("Net_PostJsonCb(url, jsonBody, contentType, cb), Telegram_SendMessageCb(text, cb)");
 			}
 			stringBuilder.AppendLine();
-			stringBuilder.AppendLine("=== АРГУМЕНТЫ ЗАПУСКА (глобальная таблица args) ===");
-			stringBuilder.AppendLine("Если у модуля заданы входные параметры, в среде Lua доступна глобальная таблица args с введёнными значениями.");
-			stringBuilder.AppendLine("Пример:");
+			stringBuilder.AppendLine("=== LAUNCH ARGUMENTS (global args table) ===");
+			stringBuilder.AppendLine("When a module defines input parameters, Lua receives their entered values in the global args table.");
+			stringBuilder.AppendLine("Example:");
 			stringBuilder.AppendLine("```lua");
-			stringBuilder.AppendLine("local accounts = (args and args['accounts']) or ''\nPrint('Количество аккаунтов: ' .. tostring(#args['accounts'])");
+			stringBuilder.AppendLine("local accounts = (args and args['accounts']) or ''\nPrint('Account count: ' .. tostring(#args['accounts'])");
 			stringBuilder.AppendLine("```");
 			stringBuilder.AppendLine();
-			stringBuilder.AppendLine("ВАЖНЫЕ ПРАВИЛА:");
-			stringBuilder.AppendLine("1. ВСЕ ФУНКЦИИ ДОЛЖНЫ БЫТЬ ОБЪЯВЛЕНЫЕ СВЕРХУ, А НИЖЕ ПРИСВАИВАЙ ЗНАЧЕНИЯ!!!");
-			stringBuilder.AppendLine("2. Используй асинхронные функции (…Cb) и колбэки");
-			stringBuilder.AppendLine("3. Каждый колбэк - должен быть отдельной фукнцией");
-			stringBuilder.AppendLine("4. Добавляй комментарии на русском");
-			stringBuilder.AppendLine("5. Обрабатывай ошибки и пограничные случаи");
-			stringBuilder.AppendLine("6. Понятные имена переменных, логируй этапы через Print()");
-			stringBuilder.AppendLine("7. Если доступна Complete — вызывай в конце");
-			stringBuilder.AppendLine("8. Перед обращением к элементу — дождись его появления (например, 1000 мс)");
-			stringBuilder.AppendLine("9. Навигация разрешена только на домен pwonline.ru");
-			stringBuilder.AppendLine("10. JS должен возвращать строку; массивы кодируй в строку и парси в Lua");
+			stringBuilder.AppendLine("IMPORTANT RULES:");
+			stringBuilder.AppendLine("1. DECLARE ALL FUNCTIONS FIRST, THEN ASSIGN VALUES BELOW THEM.");
+			stringBuilder.AppendLine("2. Use asynchronous functions (…Cb) and callbacks.");
+			stringBuilder.AppendLine("3. Define each callback as a separate function.");
+			stringBuilder.AppendLine("4. Write comments in English.");
+			stringBuilder.AppendLine("5. Handle errors and edge cases.");
+			stringBuilder.AppendLine("6. Use clear variable names and log stages with Print().");
+			stringBuilder.AppendLine("7. Call Complete at the end when it is available.");
+			stringBuilder.AppendLine("8. Wait for an element before accessing it (for example, 1000 ms).");
+			stringBuilder.AppendLine("9. Navigation is allowed only on the pwonline.ru domain.");
+			stringBuilder.AppendLine("10. JavaScript must return a string; encode arrays as strings and parse them in Lua.");
 			_messages.Insert(0, new AiMessage
 			{
 				role = "system",
@@ -379,7 +379,7 @@ public class AiAssistantService : IAiAssistantService, IDisposable
 	{
 		if (diffLines == null || diffLines.Count == 0)
 		{
-			return "Изменений нет. Код идентичен текущему.";
+			return "No changes. The code is identical to the current version.";
 		}
 		int num = 0;
 		int num2 = 0;
@@ -404,8 +404,8 @@ public class AiAssistantService : IAiAssistantService, IDisposable
 		}
 		if (num != 0 || num2 != 0)
 		{
-			return $"Изменения: +{num} / -{num2} строк в {num3} блок(ах). Нажмите ‘Показать полные изменения’, чтобы ознакомиться с diff.";
+			return $"Changes: +{num} / -{num2} lines in {num3} block(s). Select 'Show Full Changes' to review the diff.";
 		}
-		return "Изменений нет. Код идентичен текущему.";
+		return "No changes. The code is identical to the current version.";
 	}
 }

@@ -204,7 +204,7 @@ public class LuaEditorViewModel : BaseViewModel
 		try
 		{
 			_runner?.Stop();
-			AppendLog("[Остановлено пользователем]");
+			AppendLog("[Stopped by user]");
 		}
 		catch
 		{
@@ -258,8 +258,8 @@ public class LuaEditorViewModel : BaseViewModel
 		}
 		catch (Exception ex)
 		{
-			_dialogs.Alert("Ошибка запуска: " + ex.Message, "Lua");
-			AppendLog("[Ошибка] " + ex);
+			_dialogs.Alert("Launch error: " + ex.Message, "Lua");
+			AppendLog("[Error] " + ex);
 		}
 		finally
 		{
@@ -325,8 +325,8 @@ public class LuaEditorViewModel : BaseViewModel
 		}
 		catch (Exception ex)
 		{
-			_dialogs.Alert("Ошибка отладки: " + ex.Message, "Lua");
-			AppendLog("[Ошибка] " + ex);
+			_dialogs.Alert("Debug error: " + ex.Message, "Lua");
+			AppendLog("[Error] " + ex);
 		}
 		finally
 		{

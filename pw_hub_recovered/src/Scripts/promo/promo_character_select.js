@@ -65,7 +65,7 @@
                       if (!ch) continue;
                       var opt = document.createElement('option');
                       opt.value = ch.id;
-                      opt.textContent = (ch.name || '') + ' - ' + (ch.occupation || '') + ' (' + (ch.level||'') + ' ур.)';
+                      opt.textContent = (ch.name || '') + ' - ' + (ch.occupation || '') + ' (lvl. ' + (ch.level||'') + ')';
                       select.appendChild(opt);
                     }
                   }
@@ -156,7 +156,7 @@
                 var occupation = '';
                 var level = '';
                 try{
-                  var m = text.match(/^(.*?)\s*-\s*(.*?)\s*\((\d+)\s*ур\.?\)/i);
+                  var m = text.match(/^(.*?)\s*-\s*(.*?)\s*\(lvl\.\s*(\d+)\)/i);
                   if (m){ name = m[1]; occupation = m[2]; level = m[3]; }
                 }catch(__){}
                 srv.accounts[accId].chars.push({ id: chId, name: name, occupation: occupation, level: level });
@@ -336,7 +336,7 @@
                         if (!ch) continue;
                         var opt = document.createElement('option');
                         opt.value = ch.id;
-                        opt.textContent = (ch.name || '') + ' - ' + (ch.occupation || '') + ' (' + (ch.level||'') + ' ур.)';
+                        opt.textContent = (ch.name || '') + ' - ' + (ch.occupation || '') + ' (lvl. ' + (ch.level||'') + ')';
                         select.appendChild(opt);
                       }
                     }
@@ -429,7 +429,7 @@
                   var occupation = '';
                   var level = '';
                   try{
-                    var m = text.match(/^(.*?)\s*-\s*(.*?)\s*\((\d+)\s*ур\.?\)/i);
+                    var m = text.match(/^(.*?)\s*-\s*(.*?)\s*\(lvl\.\s*(\d+)\)/i);
                     if (m){ name = m[1]; occupation = m[2]; level = m[3]; }
                   }catch(__){}
                   srv.accounts[accId].chars.push({ id: chId, name: name, occupation: occupation, level: level });

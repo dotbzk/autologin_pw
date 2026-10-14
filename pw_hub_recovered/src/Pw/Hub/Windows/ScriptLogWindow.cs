@@ -27,7 +27,7 @@ public class ScriptLogWindow : Window, IComponentConnector
 		InitializeComponent();
 		Vm = new ScriptLogViewModel
 		{
-			Title = (string.IsNullOrWhiteSpace(moduleTitle) ? "Логи выполнения" : ("Модуль — " + moduleTitle))
+			Title = (string.IsNullOrWhiteSpace(moduleTitle) ? "Execution Logs" : ("Module — " + moduleTitle))
 		};
 		Vm.RequestClose += OnRequestClose;
 		base.DataContext = Vm;

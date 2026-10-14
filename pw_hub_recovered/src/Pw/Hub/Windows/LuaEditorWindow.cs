@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Markup;
 using System.Windows.Media;
@@ -90,21 +91,21 @@ public class LuaEditorWindow : Window, IComponentConnector
 
 	private readonly ApiSymbol[] _apiSymbols = new ApiSymbol[15]
 	{
-		new ApiSymbol("Account_GetAccountCb", "Account_GetAccountCb(accountId, function(acc)\r\n    __CURSOR__\r\nend)", "Получить аккаунт по id и вернуть в callback(acc)"),
-		new ApiSymbol("Account_IsAuthorizedCb", "Account_IsAuthorizedCb(accountId, function(isAuth)\r\n    __CURSOR__\r\nend)", "Проверить авторизацию аккаунта"),
-		new ApiSymbol("Account_GetAccountsJsonCb", "Account_GetAccountsJsonCb(function(json)\r\n    __CURSOR__\r\nend)", "Список аккаунтов (JSON)"),
-		new ApiSymbol("Account_GetAccountsCb", "Account_GetAccountsCb(function(accounts)\r\n    __CURSOR__\r\nend)", "Список аккаунтов (таблица)"),
-		new ApiSymbol("Account_ChangeAccountCb", "Account_ChangeAccountCb(accountId, function(ok)\r\n    __CURSOR__\r\nend)", "Сменить активный аккаунт"),
-		new ApiSymbol("Browser_NavigateCb", "Browser_NavigateCb(url, function()\r\n    __CURSOR__\r\nend)", "Открыть url"),
-		new ApiSymbol("Browser_ReloadCb", "Browser_ReloadCb(function()\r\n    __CURSOR__\r\nend)", "Перезагрузить страницу"),
-		new ApiSymbol("Browser_ExecuteScriptCb", "Browser_ExecuteScriptCb(jsCode, function(result)\r\n    __CURSOR__\r\nend)", "Выполнить JS и вернуть результат"),
-		new ApiSymbol("Browser_ElementExistsCb", "Browser_ElementExistsCb(selector, function(exists)\r\n    __CURSOR__\r\nend)", "Проверить наличие элемента"),
-		new ApiSymbol("Browser_WaitForElementCb", "Browser_WaitForElementCb(selector, timeoutMs, function(found)\r\n    __CURSOR__\r\nend)", "Ждать появления элемента"),
-		new ApiSymbol("Print", "Print(value)", "Вывести текст в консоль"),
-		new ApiSymbol("DelayCb", "DelayCb(ms, function()\r\n    __CURSOR__\r\nend)", "Задержка с колбэком"),
-		new ApiSymbol("ReportProgress", "ReportProgress(percent)", "Обновить прогресс"),
-		new ApiSymbol("ReportProgressMsg", "ReportProgressMsg(percent, message)", "Обновить прогресс с сообщением"),
-		new ApiSymbol("Complete", "Complete()", "Завершить задачу/скрипт")
+		new ApiSymbol("Account_GetAccountCb", "Account_GetAccountCb(accountId, function(acc)\r\n    __CURSOR__\r\nend)", "Get an account by ID and return it to callback(acc)"),
+		new ApiSymbol("Account_IsAuthorizedCb", "Account_IsAuthorizedCb(accountId, function(isAuth)\r\n    __CURSOR__\r\nend)", "Check account authorization"),
+		new ApiSymbol("Account_GetAccountsJsonCb", "Account_GetAccountsJsonCb(function(json)\r\n    __CURSOR__\r\nend)", "Account list (JSON)"),
+		new ApiSymbol("Account_GetAccountsCb", "Account_GetAccountsCb(function(accounts)\r\n    __CURSOR__\r\nend)", "Account list (table)"),
+		new ApiSymbol("Account_ChangeAccountCb", "Account_ChangeAccountCb(accountId, function(ok)\r\n    __CURSOR__\r\nend)", "Switch the active account"),
+		new ApiSymbol("Browser_NavigateCb", "Browser_NavigateCb(url, function()\r\n    __CURSOR__\r\nend)", "Open a URL"),
+		new ApiSymbol("Browser_ReloadCb", "Browser_ReloadCb(function()\r\n    __CURSOR__\r\nend)", "Reload the page"),
+		new ApiSymbol("Browser_ExecuteScriptCb", "Browser_ExecuteScriptCb(jsCode, function(result)\r\n    __CURSOR__\r\nend)", "Execute JavaScript and return the result"),
+		new ApiSymbol("Browser_ElementExistsCb", "Browser_ElementExistsCb(selector, function(exists)\r\n    __CURSOR__\r\nend)", "Check whether an element exists"),
+		new ApiSymbol("Browser_WaitForElementCb", "Browser_WaitForElementCb(selector, timeoutMs, function(found)\r\n    __CURSOR__\r\nend)", "Wait for an element"),
+		new ApiSymbol("Print", "Print(value)", "Write text to the console"),
+		new ApiSymbol("DelayCb", "DelayCb(ms, function()\r\n    __CURSOR__\r\nend)", "Delay with a callback"),
+		new ApiSymbol("ReportProgress", "ReportProgress(percent)", "Update progress"),
+		new ApiSymbol("ReportProgressMsg", "ReportProgressMsg(percent, message)", "Update progress with a message"),
+		new ApiSymbol("Complete", "Complete()", "Complete the task or script")
 	};
 
 	private List<ICompletionData> _cachedCompletionItems;
@@ -184,6 +185,10 @@ public class LuaEditorWindow : Window, IComponentConnector
 
 	private void CommonInit()
 	{
+		BpCountText.SetBinding(TextBlock.TextProperty, new Binding("Breakpoints.Count")
+		{
+			StringFormat = "({0} breakpoints)"
+		});
 		_vm.RequestOpenDebugVariables += delegate(int line, IDictionary<string, object> locals, IDictionary<string, object> globals)
 		{
 			try
@@ -356,13 +361,13 @@ public class LuaEditorWindow : Window, IComponentConnector
 				}
 				else
 				{
-					AppendLog("Не удалось найти lua.xshd ни в ресурсах, ни в папке вывода.");
+					AppendLog("Could not find lua.xshd in resources or the output directory.");
 				}
 			}
 		}
 		catch (Exception ex)
 		{
-			AppendLog("Ошибка загрузки подсветки: " + ex.Message);
+			AppendLog("Syntax highlighting load error: " + ex.Message);
 		}
 		if (Editor != null && string.IsNullOrWhiteSpace(Editor.Text))
 		{

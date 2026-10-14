@@ -246,15 +246,15 @@
         header.style = 'display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#EDE4D6;border-bottom:1px solid #E2D8C9;cursor:move;user-select:none;';
         var title = document.createElement('div');
         title.id = 'promo_history_popup_title';
-        title.textContent = 'История передачи';
+        title.textContent = 'Transfer History';
         title.style = 'font-weight:700;color:#2c4a8d;font-size:13px;letter-spacing:0.2px;';
         var headerBtns = document.createElement('div');
         headerBtns.id = 'promo_history_header_buttons';
         headerBtns.style = 'display:flex;gap:6px;align-items:center;';
         var dockBtn = document.createElement('button');
         dockBtn.id = 'promo_history_dock_btn';
-        dockBtn.textContent = 'Встроить';
-        dockBtn.title = 'Вставить окно в правый блок страницы';
+        dockBtn.textContent = 'Dock';
+        dockBtn.title = 'Dock the window in the right side of the page';
         dockBtn.style = [
           'border:none',
           'background:#D2C0BE',
@@ -271,12 +271,12 @@
         var collapseBtn = document.createElement('button');
         collapseBtn.id = 'promo_history_collapse_btn';
         collapseBtn.textContent = '−';
-        collapseBtn.title = 'Свернуть';
+        collapseBtn.title = 'Collapse';
         collapseBtn.style = 'border:none;background:#D2C0BE;color:#333;border-radius:12px;padding:1px 6px;cursor:pointer;font-size:12px;line-height:16px;';
         var refreshBtn = document.createElement('button');
         refreshBtn.id = 'promo_history_refresh_btn';
-        refreshBtn.textContent = 'Обновить';
-        refreshBtn.title = 'Обновить статусы без перезагрузки страницы';
+        refreshBtn.textContent = 'Refresh';
+        refreshBtn.title = 'Refresh statuses without reloading the page';
         refreshBtn.style = [
           'border:none',
           'background:#D2C0BE',
@@ -306,7 +306,7 @@
         ].join(';');
         var coverInner = document.createElement('div');
         coverInner.style = 'padding:12px 14px;border:1px solid #E2D8C9;border-radius:8px;background:#F6F1E7;color:#666;font-family:Arial,sans-serif;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,0.08)';
-        coverInner.textContent = 'Загрузка истории…';
+        coverInner.textContent = 'Loading history…';
         cover.appendChild(coverInner);
 
         body.appendChild(iframe);
@@ -323,8 +323,8 @@
         var compact = document.createElement('div');
         compact.id = 'promo_history_popup_compact';
         compact.style = 'display:none; margin:4px; padding:4px 10px; background:#EDE4D6; color:#2c4a8d; font-weight:700; font-size:12px; border-radius:14px; cursor:move; user-select:none; box-shadow: inset 0 0 0 1px #E2D8C9; width:max-content;';
-        compact.title = 'Развернуть историю передачи';
-        compact.innerText = 'История передачи';
+        compact.title = 'Expand transfer history';
+        compact.innerText = 'Transfer History';
         popup.appendChild(compact);
         try{ promoLog('compact_created', null); }catch(__){}
 
@@ -485,13 +485,13 @@
             var ifr = document.getElementById('promo_history_popup_iframe');
             if (!ifr) return;
             refreshBtn.disabled = true;
-            refreshBtn.textContent = 'Обновляем…';
+            refreshBtn.textContent = 'Refreshing…';
             try{ ifr.style.opacity = '0'; promoLog('iframe_hide', null); }catch(__){}
             try{ var cv = document.getElementById('promo_history_loading_cover'); if (cv){ cv.style.display='flex'; promoLog('cover_show', { reason:'refresh' }); } }catch(__){}
             try{
               window.__pwHistGuard && clearTimeout(window.__pwHistGuard);
               window.__pwHistGuard = setTimeout(function(){
-                try{ var rb = document.getElementById('promo_history_refresh_btn'); if (rb){ rb.disabled=false; rb.textContent='Обновить'; } }catch(__){}
+                try{ var rb = document.getElementById('promo_history_refresh_btn'); if (rb){ rb.disabled=false; rb.textContent='Refresh'; } }catch(__){}
                 try{ var cv2 = document.getElementById('promo_history_loading_cover'); if (cv2){ cv2.style.display='none'; promoLog('cover_hide', { reason:'timeout' }); } }catch(__){}
                 try{ var ifr2 = document.getElementById('promo_history_popup_iframe'); if (ifr2){ ifr2.style.opacity='1'; promoLog('iframe_show', { reason:'timeout' }); } }catch(__){}
                 try{ promoLog('refresh_timeout', null); }catch(__){}
@@ -594,8 +594,8 @@
               }
               host.appendChild(popup);
               setDockVisual(true);
-              dockBtn.textContent = 'Отделить';
-              dockBtn.title = 'Вынести окно из правого блока';
+              dockBtn.textContent = 'Undock';
+              dockBtn.title = 'Move the window out of the right-side panel';
               try{ setCollapsed(false); }catch(__){}
               saveHistState(mergeState({ docked:true }));
               promoLog('dock_applied', null);
@@ -603,8 +603,8 @@
             } else {
               document.body.appendChild(popup);
               setDockVisual(false);
-              dockBtn.textContent = 'Встроить';
-              dockBtn.title = 'Вставить окно в правый блок страницы';
+              dockBtn.textContent = 'Dock';
+              dockBtn.title = 'Dock the window in the right side of the page';
               var s2 = loadHistState() || {};
               var fr = opts && opts.fromRect;
               if (fr && typeof fr.left === 'number' && typeof fr.top === 'number'){
@@ -1001,7 +1001,7 @@
           wrap.className = 'hist_wrap';
           var empty = doc.createElement('div');
           empty.className = 'hist_empty';
-          empty.textContent = 'История передач пуста или недоступна.';
+          empty.textContent = 'Transfer history is empty or unavailable.';
           wrap.appendChild(empty);
           doc.body.appendChild(wrap);
           try{ var cv0 = document.getElementById('promo_history_loading_cover'); if (cv0){ cv0.style.display='none'; promoLog('cover_hide', { reason:'empty' }); } }catch(__){}
@@ -1068,6 +1068,14 @@
           }catch(__){ return null; }
         }
 
+        function displayStatus(value){
+          var status = value || '';
+          var normalized = status.toLowerCase();
+          if (normalized.indexOf('передан') !== -1) return 'Transferred';
+          if (normalized.indexOf('обработ') !== -1) return 'Processing';
+          return status;
+        }
+
         function humanizeDate(s){
           var exact = s || '';
           var dt = parseDateLocal(s);
@@ -1079,15 +1087,14 @@
             var min = Math.floor(sec/60);
             var hr = Math.floor(min/60);
             var day = Math.floor(hr/24);
-            if (sec < 30) return { text: 'только что', exact: exact };
-            if (min < 5) return { text: 'несколько минут назад', exact: exact };
-            if (min < 60) return { text: String(min) + ' минут назад', exact: exact };
-            if (hr < 2) return { text: 'час назад', exact: exact };
-            if (hr < 5) return { text: String(hr) + ' ' + declRu(hr, 'час', 'часа', 'часов') + ' назад', exact: exact };
-            if (hr < 24) return { text: String(hr) + ' ' + declRu(hr, 'час', 'часа', 'часов') + ' назад', exact: exact };
-            if (day < 2) return { text: 'вчера', exact: exact };
-            if (day < 3) return { text: 'позавчера', exact: exact };
-            return { text: String(day) + ' ' + declRu(day, 'день', 'дня', 'дней') + ' назад', exact: exact };
+            if (sec < 30) return { text: 'just now', exact: exact };
+            if (min < 5) return { text: 'a few minutes ago', exact: exact };
+            if (min < 60) return { text: String(min) + ' minutes ago', exact: exact };
+            if (hr < 2) return { text: 'an hour ago', exact: exact };
+            if (hr < 24) return { text: String(hr) + ' hours ago', exact: exact };
+            if (day < 2) return { text: 'yesterday', exact: exact };
+            if (day < 3) return { text: 'the day before yesterday', exact: exact };
+            return { text: String(day) + ' days ago', exact: exact };
           }catch(__){ return { text: exact, exact: exact }; }
         }
 
@@ -1129,7 +1136,7 @@
             var stc = doc.createElement('div'); stc.className = 'li_status';
             var s1 = (row1.status||'').toLowerCase(); var cls1='status_other';
             if (s1.indexOf('передан') !== -1) cls1 = 'status_ok'; else if (s1.indexOf('обработ') !== -1) cls1 = 'status_proc';
-            var badge = doc.createElement('span'); badge.className = 'status_badge ' + cls1; badge.textContent = row1.status || '';
+            var badge = doc.createElement('span'); badge.className = 'status_badge ' + cls1; badge.textContent = displayStatus(row1.status);
             stc.appendChild(badge);
             var d1 = humanizeDate(row1.date || '');
             var dt1 = doc.createElement('div'); dt1.className = 'li_date'; dt1.textContent = d1.text; dt1.title = d1.exact;
@@ -1165,7 +1172,7 @@
           var tbl = doc.createElement('table'); tbl.className = 'hist';
           var thead = doc.createElement('thead');
           var thr = doc.createElement('tr');
-          ['Название','Кому передан','Статус','Дата'].forEach(function(h){ var th = doc.createElement('th'); th.textContent = h; thr.appendChild(th); });
+          ['Name','Transferred To','Status','Date'].forEach(function(h){ var th = doc.createElement('th'); th.textContent = h; thr.appendChild(th); });
           thead.appendChild(thr);
           var tbody = doc.createElement('tbody');
           var compacted = 0;
@@ -1184,7 +1191,7 @@
             var cls = 'status_other';
             if (s.indexOf('передан') !== -1) cls = 'status_ok';
             else if (s.indexOf('обработ') !== -1) cls = 'status_proc';
-            st.className = 'status_badge ' + cls; st.textContent = row.status || '';
+            st.className = 'status_badge ' + cls; st.textContent = displayStatus(row.status);
             td3.appendChild(st);
             var td4 = doc.createElement('td');
             var rel = humanizeDate(row.date || '');
@@ -1236,7 +1243,7 @@
           try{
             window.__pwHistGuard && clearTimeout(window.__pwHistGuard);
             window.__pwHistGuard = setTimeout(function(){
-              try{ var rb = document.getElementById('promo_history_refresh_btn'); if (rb){ rb.disabled=false; rb.textContent='Обновить'; } }catch(__){}
+              try{ var rb = document.getElementById('promo_history_refresh_btn'); if (rb){ rb.disabled=false; rb.textContent='Refresh'; } }catch(__){}
               try{ var cv2 = document.getElementById('promo_history_loading_cover'); if (cv2){ cv2.style.display='none'; promoLog('cover_hide', { reason:'timeout_open' }); } }catch(__){}
               try{ var ifr2 = document.getElementById('promo_history_popup_iframe'); if (ifr2){ ifr2.style.opacity='1'; promoLog('iframe_show', { reason:'timeout_open' }); } }catch(__){}
               try{ promoLog('open_timeout', null); }catch(__){}
@@ -1249,7 +1256,7 @@
             }catch(__){}
             finally{
               try{ window.__pwHistGuard && clearTimeout(window.__pwHistGuard); }catch(__){}
-              try{ var rb = document.getElementById('promo_history_refresh_btn'); if (rb){ rb.disabled = false; rb.textContent = 'Обновить'; } }catch(__){}
+              try{ var rb = document.getElementById('promo_history_refresh_btn'); if (rb){ rb.disabled = false; rb.textContent = 'Refresh'; } }catch(__){}
             }
           };
           iframe.src = url;
