@@ -20,6 +20,10 @@ public interface IAccountManager
 
 	Task ChangeAccountAsync(string accountId);
 
+	Task ImportBrowserSessionAsync(Cookie[] cookies);
+
+	Task SaveCurrentSessionAsync();
+
 	Task<bool> IsAuthorizedAsync();
 
 	Task<Account> GetAccountAsync();

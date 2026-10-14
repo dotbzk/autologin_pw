@@ -364,7 +364,7 @@ public class BrowserView : UserControl, IWebViewHost, INotifyPropertyChanged, IC
 	{
 		try
 		{
-			if (!e.Uri.StartsWith("https://pwonline.ru") && !e.Uri.StartsWith("http://pwonline.ru") && !e.Uri.StartsWith("https://pw.mail.ru") && !e.Uri.StartsWith("http://pw.mail.ru"))
+			if (!PwNavigationPolicy.IsAllowedUrl(e.Uri))
 			{
 				e.Cancel = true;
 				IsLoading = false;
@@ -593,27 +593,7 @@ public class BrowserView : UserControl, IWebViewHost, INotifyPropertyChanged, IC
 
 	private static string BuildAllowedUrl(string input)
 	{
-		try
-		{
-			string text = input;
-			if (text.StartsWith("/"))
-			{
-				text = "https://pwonline.ru" + text;
-			}
-			else if (!text.StartsWith("http://") && !text.StartsWith("https://"))
-			{
-				text = "https://" + text;
-			}
-			if (text.Equals("https://pwonline.ru", StringComparison.OrdinalIgnoreCase))
-			{
-				text += "/";
-			}
-			return (text.StartsWith("https://pwonline.ru") || text.StartsWith("http://pwonline.ru") || text.StartsWith("https://pw.mail.ru") || text.StartsWith("http://pw.mail.ru")) ? text : null;
-		}
-		catch
-		{
-			return null;
-		}
+		return PwNavigationPolicy.BuildAllowedUrl(input);
 	}
 
 	[DebuggerNonUserCode]

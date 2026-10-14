@@ -15,6 +15,7 @@ using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using NotifyIconEx;
 using Pw.Hub.Infrastructure.Logging;
+using Pw.Hub.Models;
 using Pw.Hub.Services;
 using Pw.Hub.ViewModels;
 using Pw.Hub.Windows;
@@ -28,6 +29,8 @@ public class App : System.Windows.Application
 	public NotifyIconEx.NotifyIcon NotifyIcon;
 
 	private AuthService _authService;
+
+	private BrowserSessionBridge? _browserSessionBridge;
 
 	private static Mutex _singleInstanceMutex;
 
@@ -131,6 +134,7 @@ public class App : System.Windows.Application
 		};
 		_authService = Services.GetRequiredService<AuthService>();
 		NotifyIcon.AddMenu("Check authorization", OnClick);
+		NotifyIcon.AddMenu("Connect browser extension", OnConnectBrowserExtension);
 		NotifyIcon.AddMenu("Check for updates", delegate
 		{
 			System.Windows.MessageBox.Show(
@@ -140,8 +144,18 @@ public class App : System.Windows.Application
 				MessageBoxImage.Information);
 		});
 		NotifyIcon.AddMenu("-");
-		NotifyIcon.AddMenu("Exit", delegate
+		NotifyIcon.AddMenu("Exit", async delegate
 		{
+			try
+			{
+				if (System.Windows.Application.Current.MainWindow is MainWindow window)
+				{
+					await window.AccountPage.AccountManager.SaveCurrentSessionAsync();
+				}
+			}
+			catch
+			{
+			}
 			System.Windows.Application.Current.Shutdown();
 		});
 		NotifyIcon.MouseDoubleClick += NotifyIconOnMouseDoubleClick;
@@ -154,6 +168,23 @@ public class App : System.Windows.Application
 		MainWindow mainWindow = new MainWindow();
 		System.Windows.Application.Current.MainWindow = mainWindow;
 		mainWindow.Show();
+		BrowserSessionBridge? bridge = null;
+		try
+		{
+			bridge = new BrowserSessionBridge(
+				() => mainWindow.AccountPage?.AccountManager?.CurrentAccount,
+				(Cookie[] cookies) => mainWindow.Dispatcher
+					.InvokeAsync(() => mainWindow.AccountPage.AccountManager.ImportBrowserSessionAsync(cookies))
+					.Task.Unwrap());
+			bridge.Start();
+			_browserSessionBridge = bridge;
+		}
+		catch (Exception ex)
+		{
+			bridge?.Dispose();
+			_browserSessionBridge = null;
+			Log.For<App>().Warn("Browser extension bridge could not start", new Dictionary<string, object> { { "error", ex.Message } });
+		}
 		try
 		{
 			LogsWindow.ShowOnDebug(mainWindow);
@@ -173,6 +204,33 @@ public class App : System.Windows.Application
 	private async void OnClick(object sender, EventArgs e)
 	{
 		await _authService.CheckAccounts(ignoreVisibility: true);
+	}
+
+	private void OnConnectBrowserExtension(object sender, EventArgs e)
+	{
+		try
+		{
+			if (_browserSessionBridge == null)
+			{
+				throw new InvalidOperationException("The browser extension bridge is not available.");
+			}
+			BrowserSessionBridge.PairingInfo pairing = _browserSessionBridge.BeginPairing();
+			System.Windows.Clipboard.SetText(pairing.Code);
+			string extensionPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "PwHubBrowserExtension"));
+			System.Windows.MessageBox.Show(
+				$"Selected account: {pairing.AccountName}\n\nPairing code: {pairing.Code}\n\nThe code has been copied to the clipboard and expires in 5 minutes. Open the PW Hub Session Import extension, paste the code, and click Connect.\n\nExtension folder:\n{extensionPath}",
+				"Connect Browser Extension",
+				MessageBoxButton.OK,
+				MessageBoxImage.Information);
+		}
+		catch (Exception ex)
+		{
+			System.Windows.MessageBox.Show(
+				ex.Message,
+				"Connect Browser Extension",
+				MessageBoxButton.OK,
+				MessageBoxImage.Warning);
+		}
 	}
 
 	private void App_OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
@@ -208,6 +266,13 @@ public class App : System.Windows.Application
 
 	protected override void OnExit(ExitEventArgs e)
 	{
+		try
+		{
+			_browserSessionBridge?.Dispose();
+		}
+		catch
+		{
+		}
 		try
 		{
 			NotifyIcon?.Dispose();

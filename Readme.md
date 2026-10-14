@@ -89,6 +89,7 @@ Build output:
 client\GameToolsHub.exe
 client\GameLauncherBot.exe
 client\PwHub\Pw.Hub.exe
+client\PwHubBrowserExtension\manifest.json
 ```
 
 To rebuild without reinstalling dependencies:
@@ -173,6 +174,31 @@ logger starts, inspect `PwHub\logs\startup-error.log`. When that directory is no
 writable, the fallback is
 `%LOCALAPPDATA%\GameToolsHub\PwHub\logs\startup-error.log`. Game Tools Hub also
 shows these paths when it detects an early PW Account Hub exit.
+
+## Import a PW Online browser session
+
+PW Account Hub uses a persistent, isolated WebView2 profile for each account.
+Cookies, DOM storage and other browser state remain available across account
+switches and application restarts. Profiles are stored under
+`%LOCALAPPDATA%\GameToolsHub\PwHub\Profiles` and are not removed by application
+updates.
+
+The release bundle includes the `PwHubBrowserExtension` directory. Load this
+directory as an unpacked extension in Chrome or Edge to import an account session
+opened through Game Center without entering its password:
+
+1. Open `chrome://extensions` or `edge://extensions`.
+2. Enable **Developer mode**, click **Load unpacked**, and select
+   `PwHubBrowserExtension` from the Game Tools installation directory.
+3. Select the target account in PW Account Hub.
+4. Open the PW Hub tray menu and click **Connect browser extension**.
+5. Paste the displayed six-digit code into the extension and click **Connect**.
+6. Use Game Center to open the authorized PW Online page in Chrome or Edge.
+7. Open the extension and click **Import Current PW Session**.
+
+The bridge listens only on `127.0.0.1`, requires a paired random token and accepts
+cookies only for `pwonline.ru` and `pw.mail.ru`. It does not request passwords or
+cookies belonging to unrelated websites.
 
 ## Configure accounts
 

@@ -1,0 +1,135 @@
+:root {
+  color-scheme: dark;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: #07111f;
+  color: #eaf7ff;
+}
+
+body {
+  width: 330px;
+  margin: 0;
+  background: linear-gradient(145deg, #081321, #0d2034);
+}
+
+main {
+  padding: 18px;
+}
+
+h1 {
+  margin: 0 0 12px;
+  color: #77d9ff;
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.status {
+  min-height: 38px;
+  margin: 0 0 14px;
+  color: #b8cad8;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.status.error {
+  color: #ff8c98;
+}
+
+.status.success {
+  color: #7fffc3;
+}
+
+section {
+  padding: 13px;
+  border: 1px solid rgba(77, 201, 255, 0.42);
+  border-radius: 10px;
+  background: rgba(8, 28, 46, 0.86);
+}
+
+label,
+.account-label {
+  display: block;
+  margin-bottom: 6px;
+  color: #90a9ba;
+  font-size: 12px;
+}
+
+.account-name {
+  overflow: hidden;
+  margin-bottom: 12px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+input {
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 9px;
+  padding: 10px;
+  border: 1px solid #397fa2;
+  border-radius: 7px;
+  outline: none;
+  background: #071421;
+  color: #ffffff;
+  font-size: 17px;
+  letter-spacing: 0.16em;
+  text-align: center;
+}
+
+input:focus {
+  border-color: #63d0ff;
+  box-shadow: 0 0 0 2px rgba(66, 190, 242, 0.18);
+}
+
+button {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 8px;
+  padding: 9px 11px;
+  border: 1px solid #459ec5;
+  border-radius: 7px;
+  background: #123b55;
+  color: #effbff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+button:hover:not(:disabled) {
+  border-color: #7bdcff;
+  background: #18506f;
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+  background: #0d3046;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.46;
+}
+
+button.primary {
+  background: #087eaa;
+}
+
+button.secondary {
+  background: #102d42;
+}
+
+button.link {
+  border-color: transparent;
+  background: transparent;
+  color: #8cb3c8;
+  font-weight: 500;
+}
+
+.privacy {
+  margin: 13px 2px 0;
+  color: #718b9c;
+  font-size: 11px;
+  line-height: 1.4;
+}

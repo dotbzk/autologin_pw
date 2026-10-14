@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "releaseVersion": "1.0.5",
+  "releaseVersion": "1.0.6",
   "components": {
     "gameToolsHub": {
       "displayName": "Game Tools Hub",
@@ -14,7 +14,7 @@
     },
     "pwHub": {
       "displayName": "PW Account Hub",
-      "version": "1.0.4",
+      "version": "1.0.5",
       "executable": "PwHub/Pw.Hub.exe"
     }
   }

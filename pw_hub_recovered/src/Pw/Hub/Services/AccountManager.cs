@@ -229,19 +229,16 @@ public class AccountManager(IBrowser browser) : IAccountManager
 			CurrentAccount = account ?? throw new InvalidOperationException("Account not found");
 			AttachToCurrentAccountPropertyChanged();
 			string previousUri = browser.Source?.ToString() ?? "https://pwonline.ru";
-			if (EnsureNewSessionBeforeSwitchAsync != null)
-			{
-				try
-				{
-					await EnsureNewSessionBeforeSwitchAsync();
-				}
-				catch
-				{
-				}
-			}
+			await browser.CreateNewSessionAsync(BrowserSessionIsolationMode.SeparateProfile, CurrentAccount.Id);
+			FingerprintProfile profile = await LoadOrCreateFingerprintAsync(CurrentAccount.Id);
+			await browser.ApplyAntiDetectAsync(profile);
 			await EnsureBrowserReadyAsync();
 			Cookie[] cookieAsync = (File.Exists(GetCookieFilePath()) ? (JsonSerializer.Deserialize<Cookie[]>(await File.ReadAllTextAsync(GetCookieFilePath()), JsonSerializerOptions.Web) ?? Array.Empty<Cookie>()) : Array.Empty<Cookie>());
-			await browser.SetCookieAsync(cookieAsync);
+			Cookie[] profileCookies = await browser.GetCookiesAsync();
+			if ((browser.CurrentProfileWasCreated || profileCookies.Length == 0) && cookieAsync.Length > 0)
+			{
+				await browser.ImportCookiesAsync(cookieAsync);
+			}
 			await browser.NavigateAsync(previousUri);
 			if (!(await browser.WaitForElementExistsAsync(".main_menu", 30000)))
 			{
@@ -313,6 +310,93 @@ public class AccountManager(IBrowser browser) : IAccountManager
 			return false;
 		}
 		return true;
+	}
+
+	public async Task ImportBrowserSessionAsync(Cookie[] cookies)
+	{
+		await _semaphoreSlim.WaitAsync();
+		SetChanging(value: true);
+		try
+		{
+			if (CurrentAccount == null)
+			{
+				throw new InvalidOperationException("Select an account in PW Hub before importing a browser session.");
+			}
+			Cookie[] allowedCookies = (cookies ?? Array.Empty<Cookie>())
+				.Where((Cookie cookie) => IsAllowedCookieDomain(cookie.Domain))
+				.ToArray();
+			if (allowedCookies.Length == 0)
+			{
+				throw new InvalidOperationException("The browser did not provide any PW authorization cookies.");
+			}
+			Cookie[] previousCookies = await browser.GetCookiesAsync();
+			try
+			{
+				await browser.ImportCookiesAsync(allowedCookies);
+				await browser.NavigateAsync("https://pwonline.ru/");
+				if (!(await browser.WaitForElementExistsAsync(".main_menu", 30000)))
+				{
+					throw new InvalidOperationException("PW Online did not finish loading after the session import.");
+				}
+				if (!(await browser.WaitForElementExistsAsync(".auth_h > h2 > a > strong", 10000)))
+				{
+					throw new InvalidOperationException("The imported browser session is not authorized on PW Online.");
+				}
+				string siteId = await GetSiteId();
+				if (string.IsNullOrWhiteSpace(siteId))
+				{
+					throw new InvalidOperationException("The imported browser session is not authorized on PW Online.");
+				}
+				if (!string.IsNullOrWhiteSpace(CurrentAccount.SiteId)
+					&& !string.Equals(CurrentAccount.SiteId, siteId, StringComparison.Ordinal))
+				{
+					throw new InvalidOperationException("The imported session belongs to a different PW Online account.");
+				}
+				await using AppDbContext db = new AppDbContext();
+				Account account = await db.Accounts.FindAsync(CurrentAccount.Id)
+					?? throw new InvalidOperationException("The selected account no longer exists.");
+				if (string.IsNullOrWhiteSpace(account.SiteId))
+				{
+					account.SiteId = siteId;
+					CurrentAccount.SiteId = siteId;
+				}
+				account.LastVisit = DateTime.UtcNow;
+				CurrentAccount.LastVisit = account.LastVisit;
+				await db.SaveChangesAsync();
+				await SaveCookies();
+				CurrentAccountChanged?.Invoke(CurrentAccount);
+			}
+			catch
+			{
+				try
+				{
+					await browser.SetCookieAsync(previousCookies);
+					await browser.ReloadAsync();
+				}
+				catch
+				{
+				}
+				throw;
+			}
+		}
+		finally
+		{
+			SetChanging(value: false);
+			_semaphoreSlim.Release();
+		}
+	}
+
+	public async Task SaveCurrentSessionAsync()
+	{
+		await _semaphoreSlim.WaitAsync();
+		try
+		{
+			await SaveCookies();
+		}
+		finally
+		{
+			_semaphoreSlim.Release();
+		}
 	}
 
 	public async Task<Account> GetAccountAsync()
@@ -419,5 +503,12 @@ public class AccountManager(IBrowser browser) : IAccountManager
 			string contents = JsonSerializer.Serialize(await browser.GetCookiesAsync(), JsonSerializerOptions.Web);
 			await File.WriteAllTextAsync(GetCookieFilePath(), contents);
 		}
+	}
+
+	private static bool IsAllowedCookieDomain(string? domain)
+	{
+		string value = (domain ?? string.Empty).Trim().TrimStart('.').ToLowerInvariant();
+		return value == "pwonline.ru" || value.EndsWith(".pwonline.ru", StringComparison.Ordinal)
+			|| value == "pw.mail.ru" || value.EndsWith(".pw.mail.ru", StringComparison.Ordinal);
 	}
 }

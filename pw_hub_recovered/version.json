@@ -1,7 +1,9 @@
 {
-  "version": "1.0.4",
+  "version": "1.0.5",
   "changes": [
-    "Fixed database initialization by aligning nullable account fields with the recovered Entity Framework migration snapshot.",
-    "Restored automatic creation and migration of the PW Hub SQLite database on first launch."
+    "Added persistent per-account browser profiles to retain authorization data between account switches and application restarts.",
+    "Added secure Chrome and Edge session import with one-time pairing and local-only communication.",
+    "Added a final cookie backup when PW Account Hub exits from its tray menu.",
+    "Hardened navigation and cookie import with exact PW Online domain validation."
   ]
 }
