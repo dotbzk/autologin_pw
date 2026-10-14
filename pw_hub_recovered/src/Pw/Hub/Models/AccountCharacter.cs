@@ -10,7 +10,7 @@ public class AccountCharacter
 
 	public string Name { get; set; } = string.Empty;
 
-	public AccountServer Server { get; set; }
+	public AccountServer? Server { get; set; }
 
-	public string ServerId { get; set; }
+	public string? ServerId { get; set; }
 }

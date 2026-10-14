@@ -28,6 +28,12 @@ jobs:
       - name: Build and test
         shell: pwsh
         run: .\src\build.ps1 -NoPause -FreshConfig
+
+      - name: Verify PW Hub database model
+        shell: pwsh
+        run: |
+          dotnet tool install --global dotnet-ef --version 9.0.0
+          dotnet ef migrations has-pending-model-changes --project .\pw_hub_recovered\src\Pw.Hub.csproj --configuration Release
       
       - name: Upload artifact
         uses: actions/upload-artifact@v4

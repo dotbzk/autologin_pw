@@ -10,9 +10,9 @@ public class Account : INotifyPropertyChanged
 {
 	private string _name = string.Empty;
 
-	private string _siteId = string.Empty;
+	private string? _siteId = string.Empty;
 
-	private string _imageSource;
+	private string? _imageSource;
 
 	private DateTime _lastVisit = DateTime.MinValue;
 
@@ -20,11 +20,11 @@ public class Account : INotifyPropertyChanged
 
 	private List<AccountServer> _servers;
 
-	private string _promoDo;
+	private string? _promoDo;
 
-	private List<string> _promoCartItems;
+	private List<string>? _promoCartItems;
 
-	private string _promoAccInfo;
+	private string? _promoAccInfo;
 
 	private DateTime? _promoLastSubmittedAt;
 
@@ -42,7 +42,7 @@ public class Account : INotifyPropertyChanged
 		}
 	}
 
-	public string SiteId
+	public string? SiteId
 	{
 		get
 		{
@@ -54,7 +54,7 @@ public class Account : INotifyPropertyChanged
 		}
 	}
 
-	public string ImageSource
+	public string? ImageSource
 	{
 		get
 		{
@@ -105,7 +105,7 @@ public class Account : INotifyPropertyChanged
 		}
 	}
 
-	public Uri ImageUri
+	public Uri? ImageUri
 	{
 		get
 		{
@@ -117,12 +117,12 @@ public class Account : INotifyPropertyChanged
 		}
 	}
 
-	public string SquadId { get; set; }
+	public string? SquadId { get; set; }
 
-	public Squad Squad { get; set; }
+	public Squad? Squad { get; set; }
 
 	[NotMapped]
-	public string PromoDo
+	public string? PromoDo
 	{
 		get
 		{
@@ -135,7 +135,7 @@ public class Account : INotifyPropertyChanged
 	}
 
 	[NotMapped]
-	public List<string> PromoCartItems
+	public List<string>? PromoCartItems
 	{
 		get
 		{
@@ -147,7 +147,7 @@ public class Account : INotifyPropertyChanged
 		}
 	}
 
-	public string PromoAccInfo
+	public string? PromoAccInfo
 	{
 		get
 		{
