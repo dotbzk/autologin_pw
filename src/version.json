@@ -1,9 +1,6 @@
 {
-  "version": "1.0.6",
+  "version": "1.0.7",
   "changes": [
-    "Added persistent per-account browser profiles in PW Account Hub to reduce session loss.",
-    "Added the PW Hub Session Import extension for Chrome and Edge.",
-    "Added secure one-time pairing for importing an authorized PW Online browser session without a password.",
-    "Hardened PW Hub navigation and cookie import so only approved PW Online domains are accepted."
+    "Fixed PW Hub Session Import connectivity when Chrome or Edge omits the extension origin header."
   ]
 }

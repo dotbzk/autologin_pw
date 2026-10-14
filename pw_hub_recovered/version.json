@@ -1,9 +1,6 @@
 {
-  "version": "1.0.5",
+  "version": "1.0.6",
   "changes": [
-    "Added persistent per-account browser profiles to retain authorization data between account switches and application restarts.",
-    "Added secure Chrome and Edge session import with one-time pairing and local-only communication.",
-    "Added a final cookie backup when PW Account Hub exits from its tray menu.",
-    "Hardened navigation and cookie import with exact PW Online domain validation."
+    "Fixed browser extension pairing and session import when Chrome or Edge omits the extension origin header."
   ]
 }
