@@ -5,6 +5,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
 using System.Windows;
@@ -25,6 +27,10 @@ public class WebCoreBrowser : IBrowser
 	private readonly BrowserSessionIsolationMode _mode;
 
 	private string _userDataDir;
+
+	private bool _profileIsPersistent;
+
+	public bool CurrentProfileWasCreated { get; private set; }
 
 	public string UserDataFolder => _userDataDir;
 
@@ -108,7 +114,7 @@ public class WebCoreBrowser : IBrowser
 	{
 		return OnUiAsync(async delegate
 		{
-			if (!(new Uri(url).Host != "pwonline.ru"))
+			if (PwNavigationPolicy.IsAllowedUrl(url))
 			{
 				await EnsureCoreAndSetBackgroundAsync();
 				_webView.CoreWebView2.Navigate(url);
@@ -161,34 +167,62 @@ public class WebCoreBrowser : IBrowser
 			await EnsureCoreAndSetBackgroundAsync();
 			CoreWebView2CookieManager cookieManager = _webView.CoreWebView2.CookieManager;
 			cookieManager.DeleteAllCookies();
-			Cookie[] array = cookie;
-			foreach (Cookie cookie2 in array)
-			{
-				CoreWebView2Cookie coreWebView2Cookie = cookieManager.CreateCookie(cookie2.Name, cookie2.Value, cookie2.Domain, cookie2.Path);
-				coreWebView2Cookie.Expires = cookie2.Expires;
-				coreWebView2Cookie.IsHttpOnly = cookie2.IsHttpOnly;
-				coreWebView2Cookie.IsSecure = cookie2.IsSecure;
-				coreWebView2Cookie.SameSite = cookie2.SameSite;
-				cookieManager.AddOrUpdateCookie(coreWebView2Cookie);
-			}
+			AddOrUpdateCookies(cookieManager, cookie);
 		});
 	}
 
-	public Task CreateNewSessionAsync(BrowserSessionIsolationMode? overrideMode = null)
+	public Task ImportCookiesAsync(Cookie[] cookies)
+	{
+		return OnUiAsync(async delegate
+		{
+			await EnsureCoreAndSetBackgroundAsync();
+			AddOrUpdateCookies(_webView.CoreWebView2.CookieManager, cookies);
+		});
+	}
+
+	private static void AddOrUpdateCookies(CoreWebView2CookieManager cookieManager, Cookie[] cookies)
+	{
+		foreach (Cookie cookie in cookies ?? Array.Empty<Cookie>())
+		{
+			CoreWebView2Cookie coreCookie = cookieManager.CreateCookie(cookie.Name, cookie.Value, cookie.Domain, cookie.Path);
+			if (!cookie.IsSession && cookie.Expires > DateTime.UnixEpoch)
+			{
+				coreCookie.Expires = cookie.Expires;
+			}
+			coreCookie.IsHttpOnly = cookie.IsHttpOnly;
+			coreCookie.IsSecure = cookie.IsSecure;
+			coreCookie.SameSite = cookie.SameSite;
+			cookieManager.AddOrUpdateCookie(coreCookie);
+		}
+	}
+
+	public Task CreateNewSessionAsync(BrowserSessionIsolationMode? overrideMode = null, string? persistentProfileId = null)
 	{
 		return OnUiAsync(async delegate
 		{
 			Uri previousUri = _webView?.Source ?? new Uri("https://pwonline.ru");
 			string oldDir = _userDataDir;
+			bool oldProfileIsPersistent = _profileIsPersistent;
 			string newDir = null;
 			CoreWebView2CreationProperties coreWebView2CreationProperties = new CoreWebView2CreationProperties();
 			BrowserSessionIsolationMode effMode = overrideMode ?? _mode;
 			if (effMode == BrowserSessionIsolationMode.SeparateProfile)
 			{
-				newDir = (coreWebView2CreationProperties.UserDataFolder = CreateProfileDir());
+				if (string.IsNullOrWhiteSpace(persistentProfileId))
+				{
+					newDir = CreateProfileDir();
+					CurrentProfileWasCreated = true;
+				}
+				else
+				{
+					newDir = GetPersistentProfileDir(persistentProfileId, out bool created);
+					CurrentProfileWasCreated = created;
+				}
+				coreWebView2CreationProperties.UserDataFolder = newDir;
 			}
 			else
 			{
+				CurrentProfileWasCreated = true;
 				coreWebView2CreationProperties.IsInPrivateModeEnabled = true;
 			}
 			WebView2 newWv = new WebView2
@@ -227,6 +261,8 @@ public class WebCoreBrowser : IBrowser
 			newWv.Source = previousUri;
 			_webView = newWv;
 			_userDataDir = ((effMode == BrowserSessionIsolationMode.SeparateProfile) ? newDir : null);
+			_profileIsPersistent = effMode == BrowserSessionIsolationMode.SeparateProfile
+				&& !string.IsNullOrWhiteSpace(persistentProfileId);
 			bool finalized = false;
 			try
 			{
@@ -244,7 +280,7 @@ public class WebCoreBrowser : IBrowser
 				await Task.Delay(500);
 				EnsureFinalize();
 			});
-			if (effMode == BrowserSessionIsolationMode.SeparateProfile && !string.IsNullOrWhiteSpace(oldDir))
+			if (!oldProfileIsPersistent && !string.IsNullOrWhiteSpace(oldDir))
 			{
 				TryDeleteDirWithRetries(oldDir);
 			}
@@ -355,7 +391,7 @@ public class WebCoreBrowser : IBrowser
 	{
 		try
 		{
-			string text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PwHub", "WebViewProfiles");
+			string text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "GameToolsHub", "PwHub", "Profiles");
 			Directory.CreateDirectory(text);
 			return text;
 		}
@@ -371,6 +407,16 @@ public class WebCoreBrowser : IBrowser
 			}
 			return text2;
 		}
+	}
+
+	private static string GetPersistentProfileDir(string accountId, out bool created)
+	{
+		byte[] hash = SHA256.HashData(Encoding.UTF8.GetBytes(accountId));
+		string profileName = Convert.ToHexString(hash).ToLowerInvariant()[..32];
+		string path = Path.Combine(ProfilesRoot(), profileName);
+		created = !Directory.Exists(path);
+		Directory.CreateDirectory(path);
+		return path;
 	}
 
 	private static string CreateProfileDir()

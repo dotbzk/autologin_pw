@@ -15,6 +15,7 @@ $TestsDir = Join-Path $SourceDir "tests"
 $HubDir = Join-Path $ProjectRoot "game_tools_hub"
 $HubTestsDir = Join-Path $HubDir "tests"
 $PwHubProject = Join-Path $ProjectRoot "pw_hub_recovered\src\Pw.Hub.csproj"
+$BrowserExtensionSource = Join-Path $ProjectRoot "pw_hub_browser_extension"
 $ReleaseManifest = Join-Path $ProjectRoot "release-manifest.json"
 $OutputDir = Join-Path $ProjectRoot "client"
 $BuildRoot = Join-Path $ProjectRoot "build"
@@ -86,12 +87,14 @@ try {
     $AccountsDir = Join-Path $StagedOutput "accounts"
     $ModulesDir = Join-Path $StagedOutput "modules"
     $PwHubOutput = Join-Path $StagedOutput "PwHub"
+    $BrowserExtensionOutput = Join-Path $StagedOutput "PwHubBrowserExtension"
     New-Item -ItemType Directory -Force $ConfigDir | Out-Null
     New-Item -ItemType Directory -Force $ThemeDir | Out-Null
     New-Item -ItemType Directory -Force $IconDir | Out-Null
     New-Item -ItemType Directory -Force $ClassesDir | Out-Null
     New-Item -ItemType Directory -Force $AccountsDir | Out-Null
     New-Item -ItemType Directory -Force $ModulesDir | Out-Null
+    New-Item -ItemType Directory -Force $BrowserExtensionOutput | Out-Null
 
     Write-Host "Publishing PW Account Hub..."
     & dotnet publish $PwHubProject -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o $PwHubOutput
@@ -110,6 +113,7 @@ try {
     Copy-Item $ReleaseManifest (Join-Path $StagedOutput "release-manifest.json") -Force
     Copy-Item (Join-Path $ProjectRoot "pw_hub_recovered\version.json") (Join-Path $PwHubOutput "version.json") -Force
     Copy-Item (Join-Path $HubDir "modules\*") $ModulesDir -Recurse -Force
+    Copy-Item (Join-Path $BrowserExtensionSource "*") $BrowserExtensionOutput -Recurse -Force
 
     if (-not $FreshConfig -and (Test-Path $OutputDir)) {
         & $VenvPython -c "from src.update_support import preserve_user_data; import sys; preserve_user_data(sys.argv[1], sys.argv[2])" $OutputDir $StagedOutput
@@ -128,6 +132,8 @@ try {
         (Join-Path $StagedOutput "launcher-version.json"),
         (Join-Path $StagedOutput "release-manifest.json"),
         (Join-Path $PwHubOutput "Pw.Hub.exe"),
+        (Join-Path $BrowserExtensionOutput "manifest.json"),
+        (Join-Path $BrowserExtensionOutput "popup.html"),
         (Join-Path $ModulesDir "game_launcher_bot\module.json"),
         (Join-Path $ModulesDir "pw_hub\module.json"),
         (Join-Path $ConfigDir "config.ini"),

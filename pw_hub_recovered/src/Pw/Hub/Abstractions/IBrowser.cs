@@ -8,6 +8,8 @@ public interface IBrowser
 {
 	Uri Source { get; }
 
+	bool CurrentProfileWasCreated { get; }
+
 	Task<string> ExecuteScriptAsync(string script);
 
 	Task NavigateAsync(string url);
@@ -22,7 +24,9 @@ public interface IBrowser
 
 	Task SetCookieAsync(Cookie[] cookie);
 
-	Task CreateNewSessionAsync(BrowserSessionIsolationMode? overrideMode = null);
+	Task ImportCookiesAsync(Cookie[] cookies);
+
+	Task CreateNewSessionAsync(BrowserSessionIsolationMode? overrideMode = null, string? persistentProfileId = null);
 
 	Task ApplyAntiDetectAsync(FingerprintProfile profile);
 }

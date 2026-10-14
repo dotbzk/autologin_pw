@@ -127,22 +127,6 @@ public class AccountPage : UserControl, IWebViewHost, INotifyPropertyChanged, IC
 		Wv.NavigationStarting += WvOnNavigationStarting;
 		Browser = new WebCoreBrowser(this, BrowserSessionIsolationMode.InPrivate);
 		AccountManager = new AccountManager(Browser);
-		if (AccountManager is AccountManager accountManager)
-		{
-			accountManager.EnsureNewSessionBeforeSwitchAsync = async delegate
-			{
-				_ = 1;
-				try
-				{
-					await Browser.CreateNewSessionAsync(BrowserSessionIsolationMode.InPrivate);
-					FingerprintProfile profile = FingerprintGenerator.Generate();
-					await Browser.ApplyAntiDetectAsync(profile);
-				}
-				catch
-				{
-				}
-			};
-		}
 		try
 		{
 			UpdateNavUi();
@@ -520,7 +504,7 @@ public class AccountPage : UserControl, IWebViewHost, INotifyPropertyChanged, IC
 		bool flag = false;
 		try
 		{
-			flag = e.Uri.StartsWith("https://pwonline.ru") || e.Uri.StartsWith("http://pwonline.ru") || e.Uri.StartsWith("https://pw.mail.ru") || e.Uri.StartsWith("http://pw.mail.ru");
+			flag = PwNavigationPolicy.IsAllowedUrl(e.Uri);
 		}
 		catch
 		{
@@ -1156,27 +1140,7 @@ public class AccountPage : UserControl, IWebViewHost, INotifyPropertyChanged, IC
 
 	private static string BuildAllowedUrl(string input)
 	{
-		try
-		{
-			string text = input;
-			if (text.StartsWith("/"))
-			{
-				text = "https://pwonline.ru" + text;
-			}
-			else if (!text.StartsWith("http://") && !text.StartsWith("https://"))
-			{
-				text = "https://" + text;
-			}
-			if (text.Equals("https://pwonline.ru", StringComparison.OrdinalIgnoreCase))
-			{
-				text += "/";
-			}
-			return (text.StartsWith("https://pwonline.ru") || text.StartsWith("http://pwonline.ru") || text.StartsWith("https://pw.mail.ru") || text.StartsWith("http://pw.mail.ru")) ? text : null;
-		}
-		catch
-		{
-			return null;
-		}
+		return PwNavigationPolicy.BuildAllowedUrl(input);
 	}
 
 	[DebuggerNonUserCode]

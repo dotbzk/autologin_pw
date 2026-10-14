@@ -1,7 +1,9 @@
 {
-  "version": "1.0.5",
+  "version": "1.0.6",
   "changes": [
-    "Fixed PW Account Hub database initialization by aligning the Entity Framework model with its migration history.",
-    "Restored automatic creation of the Accounts and Squads tables on first launch."
+    "Added persistent per-account browser profiles in PW Account Hub to reduce session loss.",
+    "Added the PW Hub Session Import extension for Chrome and Edge.",
+    "Added secure one-time pairing for importing an authorized PW Online browser session without a password.",
+    "Hardened PW Hub navigation and cookie import so only approved PW Online domains are accepted."
   ]
 }

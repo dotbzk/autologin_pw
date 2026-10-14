@@ -50,6 +50,25 @@ class ReleaseManifestTests(unittest.TestCase):
         self.assertEqual(pw_hub["version"], components["pwHub"]["version"])
         self.assertEqual(pw_hub["status"], "ready")
 
+    def test_pw_hub_browser_extension_has_scoped_permissions(self):
+        extension = load_json(ROOT / "pw_hub_browser_extension/manifest.json")
+        host_permissions = set(extension["host_permissions"])
+
+        self.assertEqual(extension["manifest_version"], 3)
+        self.assertNotIn("<all_urls>", host_permissions)
+        self.assertIn("http://127.0.0.1:43827/*", host_permissions)
+        self.assertIn("https://*.pwonline.ru/*", host_permissions)
+        self.assertIn("https://*.pw.mail.ru/*", host_permissions)
+        self.assertNotIn("https://*.mail.ru/*", host_permissions)
+        self.assertEqual(set(extension["permissions"]), {"cookies", "storage"})
+
+    def test_windows_bundle_includes_pw_hub_browser_extension(self):
+        build_script = (ROOT / "src/build.ps1").read_text(encoding="utf-8")
+
+        self.assertIn('"pw_hub_browser_extension"', build_script)
+        self.assertIn('"PwHubBrowserExtension"', build_script)
+        self.assertIn('"manifest.json"', build_script)
+
 
 if __name__ == "__main__":
     unittest.main()
