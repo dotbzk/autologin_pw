@@ -5,9 +5,9 @@ local function trim(s)
   return (tostring(s):gsub('^%s*(.-)%s*$', '%1'))
 end
 
-local promocode = trim(args and (args["promo_code"] or args["promocode"] or args["промокод"])) or ""
+local promocode = trim(args and args["промокод"]) or ""
 if promocode == "" then
-  if Complete ~= nil then Complete("Promo code is not specified") end
+  if Complete ~= nil then Complete("Не задан промокод") end
   return
 end
 
@@ -18,14 +18,14 @@ local messages = {}
 local total_accounts = 0
 
 local function buildAndFinish()
-  local summary = string.format("Promo code: %s\nTotal: %d, Successful: %d, Errors: %d", promocode, total, success, failed)
+  local summary = string.format("Промокод: %s\nВсего: %d, Успешно: %d, Ошибки: %d", promocode, total, success, failed)
   local result = summary
   if #messages > 0 then
     result = result .. "\n" .. table.concat(messages, "\n")
   end
   if ReportProgress ~= nil or ReportProgressMsg ~= nil then
     if ReportProgress ~= nil then ReportProgress(100) end
-    if ReportProgressMsg ~= nil then ReportProgressMsg(100, "Done") end
+    if ReportProgressMsg ~= nil then ReportProgressMsg(100, "Готово") end
   end
   if Complete ~= nil then Complete(result) end
 end
@@ -55,7 +55,7 @@ local function processAccountAt(accounts, index)
       -- 3) Wait for the input field.
       Browser_WaitForElementCb(".pin_input > input", 2000, function(ok)
         if not ok then
-          local msg = accName .. ": input form not found"
+          local msg = accName .. ": не найдена форма ввода"
           table.insert(messages, msg)
           if Print ~= nil then Print(msg) end
           failed = failed + 1
@@ -89,7 +89,7 @@ local function processAccountAt(accounts, index)
               local msg = trim(raw)
               local tolog = nil
               if msg == "" then
-                tolog = accName .. ": submitted"
+                tolog = accName .. ": отправлено"
                 table.insert(messages, tolog)
                 success = success + 1
               else

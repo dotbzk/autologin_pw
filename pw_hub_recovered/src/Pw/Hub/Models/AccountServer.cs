@@ -30,7 +30,7 @@ public class AccountServer
 				new AccountCharacter
 				{
 					OptionId = null,
-					Name = "— not selected —"
+					Name = "— не выбран —"
 				}
 			};
 			if (Characters != null && Characters.Count > 0)

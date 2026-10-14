@@ -8,9 +8,9 @@ public interface IUiDialogService
 {
 	void Alert(string message, string caption = "PW Hub");
 
-	bool Confirm(string message, string caption = "Confirmation");
+	bool Confirm(string message, string caption = "Подтверждение");
 
-	string? Prompt(string prompt, string caption = "Input", string? defaultValue = null);
+	string? Prompt(string prompt, string caption = "Ввод", string? defaultValue = null);
 
 	Dictionary<string, object>? AskRunArguments(IList<InputDefinitionDto> inputs);
 

@@ -123,10 +123,10 @@ public static class LuaApiRegistry
 		}
 		if (list.Count == 0)
 		{
-			return "No Lua API functions are available (the catalog is empty).";
+			return "Доступные функции Lua API отсутствуют (каталог пуст).";
 		}
 		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.AppendLine("Available Lua API functions (v1 and v2):");
+		stringBuilder.AppendLine("Доступные функции Lua API (v1 и v2):");
 		foreach (IGrouping<string, Entry> item in from e in list
 			group e by e.Category)
 		{
@@ -157,7 +157,7 @@ public static class LuaApiRegistry
 			{
 				continue;
 			}
-			stringBuilder.AppendLine("Examples:");
+			stringBuilder.AppendLine("Примеры:");
 			foreach (Entry item3 in list2)
 			{
 				if (!string.IsNullOrWhiteSpace(item3.Snippet))

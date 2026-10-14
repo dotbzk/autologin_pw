@@ -155,10 +155,10 @@
         ].join(';');
         var title = document.createElement('div');
         title.id = 'promo_chest_popup_title';
-        title.textContent = 'Chest Activation';
+        title.textContent = 'Активация сундука';
         var closeBtn = document.createElement('button');
         closeBtn.textContent = '×';
-        closeBtn.title = 'Close';
+        closeBtn.title = 'Закрыть';
         closeBtn.style = [
           'border:none',
           'background:transparent',
@@ -710,12 +710,12 @@
                 if (submitBtn.tagName === 'INPUT'){
                   txt = submitBtn.value || '';
                   if (!txt || !txt.trim()){
-                    submitBtn.value = 'Activate';
+                    submitBtn.value = 'Активировать';
                   }
                 } else {
                   txt = (submitBtn.textContent || '').trim();
                   if (!txt){
-                    submitBtn.textContent = 'Activate';
+                    submitBtn.textContent = 'Активировать';
                   }
                 }
               }catch(__){}
@@ -867,7 +867,7 @@
               if (title) label = title;
             }catch(_){ }
 
-            showPopup(label || 'Chest Activation', href);
+            showPopup(label || 'Активация сундука', href);
           }catch(_){ }
         }, true); // Capture the event before native navigation starts.
       }catch(_){ }

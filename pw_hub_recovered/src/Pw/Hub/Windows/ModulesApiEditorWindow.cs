@@ -193,7 +193,7 @@ public class ModulesApiEditorWindow : Window, IComponentConnector
 					OptionsCsv = ((inputDefinitionDto.Options == null || inputDefinitionDto.Options.Length == 0) ? string.Empty : string.Join(", ", inputDefinitionDto.Options.Where((string s) => !string.IsNullOrWhiteSpace(s))))
 				});
 			}
-			base.Title = "Editing: " + existing.Name;
+			base.Title = "Редактирование: " + existing.Name;
 		}
 		else
 		{
@@ -276,7 +276,7 @@ public class ModulesApiEditorWindow : Window, IComponentConnector
 		}
 		if (string.IsNullOrWhiteSpace(_vm.Name) || string.IsNullOrWhiteSpace(_vm.Script))
 		{
-			MessageBox.Show(this, "Name and script are required.");
+			MessageBox.Show(this, "Имя и скрипт обязательны");
 			return;
 		}
 		IsSaved = true;
@@ -308,7 +308,7 @@ public class ModulesApiEditorWindow : Window, IComponentConnector
 		_vm.Inputs.Add(new ModulesApiEditorViewModel.InputItem
 		{
 			Name = "param",
-			Label = "Parameter",
+			Label = "Параметр",
 			Type = "string",
 			Default = string.Empty,
 			Required = false
@@ -326,7 +326,7 @@ public class ModulesApiEditorWindow : Window, IComponentConnector
 			LuaScriptRunner runner = mainWindow.AccountPage?.LuaRunner;
 			if (runner == null)
 			{
-				MessageBox.Show(this, "Lua Runner is unavailable.", "Lua", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+				MessageBox.Show(this, "Lua Runner недоступен", "Lua", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 				return;
 			}
 			await EnsureFullModuleLoadedAsync();
@@ -563,7 +563,7 @@ public class ModulesApiEditorWindow : Window, IComponentConnector
 		try
 		{
 			string text = DescriptionEditor.Text ?? string.Empty;
-			string html = (string.IsNullOrWhiteSpace(text) ? "<i>No description</i>" : Markdown.ToHtml(text));
+			string html = (string.IsNullOrWhiteSpace(text) ? "<i>Нет описания</i>" : Markdown.ToHtml(text));
 			if (PreviewWebView.CoreWebView2 == null)
 			{
 				await PreviewWebView.EnsureCoreWebView2Async();
@@ -612,7 +612,7 @@ public class ModulesApiEditorWindow : Window, IComponentConnector
 			string text = descriptionEditor.SelectedText;
 			if (string.IsNullOrEmpty(text))
 			{
-				text = "text";
+				text = "текст";
 			}
 			string selectedText = left + text + right;
 			int selectionStart = descriptionEditor.SelectionStart;

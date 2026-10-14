@@ -1,10 +1,7 @@
 {
-  "version": "1.0.8",
+  "version": "1.0.9",
   "changes": [
-    "Handled unavailable elevated memory-cleanup privileges as optional limitations instead of launch warnings.",
-    "Added a confirmation dialog for saving or discarding unsaved application settings.",
-    "Fixed coordinate test actions so temporarily hiding the launcher no longer exits the application.",
-    "Made coordinate tests prepare the required VK Play view before clicking, reading the current account, or searching the account list.",
-    "Converted the PW Account Hub interface, dialogs, logs, editor descriptions, and bundled script panels to English."
+    "Added window and taskbar icons for Game Tools Hub and the updater.",
+    "Restored the Russian PW Account Hub interface, bundled script panels, and browser-session extension."
   ]
 }

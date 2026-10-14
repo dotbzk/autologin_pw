@@ -236,7 +236,7 @@ public class ModulesApiEditorViewModel : INotifyPropertyChanged
 			InputItem inputItem = new InputItem
 			{
 				Name = "param",
-				Label = "Parameter",
+				Label = "Параметр",
 				Type = "string",
 				Default = string.Empty,
 				Required = false
@@ -322,7 +322,7 @@ public class ModulesApiEditorViewModel : INotifyPropertyChanged
 			}
 			if (string.IsNullOrWhiteSpace((aiConfigService.GetEffective().ApiKey ?? string.Empty).Trim()))
 			{
-			Description = (Description ?? string.Empty) + (string.IsNullOrEmpty(Description) ? string.Empty : "\n\n") + "[AI] Configure an API key in AI Settings to generate a description.";
+				Description = (Description ?? string.Empty) + (string.IsNullOrEmpty(Description) ? string.Empty : "\n\n") + "[AI] Укажите API key в настройках AI, чтобы сгенерировать описание.";
 				return;
 			}
 		}
@@ -335,7 +335,7 @@ public class ModulesApiEditorViewModel : INotifyPropertyChanged
 		}
 		catch (Exception ex)
 		{
-			Description = (Description ?? string.Empty) + (string.IsNullOrEmpty(Description) ? string.Empty : "\n\n") + "[Description generation error] " + ex.Message;
+			Description = (Description ?? string.Empty) + (string.IsNullOrEmpty(Description) ? string.Empty : "\n\n") + "[Ошибка генерации описания] " + ex.Message;
 		}
 		finally
 		{

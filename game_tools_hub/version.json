@@ -1,9 +1,7 @@
 {
-  "version": "0.2.2",
+  "version": "0.2.3",
   "changes": [
-    "Separated component versions from the internal release package version.",
-    "Removed the package version from the user interface.",
-    "Improved failed module startup reporting.",
-    "Added permission repair after installation by the previous updater."
+    "Added the application icon to the Game Tools Hub window and its Windows taskbar entry.",
+    "Bundled the icon resource for reliable use in frozen builds."
   ]
 }

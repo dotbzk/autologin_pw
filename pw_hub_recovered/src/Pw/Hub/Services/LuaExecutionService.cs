@@ -44,7 +44,7 @@ public class LuaExecutionService : ILuaExecutionService
 			try
 			{
 				runner.Stop();
-				logWindow.AppendLog("[Stopped by user]");
+				logWindow.AppendLog("[Остановлено пользователем]");
 			}
 			catch
 			{
@@ -72,8 +72,8 @@ public class LuaExecutionService : ILuaExecutionService
 					logWindow.MarkCompleted(result);
 					if (System.Windows.Application.Current is App app)
 					{
-						string tipTitle = "Module: " + module.Name;
-						string tipText = (string.IsNullOrWhiteSpace(result) ? "Completed" : result);
+						string tipTitle = "Модуль: " + module.Name;
+						string tipText = (string.IsNullOrWhiteSpace(result) ? "Выполнено" : result);
 						app.NotifyIcon?.ShowBalloonTip(5, tipTitle, tipText, ToolTipIcon.Info);
 					}
 				}

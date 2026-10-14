@@ -134,7 +134,7 @@ public sealed class DiffPreviewService : IDiffPreviewService
 		}
 		if (list.Count <= 2)
 		{
-			list.Add("No changes (the code is identical to the current version).");
+			list.Add("Изменений нет (код идентичен текущему).");
 		}
 		return list;
 	}

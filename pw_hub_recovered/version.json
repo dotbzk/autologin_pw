@@ -1,7 +1,7 @@
 {
-  "version": "1.0.7",
+  "version": "1.0.8",
   "changes": [
-    "Converted the complete PW Account Hub interface, dialogs, messages, logs, editor descriptions, and bundled script panels to English.",
-    "Added runtime English localization for recovered WPF resources while preserving Russian PW Online matching strings required by automation."
+    "Restored the Russian interface, dialogs, messages, logs, editor descriptions, bundled script panels, and browser-session connection flow.",
+    "Removed the runtime English localization layer from recovered WPF resources."
   ]
 }

@@ -150,7 +150,7 @@ public class LuaScriptRunner
 			string text = Path.Combine(AppContext.BaseDirectory, "Scripts", scriptFileName);
 			if (!File.Exists(text))
 			{
-				MessageBox.Show("Script " + scriptFileName + " was not found at: " + text, "Lua", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+				MessageBox.Show("Скрипт " + scriptFileName + " не найден по пути: " + text, "Lua", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 			}
 			else
 			{
@@ -159,7 +159,7 @@ public class LuaScriptRunner
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show("Lua script execution error: " + ex.Message, "Lua", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show("Ошибка во время выполнения Lua-скрипта: " + ex.Message, "Lua", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 
@@ -261,7 +261,7 @@ public class LuaScriptRunner
 			}
 			catch (Exception ex2)
 			{
-				MessageBox.Show("Lua error: " + ex2.Message, "Lua", MessageBoxButton.OK, MessageBoxImage.Hand);
+				MessageBox.Show("Ошибка Lua: " + ex2.Message, "Lua", MessageBoxButton.OK, MessageBoxImage.Hand);
 				_currentTcs?.TrySetResult(null);
 			}
 		}).ContinueWith((Task t) => _currentTcs.Task).Unwrap();
@@ -336,7 +336,7 @@ public class LuaScriptRunner
 		}
 		catch (Exception ex2)
 		{
-			MessageBox.Show("Lua script debugging error: " + ex2.Message, "Lua Debug", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show("Ошибка во время отладки Lua-скрипта: " + ex2.Message, "Lua Debug", MessageBoxButton.OK, MessageBoxImage.Hand);
 			_currentTcs?.TrySetResult(null);
 		}
 		return _currentTcs?.Task ?? Task.CompletedTask;
@@ -499,7 +499,7 @@ public class LuaScriptRunner
 			}
 			if (!File.Exists(text))
 			{
-				MessageBox.Show("Module script not found: " + module.Script, "Modules", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+				MessageBox.Show("Скрипт модуля не найден: " + module.Script, "Модули", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 				return null;
 			}
 			_currentLua = new Lua();
@@ -541,7 +541,7 @@ public class LuaScriptRunner
 			}
 			catch (Exception ex2)
 			{
-				MessageBox.Show("Module execution error: " + ex2.Message, "Modules", MessageBoxButton.OK, MessageBoxImage.Hand);
+				MessageBox.Show("Ошибка при выполнении модуля: " + ex2.Message, "Модули", MessageBoxButton.OK, MessageBoxImage.Hand);
 				return null;
 			}
 			return await _currentTcs.Task.ConfigureAwait(continueOnCapturedContext: true);
