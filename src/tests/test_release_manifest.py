@@ -69,6 +69,19 @@ class ReleaseManifestTests(unittest.TestCase):
         self.assertIn('"PwHubBrowserExtension"', build_script)
         self.assertIn('"manifest.json"', build_script)
 
+    def test_browser_extension_and_bridge_share_request_marker(self):
+        popup = (ROOT / "pw_hub_browser_extension/popup.js").read_text(
+            encoding="utf-8"
+        )
+        bridge = (
+            ROOT
+            / "pw_hub_recovered/src/Pw/Hub/Services/BrowserSessionBridge.cs"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn('"X-PW-Hub-Extension": "pw-hub-session-import-v1"', popup)
+        self.assertIn('ExtensionMarker = "pw-hub-session-import-v1"', bridge)
+        self.assertIn("X-PW-Hub-Extension", bridge)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -23,6 +23,8 @@ public sealed class BrowserSessionBridge : IDisposable
 
 	private const int MaxBodyBytes = 1048576;
 
+	private const string ExtensionMarker = "pw-hub-session-import-v1";
+
 	private static readonly ILogger _log = Log.For<BrowserSessionBridge>();
 
 	private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
@@ -112,8 +114,13 @@ public sealed class BrowserSessionBridge : IDisposable
 					await WriteResponseAsync(client.GetStream(), 204, null, origin, cancellationToken);
 					return;
 				}
-				if (!IsExtensionOrigin(origin))
+				if (!IsExtensionRequest(request, origin))
 				{
+					_log.Warn("Rejected browser session bridge request", new Dictionary<string, object>
+					{
+						{ "origin", origin ?? "<none>" },
+						{ "path", request.Path }
+					});
 					await WriteResponseAsync(client.GetStream(), 403, new { error = "Requests are accepted only from the PW Hub browser extension." }, null, cancellationToken);
 					return;
 				}
@@ -251,6 +258,13 @@ public sealed class BrowserSessionBridge : IDisposable
 	{
 		return origin != null && (origin.StartsWith("chrome-extension://", StringComparison.OrdinalIgnoreCase)
 			|| origin.StartsWith("extension://", StringComparison.OrdinalIgnoreCase));
+	}
+
+	private static bool IsExtensionRequest(HttpRequest request, string? origin)
+	{
+		return IsExtensionOrigin(origin)
+			|| (request.Headers.TryGetValue("X-PW-Hub-Extension", out string? marker)
+				&& FixedTimeEquals(marker, ExtensionMarker));
 	}
 
 	private static bool FixedTimeEquals(string? left, string? right)
@@ -464,7 +478,7 @@ public sealed class BrowserSessionBridge : IDisposable
 		headers.Append("Content-Type: application/json; charset=utf-8\r\n");
 		headers.Append($"Content-Length: {body.Length}\r\n");
 		headers.Append("Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n");
-		headers.Append("Access-Control-Allow-Headers: Content-Type, X-PW-Hub-Token\r\n");
+		headers.Append("Access-Control-Allow-Headers: Content-Type, X-PW-Hub-Token, X-PW-Hub-Extension\r\n");
 		headers.Append("Access-Control-Allow-Private-Network: true\r\n");
 		headers.Append("Cache-Control: no-store\r\n");
 		if (IsExtensionOrigin(origin))
