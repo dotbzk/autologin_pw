@@ -1,9 +1,7 @@
 {
-  "version": "1.0.4",
+  "version": "1.0.5",
   "changes": [
-    "Handled unavailable elevated memory-cleanup privileges as optional limitations instead of launch warnings.",
-    "Added a confirmation dialog for saving or discarding unsaved application settings.",
-    "Fixed coordinate test actions so temporarily hiding the launcher no longer exits the application.",
-    "Made coordinate tests prepare the required VK Play view before clicking, reading the current account, or searching the account list."
+    "Added the application icon to the updater window and its Windows taskbar entry.",
+    "Bundled the updater icon resource for reliable use during installation."
   ]
 }

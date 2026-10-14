@@ -62,7 +62,7 @@ public class ApiKeySettingsViewModel : BaseViewModel
 		}
 		catch (Exception ex)
 		{
-			throw new InvalidOperationException("Could not save settings: " + ex.Message, ex);
+			throw new InvalidOperationException("Ошибка сохранения настроек: " + ex.Message, ex);
 		}
 	}
 }

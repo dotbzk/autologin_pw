@@ -73,7 +73,7 @@ public class ModuleArgsWindow : Window, IComponentConnector
 		PrefillFromLastArgs();
 	}
 
-	public ModuleArgsWindow(IList<InputDefinitionDto> inputs, string title = "Launch Arguments")
+	public ModuleArgsWindow(IList<InputDefinitionDto> inputs, string title = "Аргументы запуска")
 	{
 		InitializeComponent();
 		_module = new ModuleDefinition
@@ -110,7 +110,7 @@ public class ModuleArgsWindow : Window, IComponentConnector
 		{
 			TextBlock textBlock = new TextBlock
 			{
-				Text = "This module does not require launch arguments."
+				Text = "Модуль не требует аргументов запуска."
 			};
 			if (TryFindResource("ModernTextBlock") is Style style)
 			{
@@ -239,12 +239,12 @@ public class ModuleArgsWindow : Window, IComponentConnector
 				};
 				Button button = new Button
 				{
-					Content = "Select All",
+					Content = "Выбрать все",
 					Margin = new Thickness(0.0, 0.0, 6.0, 0.0)
 				};
 				Button button2 = new Button
 				{
-					Content = "Clear All"
+					Content = "Снять все"
 				};
 				if (TryFindResource("ModernButton") is Style style5)
 				{
@@ -341,12 +341,12 @@ public class ModuleArgsWindow : Window, IComponentConnector
 				};
 				Button button3 = new Button
 				{
-					Content = "Select All",
+					Content = "Выбрать все",
 					Margin = new Thickness(0.0, 0.0, 6.0, 0.0)
 				};
 				Button button4 = new Button
 				{
-					Content = "Clear All"
+					Content = "Снять все"
 				};
 				if (TryFindResource("ModernButton") is Style style8)
 				{
@@ -872,7 +872,7 @@ public class ModuleArgsWindow : Window, IComponentConnector
 			}
 			if (moduleInput.Required && (obj == null || (obj is string value2 && string.IsNullOrWhiteSpace(value2)) || obj is ICollection { Count: 0 }))
 			{
-				MessageBox.Show("Complete the field: " + (moduleInput.Label ?? moduleInput.Name), "Module Parameters", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+				MessageBox.Show("Заполните поле: " + (moduleInput.Label ?? moduleInput.Name), "Параметры модуля", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 				return;
 			}
 			Values[key] = obj;

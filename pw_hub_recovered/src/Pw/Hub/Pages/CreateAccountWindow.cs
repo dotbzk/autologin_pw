@@ -27,7 +27,7 @@ public class CreateAccountWindow : Window, IComponentConnector
 		string text = AccountNameTextBox.Text.Trim();
 		if (string.IsNullOrWhiteSpace(text))
 		{
-			MessageBox.Show("Enter an account name.", "Error", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+			MessageBox.Show("Введите название аккаунта", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 			return;
 		}
 		AccountName = text;

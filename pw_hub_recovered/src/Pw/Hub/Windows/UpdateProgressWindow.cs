@@ -24,7 +24,7 @@ public class UpdateProgressWindow : Window, IComponentConnector
 	{
 		InitializeComponent();
 		SetIndeterminate(indeterminate: true);
-		SetStatus("Preparing...");
+		SetStatus("Подготовка...");
 	}
 
 	public void SetTitle(string title)

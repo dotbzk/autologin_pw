@@ -40,7 +40,7 @@ async function request(path, options = {}) {
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(payload.error || `PW Hub returned HTTP ${response.status}.`);
+      throw new Error(payload.error || `PW Hub вернул ошибку HTTP ${response.status}.`);
     }
     return payload;
   } finally {
@@ -52,7 +52,7 @@ async function showPairing(message) {
   selectedAccountId = "";
   pairingSection.hidden = false;
   connectedSection.hidden = true;
-  setStatus(message || "Select an account in PW Hub, then use Connect browser extension from its tray menu.");
+  setStatus(message || "Выберите аккаунт в PW Hub, затем нажмите «Подключить расширение браузера» в меню значка приложения.");
 }
 
 async function refreshStatus() {
@@ -65,15 +65,15 @@ async function refreshStatus() {
     const status = await request("/status", { token });
     pairingSection.hidden = true;
     connectedSection.hidden = false;
-    accountName.textContent = status.accountName || "No account selected";
+    accountName.textContent = status.accountName || "Аккаунт не выбран";
     selectedAccountId = status.accountId || "";
     importButton.disabled = !status.ready;
-    setStatus(status.message || "Connected to PW Hub.", status.ready ? "success" : "");
+    setStatus(status.message || "Подключено к PW Hub.", status.ready ? "success" : "");
   } catch (error) {
-    if (String(error.message).includes("not connected")) {
+    if (String(error.message).includes("не подключено") || String(error.message).includes("not connected")) {
       await chrome.storage.local.remove("pwHubToken");
     }
-    await showPairing(`Cannot connect to PW Hub: ${error.message}`);
+    await showPairing(`Не удалось подключиться к PW Hub: ${error.message}`);
   }
 }
 
@@ -132,7 +132,7 @@ async function collectPwCookies() {
 connectButton.addEventListener("click", async () => {
   const code = pairingCode.value.trim();
   if (!/^\d{6}$/.test(code)) {
-    setStatus("Enter the six-digit pairing code shown by PW Hub.", "error");
+    setStatus("Введите шестизначный код подключения, показанный в PW Hub.", "error");
     return;
   }
   connectButton.disabled = true;
@@ -146,7 +146,7 @@ connectButton.addEventListener("click", async () => {
     pairingCode.value = "";
     await refreshStatus();
   } catch (error) {
-    setStatus(`Connection failed: ${error.message}`, "error");
+    setStatus(`Ошибка подключения: ${error.message}`, "error");
   } finally {
     connectButton.disabled = false;
   }
@@ -154,11 +154,11 @@ connectButton.addEventListener("click", async () => {
 
 importButton.addEventListener("click", async () => {
   importButton.disabled = true;
-  setStatus("Reading the current PW Online session…");
+  setStatus("Чтение текущей сессии PW Online…");
   try {
     const cookies = await collectPwCookies();
     if (!cookies.length) {
-      throw new Error("No PW Online cookies were found. Open the PW account page through Game Center first.");
+      throw new Error("Cookies PW Online не найдены. Сначала откройте страницу аккаунта PW через Игровой центр.");
     }
     const result = await request("/import", {
       method: "POST",
@@ -166,9 +166,9 @@ importButton.addEventListener("click", async () => {
       timeout: 45000
     });
     accountName.textContent = result.accountName;
-    setStatus(`Session imported into ${result.accountName}.`, "success");
+    setStatus(`Сессия импортирована в аккаунт ${result.accountName}.`, "success");
   } catch (error) {
-    setStatus(`Import failed: ${error.message}`, "error");
+    setStatus(`Ошибка импорта: ${error.message}`, "error");
   } finally {
     importButton.disabled = false;
   }
@@ -178,7 +178,7 @@ refreshButton.addEventListener("click", refreshStatus);
 
 disconnectButton.addEventListener("click", async () => {
   await chrome.storage.local.remove("pwHubToken");
-  await showPairing("The extension has been disconnected from PW Hub.");
+  await showPairing("Расширение отключено от PW Hub.");
 });
 
 refreshStatus();

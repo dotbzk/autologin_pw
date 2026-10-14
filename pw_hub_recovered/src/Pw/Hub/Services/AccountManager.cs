@@ -75,7 +75,7 @@ public class AccountManager(IBrowser browser) : IAccountManager
 				{
 				}
 			}
-			CurrentAccount = account ?? throw new InvalidOperationException("Account not found");
+			CurrentAccount = account ?? throw new InvalidOperationException("Аккаунт не найден");
 			AttachToCurrentAccountPropertyChanged();
 			string previousUri = browser.Source?.ToString() ?? "https://pwonline.ru";
 			if (opts.CreateFreshSession)
@@ -130,7 +130,7 @@ public class AccountManager(IBrowser browser) : IAccountManager
 				}
 				if (!(await browser.WaitForElementExistsAsync(".main_menu", 15000)))
 				{
-					throw new InvalidOperationException("Page did not load in time (after retry)");
+					throw new InvalidOperationException("Страница не загрузилась вовремя после повторной попытки");
 				}
 			}
 			bool isAuthorized = await IsAuthorizedAsync();
@@ -226,7 +226,7 @@ public class AccountManager(IBrowser browser) : IAccountManager
 				{
 				}
 			}
-			CurrentAccount = account ?? throw new InvalidOperationException("Account not found");
+			CurrentAccount = account ?? throw new InvalidOperationException("Аккаунт не найден");
 			AttachToCurrentAccountPropertyChanged();
 			string previousUri = browser.Source?.ToString() ?? "https://pwonline.ru";
 			await browser.CreateNewSessionAsync(BrowserSessionIsolationMode.SeparateProfile, CurrentAccount.Id);
@@ -251,7 +251,7 @@ public class AccountManager(IBrowser browser) : IAccountManager
 				}
 				if (!(await browser.WaitForElementExistsAsync(".main_menu", 15000)))
 				{
-					throw new InvalidOperationException("Page did not load in time (after retry)");
+					throw new InvalidOperationException("Страница не загрузилась вовремя после повторной попытки");
 				}
 			}
 			bool isAuthorized = await IsAuthorizedAsync();
@@ -320,14 +320,14 @@ public class AccountManager(IBrowser browser) : IAccountManager
 		{
 			if (CurrentAccount == null)
 			{
-				throw new InvalidOperationException("Select an account in PW Hub before importing a browser session.");
+				throw new InvalidOperationException("Перед импортом браузерной сессии выберите аккаунт в PW Hub.");
 			}
 			Cookie[] allowedCookies = (cookies ?? Array.Empty<Cookie>())
 				.Where((Cookie cookie) => IsAllowedCookieDomain(cookie.Domain))
 				.ToArray();
 			if (allowedCookies.Length == 0)
 			{
-				throw new InvalidOperationException("The browser did not provide any PW authorization cookies.");
+				throw new InvalidOperationException("Браузер не передал cookies авторизации PW.");
 			}
 			Cookie[] previousCookies = await browser.GetCookiesAsync();
 			try
@@ -336,25 +336,25 @@ public class AccountManager(IBrowser browser) : IAccountManager
 				await browser.NavigateAsync("https://pwonline.ru/");
 				if (!(await browser.WaitForElementExistsAsync(".main_menu", 30000)))
 				{
-					throw new InvalidOperationException("PW Online did not finish loading after the session import.");
+					throw new InvalidOperationException("PW Online не завершил загрузку после импорта сессии.");
 				}
 				if (!(await browser.WaitForElementExistsAsync(".auth_h > h2 > a > strong", 10000)))
 				{
-					throw new InvalidOperationException("The imported browser session is not authorized on PW Online.");
+					throw new InvalidOperationException("Импортированная браузерная сессия не авторизована на PW Online.");
 				}
 				string siteId = await GetSiteId();
 				if (string.IsNullOrWhiteSpace(siteId))
 				{
-					throw new InvalidOperationException("The imported browser session is not authorized on PW Online.");
+					throw new InvalidOperationException("Импортированная браузерная сессия не авторизована на PW Online.");
 				}
 				if (!string.IsNullOrWhiteSpace(CurrentAccount.SiteId)
 					&& !string.Equals(CurrentAccount.SiteId, siteId, StringComparison.Ordinal))
 				{
-					throw new InvalidOperationException("The imported session belongs to a different PW Online account.");
+					throw new InvalidOperationException("Импортированная сессия принадлежит другому аккаунту PW Online.");
 				}
 				await using AppDbContext db = new AppDbContext();
 				Account account = await db.Accounts.FindAsync(CurrentAccount.Id)
-					?? throw new InvalidOperationException("The selected account no longer exists.");
+					?? throw new InvalidOperationException("Выбранный аккаунт больше не существует.");
 				if (string.IsNullOrWhiteSpace(account.SiteId))
 				{
 					account.SiteId = siteId;

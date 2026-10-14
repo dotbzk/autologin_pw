@@ -67,7 +67,7 @@ public sealed class BrowserSessionBridge : IDisposable
 	public PairingInfo BeginPairing()
 	{
 		Account account = _getSelectedAccount()
-			?? throw new InvalidOperationException("Select an account before connecting the browser extension.");
+			?? throw new InvalidOperationException("Перед подключением расширения браузера выберите аккаунт.");
 		_pairingCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
 		_pairingExpiresUtc = DateTime.UtcNow.AddMinutes(5);
 		_pairingAttemptsRemaining = 8;
@@ -121,7 +121,7 @@ public sealed class BrowserSessionBridge : IDisposable
 						{ "origin", origin ?? "<none>" },
 						{ "path", request.Path }
 					});
-					await WriteResponseAsync(client.GetStream(), 403, new { error = "Requests are accepted only from the PW Hub browser extension." }, null, cancellationToken);
+					await WriteResponseAsync(client.GetStream(), 403, new { error = "Запросы принимаются только от расширения браузера PW Hub." }, null, cancellationToken);
 					return;
 				}
 				switch ((request.Method, request.Path))
@@ -147,7 +147,7 @@ public sealed class BrowserSessionBridge : IDisposable
 			catch (Exception ex)
 			{
 				_log.Warn("Browser session bridge request failed", new Dictionary<string, object> { { "error", ex.Message } });
-				await TryWriteErrorAsync(client, 500, "PW Hub could not process the browser session.", origin, cancellationToken);
+				await TryWriteErrorAsync(client, 500, "PW Hub не смог обработать браузерную сессию.", origin, cancellationToken);
 			}
 		}
 	}
@@ -157,13 +157,13 @@ public sealed class BrowserSessionBridge : IDisposable
 		PairRequest? payload = JsonSerializer.Deserialize<PairRequest>(request.Body, _jsonOptions);
 		if (_pairingCode == null || DateTime.UtcNow > _pairingExpiresUtc || _pairingAttemptsRemaining <= 0)
 		{
-			await WriteResponseAsync(stream, 401, new { error = "The pairing code has expired. Request a new code from PW Hub." }, origin, cancellationToken);
+			await WriteResponseAsync(stream, 401, new { error = "Срок действия кода подключения истёк. Запросите новый код в PW Hub." }, origin, cancellationToken);
 			return;
 		}
 		_pairingAttemptsRemaining--;
 		if (payload == null || !FixedTimeEquals(payload.Code, _pairingCode))
 		{
-			await WriteResponseAsync(stream, 401, new { error = "The pairing code is not valid." }, origin, cancellationToken);
+			await WriteResponseAsync(stream, 401, new { error = "Неверный код подключения." }, origin, cancellationToken);
 			return;
 		}
 		_pairingCode = null;
@@ -180,7 +180,7 @@ public sealed class BrowserSessionBridge : IDisposable
 	{
 		if (!IsAuthorized(request))
 		{
-			await WriteResponseAsync(stream, 401, new { error = "The extension is not connected to PW Hub." }, origin, cancellationToken);
+			await WriteResponseAsync(stream, 401, new { error = "Расширение не подключено к PW Hub." }, origin, cancellationToken);
 			return;
 		}
 		Account? account = _getSelectedAccount();
@@ -189,7 +189,7 @@ public sealed class BrowserSessionBridge : IDisposable
 			ready = account != null,
 			accountId = account?.Id,
 			accountName = account?.Name,
-			message = account == null ? "Select an account in PW Hub." : "Ready to import the current PW session."
+			message = account == null ? "Выберите аккаунт в PW Hub." : "Готово к импорту текущей сессии PW."
 		}, origin, cancellationToken);
 	}
 
@@ -197,15 +197,15 @@ public sealed class BrowserSessionBridge : IDisposable
 	{
 		if (!IsAuthorized(request))
 		{
-			await WriteResponseAsync(stream, 401, new { error = "The extension is not connected to PW Hub." }, origin, cancellationToken);
+			await WriteResponseAsync(stream, 401, new { error = "Расширение не подключено к PW Hub." }, origin, cancellationToken);
 			return;
 		}
 		Account account = _getSelectedAccount()
-			?? throw new InvalidOperationException("Select an account in PW Hub before importing the browser session.");
+			?? throw new InvalidOperationException("Перед импортом браузерной сессии выберите аккаунт в PW Hub.");
 		ImportRequest? payload = JsonSerializer.Deserialize<ImportRequest>(request.Body, _jsonOptions);
 		if (payload == null || !string.Equals(payload.AccountId, account.Id, StringComparison.Ordinal))
 		{
-			await WriteResponseAsync(stream, 400, new { error = "The selected PW Hub account changed. Refresh the extension and try again." }, origin, cancellationToken);
+			await WriteResponseAsync(stream, 400, new { error = "Выбранный аккаунт PW Hub изменился. Обновите расширение и повторите попытку." }, origin, cancellationToken);
 			return;
 		}
 		Cookie[] cookies = (payload?.Cookies ?? Array.Empty<Cookie>())
@@ -214,7 +214,7 @@ public sealed class BrowserSessionBridge : IDisposable
 			.ToArray();
 		if (cookies.Length == 0)
 		{
-			await WriteResponseAsync(stream, 400, new { error = "No supported PW cookies were found in the browser." }, origin, cancellationToken);
+			await WriteResponseAsync(stream, 400, new { error = "В браузере не найдены поддерживаемые cookies PW." }, origin, cancellationToken);
 			return;
 		}
 		try

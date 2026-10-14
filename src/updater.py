@@ -12,8 +12,34 @@ import time
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-from update_support import download_release, install_release
-from background_memory import stop_background_cleaner
+try:
+    from .update_support import download_release, install_release
+    from .background_memory import stop_background_cleaner
+except ImportError:
+    from update_support import download_release, install_release
+    from background_memory import stop_background_cleaner
+
+
+def application_icon_path():
+    candidates = []
+    if getattr(sys, "frozen", False):
+        candidates.append(Path(sys.executable).resolve().parent / "configs" / "ico" / "app.ico")
+        bundle_root = getattr(sys, "_MEIPASS", None)
+        if bundle_root:
+            candidates.append(Path(bundle_root) / "configs" / "ico" / "app.ico")
+    else:
+        candidates.append(Path(__file__).resolve().parent / "configs" / "ico" / "app.ico")
+    return next((path for path in candidates if path.is_file()), None)
+
+
+def configure_window_icon(root):
+    icon_path = application_icon_path()
+    if icon_path is not None:
+        try:
+            root.iconbitmap(default=str(icon_path))
+        except (OSError, tk.TclError):
+            pass
+    return icon_path
 
 
 def wait_for_parent_exit(pid):
@@ -111,8 +137,16 @@ def main():
     )
     args = parser.parse_args()
 
+    if sys.platform == "win32":
+        try:
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                "autologin_pw.Updater"
+            )
+        except (AttributeError, OSError):
+            pass
     root = tk.Tk()
     root.title("Game Tools Update")
+    configure_window_icon(root)
     root.geometry("460x155")
     root.resizable(False, False)
     root.attributes("-topmost", True)

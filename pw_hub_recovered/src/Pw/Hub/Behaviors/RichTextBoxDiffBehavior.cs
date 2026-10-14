@@ -77,7 +77,7 @@ public static class RichTextBoxDiffBehavior
 		{
 			try
 			{
-				richTextBox.Document = new FlowDocument(new Paragraph(new Run("Could not display the diff")));
+				richTextBox.Document = new FlowDocument(new Paragraph(new Run("Не удалось отобразить diff")));
 			}
 			catch
 			{

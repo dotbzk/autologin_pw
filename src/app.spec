@@ -8,10 +8,11 @@ source_dir = Path(SPECPATH)
 project_root = source_dir.parent
 rapidocr_datas, rapidocr_binaries, rapidocr_hiddenimports = collect_all('rapidocr')
 qml_datas = [(str(source_dir / 'qml'), 'qml')]
+icon_datas = [(str(source_dir / 'configs' / 'ico' / 'app.ico'), 'configs/ico')]
 hub_datas = [
     (str(project_root / 'game_tools_hub' / 'qml'), 'game_tools_hub/qml'),
     (str(project_root / 'game_tools_hub' / 'version.json'), 'game_tools_hub'),
-]
+] + icon_datas
 
 a = Analysis(
     [str(source_dir / 'app.py')],
@@ -65,7 +66,7 @@ updater_a = Analysis(
     [str(source_dir / 'updater.py')],
     pathex=[str(source_dir)],
     binaries=[],
-    datas=[],
+    datas=icon_datas,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

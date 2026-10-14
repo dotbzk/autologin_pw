@@ -15,7 +15,6 @@ using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using NotifyIconEx;
 using Pw.Hub.Infrastructure.Logging;
-using Pw.Hub.Infrastructure;
 using Pw.Hub.Models;
 using Pw.Hub.Services;
 using Pw.Hub.ViewModels;
@@ -61,7 +60,6 @@ public class App : System.Windows.Application
 		{
 		}
 		base.OnStartup(e);
-		EnglishUiLocalization.Enable();
 		try
 		{
 			Directory.SetCurrentDirectory(AppContext.BaseDirectory);
@@ -135,18 +133,18 @@ public class App : System.Windows.Application
 			Icon = Icon.ExtractAssociatedIcon(Process.GetCurrentProcess().MainModule?.FileName)
 		};
 		_authService = Services.GetRequiredService<AuthService>();
-		NotifyIcon.AddMenu("Check authorization", OnClick);
-		NotifyIcon.AddMenu("Connect browser extension", OnConnectBrowserExtension);
-		NotifyIcon.AddMenu("Check for updates", delegate
+		NotifyIcon.AddMenu("Проверить авторизацию", OnClick);
+		NotifyIcon.AddMenu("Подключить расширение браузера", OnConnectBrowserExtension);
+		NotifyIcon.AddMenu("Проверить обновления", delegate
 		{
 			System.Windows.MessageBox.Show(
-				"Updates are managed by Game Tools Hub.",
+				"Обновления управляются через Game Tools Hub.",
 				"PW Account Hub",
 				MessageBoxButton.OK,
 				MessageBoxImage.Information);
 		});
 		NotifyIcon.AddMenu("-");
-		NotifyIcon.AddMenu("Exit", async delegate
+		NotifyIcon.AddMenu("Выход", async delegate
 		{
 			try
 			{
@@ -185,7 +183,7 @@ public class App : System.Windows.Application
 		{
 			bridge?.Dispose();
 			_browserSessionBridge = null;
-			Log.For<App>().Warn("Browser extension bridge could not start", new Dictionary<string, object> { { "error", ex.Message } });
+			Log.For<App>().Warn("Не удалось запустить мост расширения браузера", new Dictionary<string, object> { { "error", ex.Message } });
 		}
 		try
 		{
@@ -214,14 +212,14 @@ public class App : System.Windows.Application
 		{
 			if (_browserSessionBridge == null)
 			{
-				throw new InvalidOperationException("The browser extension bridge is not available.");
+				throw new InvalidOperationException("Мост расширения браузера недоступен.");
 			}
 			BrowserSessionBridge.PairingInfo pairing = _browserSessionBridge.BeginPairing();
 			System.Windows.Clipboard.SetText(pairing.Code);
 			string extensionPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "PwHubBrowserExtension"));
 			System.Windows.MessageBox.Show(
-				$"Selected account: {pairing.AccountName}\n\nPairing code: {pairing.Code}\n\nThe code has been copied to the clipboard and expires in 5 minutes. Open the PW Hub Session Import extension, paste the code, and click Connect.\n\nExtension folder:\n{extensionPath}",
-				"Connect Browser Extension",
+				$"Выбранный аккаунт: {pairing.AccountName}\n\nКод подключения: {pairing.Code}\n\nКод скопирован в буфер обмена и действует 5 минут. Откройте расширение PW Hub Session Import, вставьте код и нажмите «Подключить».\n\nПапка расширения:\n{extensionPath}",
+				"Подключение расширения браузера",
 				MessageBoxButton.OK,
 				MessageBoxImage.Information);
 		}
@@ -229,7 +227,7 @@ public class App : System.Windows.Application
 		{
 			System.Windows.MessageBox.Show(
 				ex.Message,
-				"Connect Browser Extension",
+				"Подключение расширения браузера",
 				MessageBoxButton.OK,
 				MessageBoxImage.Warning);
 		}
@@ -237,7 +235,7 @@ public class App : System.Windows.Application
 
 	private void App_OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
 	{
-		IReadOnlyList<string> startupLogs = StartupDiagnostics.WriteFailure("UI dispatcher", e.Exception);
+		IReadOnlyList<string> startupLogs = StartupDiagnostics.WriteFailure("Диспетчер интерфейса", e.Exception);
 		try
 		{
 			Log.For<App>().Error("Unhandled UI exception", e.Exception);
@@ -248,19 +246,19 @@ public class App : System.Windows.Application
 		try
 		{
 			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine("Exception: " + e.Exception.Message);
+			stringBuilder.AppendLine("Исключение: " + e.Exception.Message);
 			stringBuilder.AppendLine();
-			stringBuilder.AppendLine("Stack trace: " + (e.Exception.StackTrace ?? "empty"));
+			stringBuilder.AppendLine("Стек вызовов: " + (e.Exception.StackTrace ?? "пусто"));
 			File.WriteAllText("error.log", stringBuilder.ToString());
 		}
 		catch
 		{
 		}
 		string logMessage = startupLogs.Count > 0
-			? "\n\nDiagnostic log:\n" + string.Join("\n", startupLogs)
+			? "\n\nДиагностический лог:\n" + string.Join("\n", startupLogs)
 			: string.Empty;
 		System.Windows.MessageBox.Show(
-			"PW Account Hub encountered an unexpected error.\n\n" + e.Exception + logMessage,
+			"В PW Account Hub произошла непредвиденная ошибка.\n\n" + e.Exception + logMessage,
 			"PW Account Hub",
 			MessageBoxButton.OK,
 			MessageBoxImage.Error);
@@ -377,12 +375,12 @@ public class App : System.Windows.Application
 		catch (Exception ex)
 		{
 			Environment.ExitCode = 1;
-			IReadOnlyList<string> startupLogs = StartupDiagnostics.WriteFailure("Application bootstrap", ex);
+			IReadOnlyList<string> startupLogs = StartupDiagnostics.WriteFailure("Запуск приложения", ex);
 			string logMessage = startupLogs.Count > 0
-				? "\n\nDiagnostic log:\n" + string.Join("\n", startupLogs)
+				? "\n\nДиагностический лог:\n" + string.Join("\n", startupLogs)
 				: string.Empty;
 			System.Windows.MessageBox.Show(
-				"PW Account Hub could not start.\n\n" + ex.Message + logMessage,
+				"Не удалось запустить PW Account Hub.\n\n" + ex.Message + logMessage,
 				"PW Account Hub",
 				MessageBoxButton.OK,
 				MessageBoxImage.Error);

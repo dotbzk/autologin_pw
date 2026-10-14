@@ -27,7 +27,7 @@ public class CreateSquadWindow : Window, IComponentConnector
 		string text = SquadNameTextBox.Text.Trim();
 		if (string.IsNullOrWhiteSpace(text))
 		{
-			MessageBox.Show("Enter a squad name.", "Error", MessageBoxButton.OK, MessageBoxImage.Exclamation);
+			MessageBox.Show("Введите название отряда", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Exclamation);
 			return;
 		}
 		SquadName = text;

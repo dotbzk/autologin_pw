@@ -509,13 +509,13 @@ public class ModulesLibraryViewModel : INotifyPropertyChanged
 				}
 				catch (Exception ex2)
 				{
-					MessageBox.Show("Could not create the module: " + ex2.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+					MessageBox.Show("Не удалось создать модуль: " + ex2.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Hand);
 				}
 			};
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show("Could not open the editor: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show("Ошибка открытия редактора: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 
@@ -524,7 +524,7 @@ public class ModulesLibraryViewModel : INotifyPropertyChanged
 		ModuleDto m = SelectedModule;
 		if (m == null)
 		{
-			MessageBox.Show("Select a module.");
+			MessageBox.Show("Выберите модуль");
 			return;
 		}
 		if (IsOwnedByCurrentUser(m))
@@ -554,19 +554,19 @@ public class ModulesLibraryViewModel : INotifyPropertyChanged
 						}
 						catch (Exception ex2)
 						{
-							MessageBox.Show("Could not update the module: " + ex2.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+							MessageBox.Show("Не удалось обновить модуль: " + ex2.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Hand);
 						}
 					};
 					return;
 				}
 				catch (Exception ex)
 				{
-					MessageBox.Show("Could not open the editor: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+					MessageBox.Show("Ошибка открытия редактора: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Hand);
 					return;
 				}
 			}
 		}
-		MessageBox.Show("You can edit only your own modules.");
+		MessageBox.Show("Можно редактировать только свои модули");
 	}
 
 	private async void DeleteModule()
@@ -581,7 +581,7 @@ public class ModulesLibraryViewModel : INotifyPropertyChanged
 			UserDto currentUser = _api.CurrentUser;
 			if (currentUser != null && currentUser.Developer)
 			{
-				if (MessageBox.Show("Delete this module?", "Confirmation", MessageBoxButton.YesNo, MessageBoxImage.Exclamation) != MessageBoxResult.Yes)
+				if (MessageBox.Show("Удалить модуль?", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Exclamation) != MessageBoxResult.Yes)
 				{
 					return;
 				}
@@ -595,12 +595,12 @@ public class ModulesLibraryViewModel : INotifyPropertyChanged
 				}
 				catch (Exception ex)
 				{
-					MessageBox.Show("Could not delete the module: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+					MessageBox.Show("Не удалось удалить модуль: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Hand);
 					return;
 				}
 			}
 		}
-		MessageBox.Show("You can delete only your own modules.");
+		MessageBox.Show("Можно удалять только свои модули");
 	}
 
 	private void OpenLuaEditor()
@@ -616,7 +616,7 @@ public class ModulesLibraryViewModel : INotifyPropertyChanged
 		}
 		catch (Exception ex)
 		{
-			MessageBox.Show("Could not open the Lua editor: " + ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Hand);
+			MessageBox.Show("Ошибка открытия редактора Lua: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Hand);
 		}
 	}
 

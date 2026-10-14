@@ -1,31 +1,31 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PW Hub Session Import</title>
+  <title>Импорт сессии PW Hub</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <main>
-    <h1>PW Hub Session Import</h1>
-    <p id="status" class="status">Checking PW Hub…</p>
+    <h1>Импорт сессии PW Hub</h1>
+    <p id="status" class="status">Проверка подключения к PW Hub…</p>
 
     <section id="pairing" hidden>
-      <label for="pairingCode">Pairing code</label>
+      <label for="pairingCode">Код подключения</label>
       <input id="pairingCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000">
-      <button id="connectButton" type="button">Connect</button>
+      <button id="connectButton" type="button">Подключить</button>
     </section>
 
     <section id="connected" hidden>
-      <div class="account-label">Selected PW Hub account</div>
-      <div id="accountName" class="account-name">No account selected</div>
-      <button id="importButton" class="primary" type="button">Import Current PW Session</button>
-      <button id="refreshButton" class="secondary" type="button">Refresh Account</button>
-      <button id="disconnectButton" class="link" type="button">Disconnect</button>
+      <div class="account-label">Выбранный аккаунт PW Hub</div>
+      <div id="accountName" class="account-name">Аккаунт не выбран</div>
+      <button id="importButton" class="primary" type="button">Импортировать текущую сессию PW</button>
+      <button id="refreshButton" class="secondary" type="button">Обновить аккаунт</button>
+      <button id="disconnectButton" class="link" type="button">Отключить</button>
     </section>
 
-    <p class="privacy">Only PW Online cookies are transferred to the local PW Hub application.</p>
+    <p class="privacy">В локальное приложение PW Hub передаются только cookies PW Online.</p>
   </main>
   <script src="popup.js"></script>
 </body>

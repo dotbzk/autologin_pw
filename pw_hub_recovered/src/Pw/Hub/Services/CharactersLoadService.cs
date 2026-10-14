@@ -34,7 +34,7 @@ public class CharactersLoadService : ICharactersLoadService
 		}
 		IBrowser browser = accountPage.Browser;
 		IAccountManager accountManager = accountPage.AccountManager;
-		ScriptLogWindow log = new ScriptLogWindow("Load Characters", closeWhenEnd: true)
+		ScriptLogWindow log = new ScriptLogWindow("Загрузка персонажей", closeWhenEnd: true)
 		{
 			Owner = owner
 		};
@@ -45,9 +45,9 @@ public class CharactersLoadService : ICharactersLoadService
 			_ = 10;
 			try
 			{
-				log.AppendLog("Switching to account: " + account.Name);
+				log.AppendLog("Переключаемся на аккаунт: " + account.Name);
 				await accountManager.ChangeAccountAsync(account.Id);
-				log.AppendLog("Opening the promotional items page...");
+				log.AppendLog("Переходим на страницу промо-предметов...");
 				await browser.NavigateAsync("https://pwonline.ru/promo_items.php");
 				await Task.Delay(300);
 				await browser.WaitForElementExistsAsync(".js-shard");
@@ -55,7 +55,7 @@ public class CharactersLoadService : ICharactersLoadService
 				string script = "(function(){var s=document.querySelector('.js-shard');if(!s)return '[]';return JSON.stringify(Array.from(s.options).map(o=>({value:o.value,text:o.text})));})()";
 				string text = TrimJs(await browser.ExecuteScriptAsync(script));
 				List<JsOption> list = (string.IsNullOrWhiteSpace(text) ? new List<JsOption>() : (JsonSerializer.Deserialize<List<JsOption>>(text) ?? new List<JsOption>()));
-				log.AppendLog($"Servers found: {list.Count}");
+				log.AppendLog($"Найдено серверов: {list.Count}");
 				List<AccountServer> servers = new List<AccountServer>();
 				foreach (JsOption shard in list)
 				{
@@ -78,7 +78,7 @@ public class CharactersLoadService : ICharactersLoadService
 							ServerId = server.Id
 						}).ToList();
 						servers.Add(server);
-						log.AppendLog($"   {server.Name}: characters — {server.Characters.Count}");
+						log.AppendLog($"   {server.Name}: персонажей — {server.Characters.Count}");
 					}
 				}
 				await using (AppDbContext db = new AppDbContext())
@@ -119,12 +119,12 @@ public class CharactersLoadService : ICharactersLoadService
 						await db.SaveChangesAsync();
 					}
 				}
-				log.MarkCompleted("Done: server and character data were saved.");
+				log.MarkCompleted("Готово: данные о серверах и персонажах сохранены.");
 			}
 			catch (Exception ex)
 			{
-				log.AppendLog("Error: " + ex.Message);
-				log.MarkCompleted("Completed with an error");
+				log.AppendLog("Ошибка: " + ex.Message);
+				log.MarkCompleted("Завершено с ошибкой");
 			}
 		}
 	}

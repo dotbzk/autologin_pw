@@ -63,7 +63,7 @@ reportInit = function(total, win)
   progress.total = total or 0
   progress.done = 0
   progress.last = -1
-  ReportProgressMsg(0, 'Starting: '..tostring(progress.total)..' accounts, '..tostring(win or 1)..' windows')
+  ReportProgressMsg(0, 'Старт: аккаунтов '..tostring(progress.total)..', окон '..tostring(win or 1))
 end
 report = function(message, force)
   local pct = 0
@@ -97,23 +97,23 @@ ensureAuthorized = function(handle) aNav(handle,'https://pwonline.ru/'); return 
 
 -- Apply the promo code to one account.
 processAccount = function(handle, accountId, promoCode)
-  if not aChange(handle, accountId) then return { status='error', error='could not switch account' } end
-  if not ensureAuthorized(handle) then aChange(handle, accountId); if not ensureAuthorized(handle) then return { status='error', error='not authorized (timeout)' } end end
+  if not aChange(handle, accountId) then return { status='ошибка', error='не удалось сменить аккаунт' } end
+  if not ensureAuthorized(handle) then aChange(handle, accountId); if not ensureAuthorized(handle) then return { status='ошибка', error='не авторизован (таймаут)' } end end
   local url='https://pwonline.ru/pin/'..promoCode
   aNav(handle, url)
-  if not aWait(handle, '.pin_code_input', 30000) then return { status='error', error='.pin_code_input was not found (timeout)' } end
+  if not aWait(handle, '.pin_code_input', 30000) then return { status='ошибка', error='кнопка .pin_code_input не найдена (таймаут)' } end
   local r1=tostring(aExec(handle, JS_CLICK_PIN_PRIMARY) or '')
   if r1~='pin_clicked' then aExec(handle, JS_CLICK_PIN_FALLBACK) end
   aExec(handle, JS_WAIT_READY)
   await(function(k) DelayCb(700, function() k(true) end) end)
   local is503=tostring(aExec(handle, JS_IS_503) or ''):lower()
-  if is503=='true' then return { status='error 503' } end
-  if aExists(handle, '.pin_bonuses_list') then return { status='success' } end
-  if aExists(handle, '.m_error') then local txt=tostring(aExec(handle, JS_READ_ERROR_TEXT) or '') if txt=='' then txt='unknown error' end return { status='error', error=txt } end
+  if is503=='true' then return { status='ошибка 503' } end
+  if aExists(handle, '.pin_bonuses_list') then return { status='успешно' } end
+  if aExists(handle, '.m_error') then local txt=tostring(aExec(handle, JS_READ_ERROR_TEXT) or '') if txt=='' then txt='неизвестная ошибка' end return { status='ошибка', error=txt } end
   await(function(k) DelayCb(1000, function() k(true) end) end)
-  if aExists(handle, '.pin_bonuses_list') then return { status='success' } end
-  if aExists(handle, '.m_error') then local txt2=tostring(aExec(handle, JS_READ_ERROR_TEXT) or '') if txt2=='' then txt2='unknown error' end return { status='error', error=txt2 } end
-  return { status='error', error='could not determine the result' }
+  if aExists(handle, '.pin_bonuses_list') then return { status='успешно' } end
+  if aExists(handle, '.m_error') then local txt2=tostring(aExec(handle, JS_READ_ERROR_TEXT) or '') if txt2=='' then txt2='неизвестная ошибка' end return { status='ошибка', error=txt2 } end
+  return { status='ошибка', error='не удалось определить результат' }
 end
 
 -- Coroutine body for one browser group.
@@ -121,51 +121,51 @@ groupMain = function(groupIndex, accountIds)
   local handle = aCreate({})
   aDelay(1000)
   if (not handle) or tonumber(handle)==0 then
-    Pfx('[Group #',groupIndex,'] could not create a browser')
-    for _,accId in ipairs(accountIds) do results[accId]={ status='error', error='browser was not created' } end
+    Pfx('[Группа #',groupIndex,'] не удалось создать браузер')
+    for _,accId in ipairs(accountIds) do results[accId]={ status='ошибка', error='браузер не создан' } end
     return
   end
-  Pfx('[Group #',groupIndex,'] handle =', handle)
-  ReportProgressMsg(progress.last<0 and 0 or progress.last, 'Group #'..tostring(groupIndex)..' started ('..tostring(#accountIds)..' accounts)')
+  Pfx('[Группа #',groupIndex,'] handle =', handle)
+  ReportProgressMsg(progress.last<0 and 0 or progress.last, 'Группа #'..tostring(groupIndex)..' стартовала ('..tostring(#accountIds)..' акк.)')
   for i=1,#accountIds do
     -- Recreate the browser after every two accounts to reduce HTTP 503 errors.
     if i > 1 and ((i-1) % 2) == 0 then
       local oldHandle = handle
-      Pfx('[Group #',groupIndex,'] account threshold reached; recreating the browser...')
+      Pfx('[Группа #',groupIndex,'] достигнут порог 5 аккаунтов, пересоздаю браузер...')
       -- Create the replacement first, then switch over and close the old browser.
       local newHandle = aCreate({})
       aDelay(700)
       if newHandle and tonumber(newHandle) ~= 0 then
         handle = newHandle
-        Pfx('[Group #',groupIndex,'] new handle =', handle, '; closing old handle =', oldHandle)
+        Pfx('[Группа #',groupIndex,'] новый handle =', handle, '; закрываю старый =', oldHandle)
         pcall(aClose, oldHandle)
       else
-        Pfx('[Group #',groupIndex,'] browser recreation failed; continuing with the existing window')
+        Pfx('[Группа #',groupIndex,'] не удалось пересоздать браузер — продолжаю со старым окном')
       end
     end
 
     local accId = tostring(accountIds[i])
     local who = nameOf(accId)
-    Pfx('[Group #',groupIndex,'] account:', who, '(', i, '/', #accountIds, ')')
+    Pfx('[Группа #',groupIndex,'] аккаунт:', who, '(', i, '/', #accountIds, ')')
     local ok,res = pcall(processAccount, handle, accId, promo)
-    if not ok then res = { status='error', error=('lua error: '..tostring(res)) } end
-    results[accId] = res or { status='error', error='empty result' }
+    if not ok then res = { status='ошибка', error=('lua error: '..tostring(res)) } end
+    results[accId] = res or { status='ошибка', error='пустой результат' }
     -- Report the completed account.
     progress.done = math.min(progress.done + 1, progress.total)
     local msg
     if res and res.status then
-      if res.status=='success' then msg = who..': success'
-      elseif res.status=='error 503' then msg = who..': error 503'
-      elseif res.status=='error' then msg = who..': error — '..(res.error or '')
+      if res.status=='успешно' then msg = who..': успешно'
+      elseif res.status=='ошибка 503' then msg = who..': ошибка 503'
+      elseif res.status=='ошибка' then msg = who..': ошибка — '..(res.error or '')
       else msg = who..': '..tostring(res.status) end
     else
-      msg = who..': no result'
+      msg = who..': нет результата'
     end
     report(msg, false)
     -- Pause briefly between accounts.
     await(function(k) DelayCb(300, function() k(true) end) end)
   end
-  Pfx('[Group #',groupIndex,'] finished; closing browser')
+  Pfx('[Группа #',groupIndex,'] завершилась, закрываю браузер')
   aClose(handle)
 end
 
@@ -182,30 +182,30 @@ startGroup = function(groupIndex, accountIds)
       for _, accId in ipairs(accounts) do
         local r = results[accId]
         if r then
-          if r.status=='success' then okCount=okCount+1
-          elseif r.status=='error 503' then e503=e503+1
-          elseif r.status=='error' then errCount=errCount+1 end
+          if r.status=='успешно' then okCount=okCount+1
+          elseif r.status=='ошибка 503' then e503=e503+1
+          elseif r.status=='ошибка' then errCount=errCount+1 end
         end
       end
       -- Always complete at 100 percent.
       progress.done = progress.total
-      report('Done: successful='..okCount..', 503='..e503..', errors='..errCount, true)
+      report('Готово: успешно='..okCount..', 503='..e503..', ошибок='..errCount, true)
 
-      Pfx('===== Promo Code Report =====')
-      Pfx('Total accounts:', #accounts)
-      Pfx('Successful:', okCount)
-      Pfx('Error 503:', e503)
-      Pfx('Errors:', errCount)
+      Pfx('===== Отчёт по вводу промокода =====')
+      Pfx('Всего аккаунтов:', #accounts)
+      Pfx('Успешно:', okCount)
+      Pfx('Ошибка 503:', e503)
+      Pfx('Ошибок:', errCount)
       for _, accId in ipairs(accounts) do
         local r = results[accId]
         local who = nameOf(accId)
         if r then
-          if r.status=='success' then Pfx(who, ': success')
-          elseif r.status=='error 503' then Pfx(who, ': error 503')
-          elseif r.status=='error' then Pfx(who, ': error — ', r.error or '')
-          else Pfx(who, ': no result') end
+          if r.status=='успешно' then Pfx(who, ': успешно')
+          elseif r.status=='ошибка 503' then Pfx(who, ': ошибка 503')
+          elseif r.status=='ошибка' then Pfx(who, ': ошибка — ', r.error or '')
+          else Pfx(who, ': нет результата') end
         else
-          Pfx(who, ': no result')
+          Pfx(who, ': нет результата')
         end
       end
       TryFinish()
@@ -222,8 +222,8 @@ local accounts = normalizeAccounts(accounts_raw)
 Pfx('accounts normalized:', #accounts)
 Pfx('windows:', windows)
 Pfx('promo:', promo)
-if #accounts==0 then Pfx('No accounts.'); ReportProgressMsg(0, 'No accounts'); TryFinish(); return end
-if promo=='' then Pfx('Promo code is empty.'); ReportProgressMsg(0, 'Empty promo code'); TryFinish(); return end
+if #accounts==0 then Pfx('Нет аккаунтов.'); ReportProgressMsg(0, 'Нет аккаунтов'); TryFinish(); return end
+if promo=='' then Pfx('Промокод пуст.'); ReportProgressMsg(0, 'Пустой промокод'); TryFinish(); return end
 
 -- Distribute accounts across exactly N browser groups.
 local groups = {}; for i=1,windows do groups[i]={} end
@@ -236,5 +236,5 @@ reportInit(progress.total, windows)
 -- Count active groups and start their coroutines.
 pending = 0; for gi=1,#groups do if #groups[gi]>0 then pending=pending+1 end end
 Pfx('groups:', #groups, 'pending:', pending)
-if pending==0 then Pfx('Empty groups.'); ReportProgressMsg(100, 'Done (empty)'); TryFinish(); return end
+if pending==0 then Pfx('Пустые группы.'); ReportProgressMsg(100, 'Готово (пусто)'); TryFinish(); return end
 for gi=1,#groups do local grp = groups[gi]; if #grp>0 then startGroup(gi, grp) end end

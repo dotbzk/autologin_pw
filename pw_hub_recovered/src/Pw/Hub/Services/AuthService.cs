@@ -69,7 +69,7 @@ public class AuthService
 					notAuthorized.Add(account);
 				}
 			}
-			app.NotifyIcon.ShowBalloonTip(5, "Authorization Check", $"Signed out: {notAuthorized.Count}, signed back in: {reAuthorized.Count}", (notAuthorized.Count <= 0) ? ToolTipIcon.Info : ToolTipIcon.Warning);
+			app.NotifyIcon.ShowBalloonTip(5, "Проверка авторизации", $"Не авторизованы: {notAuthorized.Count}, Авторизовались: {reAuthorized.Count}", (notAuthorized.Count <= 0) ? ToolTipIcon.Info : ToolTipIcon.Warning);
 		}
 		finally
 		{
