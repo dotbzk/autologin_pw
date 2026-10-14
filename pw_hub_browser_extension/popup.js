@@ -31,6 +31,7 @@ async function request(path, options = {}) {
       method: options.method || "GET",
       headers: {
         "Content-Type": "application/json",
+        "X-PW-Hub-Extension": "pw-hub-session-import-v1",
         ...(token ? { "X-PW-Hub-Token": token } : {})
       },
       body: options.body ? JSON.stringify(options.body) : undefined,
