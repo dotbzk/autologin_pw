@@ -82,6 +82,27 @@ class ReleaseManifestTests(unittest.TestCase):
         self.assertIn('ExtensionMarker = "pw-hub-session-import-v1"', bridge)
         self.assertIn("X-PW-Hub-Extension", bridge)
 
+    def test_browser_extension_supports_two_way_session_transfer(self):
+        popup = (ROOT / "pw_hub_browser_extension/popup.js").read_text(
+            encoding="utf-8"
+        )
+        popup_html = (ROOT / "pw_hub_browser_extension/popup.html").read_text(
+            encoding="utf-8"
+        )
+        bridge = (
+            ROOT
+            / "pw_hub_recovered/src/Pw/Hub/Services/BrowserSessionBridge.cs"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn('request("/import"', popup)
+        self.assertIn('request("/export"', popup)
+        self.assertIn("chrome.cookies.set", popup)
+        self.assertIn('chrome.tabs.create({ url: "https://pwonline.ru/" })', popup)
+        self.assertIn('id="importButton"', popup_html)
+        self.assertIn('id="exportButton"', popup_html)
+        self.assertIn('("POST", "/pwhub/export")', bridge)
+        self.assertIn(".Where(IsSafeCookie)", bridge)
+
 
 if __name__ == "__main__":
     unittest.main()

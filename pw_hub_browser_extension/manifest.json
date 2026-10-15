@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Импорт сессии PW Hub",
-  "version": "1.0.2",
-  "description": "Безопасно импортирует текущую браузерную сессию PW Online в выбранный аккаунт PW Hub.",
+  "name": "Обмен сессиями PW Hub",
+  "version": "1.1.0",
+  "description": "Безопасно переносит сессии PW Online между Chrome или Edge и выбранным аккаунтом PW Hub.",
   "permissions": [
     "cookies",
     "storage"
@@ -15,7 +15,7 @@
     "https://*.pw.mail.ru/*"
   ],
   "action": {
-    "default_title": "Импортировать сессию PW",
+    "default_title": "Обмен сессиями PW Hub",
     "default_popup": "popup.html"
   }
 }

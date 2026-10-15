@@ -14,7 +14,7 @@
     },
     "pwHub": {
       "displayName": "PW Account Hub",
-      "version": "1.0.8",
+      "version": "1.0.9",
       "executable": "PwHub/Pw.Hub.exe"
     }
   }

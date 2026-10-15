@@ -1,6 +1,7 @@
 {
-  "version": "1.0.8",
+  "version": "1.0.9",
   "changes": [
+    "Added secure two-way PW Online session transfer between PW Account Hub and Chrome or Edge.",
     "Restored the Russian interface, dialogs, messages, logs, editor descriptions, bundled script panels, and browser-session connection flow.",
     "Removed the runtime English localization layer from recovered WPF resources."
   ]

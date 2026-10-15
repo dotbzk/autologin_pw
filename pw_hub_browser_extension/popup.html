@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Импорт сессии PW Hub</title>
+  <title>Обмен сессиями PW Hub</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <main>
-    <h1>Импорт сессии PW Hub</h1>
+    <h1>Обмен сессиями PW Hub</h1>
     <p id="status" class="status">Проверка подключения к PW Hub…</p>
 
     <section id="pairing" hidden>
@@ -20,12 +20,13 @@
     <section id="connected" hidden>
       <div class="account-label">Выбранный аккаунт PW Hub</div>
       <div id="accountName" class="account-name">Аккаунт не выбран</div>
-      <button id="importButton" class="primary" type="button">Импортировать текущую сессию PW</button>
+      <button id="importButton" class="primary" type="button">Браузер → PW Hub</button>
+      <button id="exportButton" class="primary export" type="button">PW Hub → браузер</button>
       <button id="refreshButton" class="secondary" type="button">Обновить аккаунт</button>
       <button id="disconnectButton" class="link" type="button">Отключить</button>
     </section>
 
-    <p class="privacy">В локальное приложение PW Hub передаются только cookies PW Online.</p>
+    <p class="privacy">Обмениваются только cookies PW Online. Данные других сайтов не читаются и не изменяются.</p>
   </main>
   <script src="popup.js"></script>
 </body>

@@ -22,6 +22,8 @@ public interface IAccountManager
 
 	Task ImportBrowserSessionAsync(Cookie[] cookies);
 
+	Task<Cookie[]> ExportBrowserSessionAsync(string accountId);
+
 	Task SaveCurrentSessionAsync();
 
 	Task<bool> IsAuthorizedAsync();
