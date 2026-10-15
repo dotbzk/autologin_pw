@@ -1,6 +1,7 @@
 {
-  "version": "1.0.9",
+  "version": "1.0.10",
   "changes": [
+    "Added secure two-way PW Online session transfer between PW Account Hub and Chrome or Edge.",
     "Added window and taskbar icons for Game Tools Hub and the updater.",
     "Restored the Russian PW Account Hub interface, bundled script panels, and browser-session extension."
   ]
