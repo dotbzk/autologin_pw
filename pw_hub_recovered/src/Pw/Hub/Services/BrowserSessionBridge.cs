@@ -33,6 +33,8 @@ public sealed class BrowserSessionBridge : IDisposable
 
 	private readonly Func<Cookie[], Task> _importSessionAsync;
 
+	private readonly Func<string, Task<Cookie[]>> _exportSessionAsync;
+
 	private readonly CancellationTokenSource _cancellation = new CancellationTokenSource();
 
 	private readonly string _accessToken;
@@ -45,10 +47,14 @@ public sealed class BrowserSessionBridge : IDisposable
 
 	private int _pairingAttemptsRemaining;
 
-	public BrowserSessionBridge(Func<Account?> getSelectedAccount, Func<Cookie[], Task> importSessionAsync)
+	public BrowserSessionBridge(
+		Func<Account?> getSelectedAccount,
+		Func<Cookie[], Task> importSessionAsync,
+		Func<string, Task<Cookie[]>> exportSessionAsync)
 	{
 		_getSelectedAccount = getSelectedAccount ?? throw new ArgumentNullException(nameof(getSelectedAccount));
 		_importSessionAsync = importSessionAsync ?? throw new ArgumentNullException(nameof(importSessionAsync));
+		_exportSessionAsync = exportSessionAsync ?? throw new ArgumentNullException(nameof(exportSessionAsync));
 		_accessToken = LoadOrCreateAccessToken();
 	}
 
@@ -135,6 +141,9 @@ public sealed class BrowserSessionBridge : IDisposable
 					case ("POST", "/pwhub/import"):
 						await HandleImportAsync(client.GetStream(), request, origin, cancellationToken);
 						break;
+					case ("POST", "/pwhub/export"):
+						await HandleExportAsync(client.GetStream(), request, origin, cancellationToken);
+						break;
 					default:
 						await WriteResponseAsync(client.GetStream(), 404, new { error = "Endpoint not found." }, origin, cancellationToken);
 						break;
@@ -189,7 +198,49 @@ public sealed class BrowserSessionBridge : IDisposable
 			ready = account != null,
 			accountId = account?.Id,
 			accountName = account?.Name,
-			message = account == null ? "Выберите аккаунт в PW Hub." : "Готово к импорту текущей сессии PW."
+			message = account == null ? "Выберите аккаунт в PW Hub." : "Готово к обмену сессией PW."
+		}, origin, cancellationToken);
+	}
+
+	private async Task HandleExportAsync(NetworkStream stream, HttpRequest request, string? origin, CancellationToken cancellationToken)
+	{
+		if (!IsAuthorized(request))
+		{
+			await WriteResponseAsync(stream, 401, new { error = "Расширение не подключено к PW Hub." }, origin, cancellationToken);
+			return;
+		}
+		Account account = _getSelectedAccount()
+			?? throw new InvalidOperationException("Перед экспортом браузерной сессии выберите аккаунт в PW Hub.");
+		ExportRequest? payload = JsonSerializer.Deserialize<ExportRequest>(request.Body, _jsonOptions);
+		if (payload == null || !string.Equals(payload.AccountId, account.Id, StringComparison.Ordinal))
+		{
+			await WriteResponseAsync(stream, 400, new { error = "Выбранный аккаунт PW Hub изменился. Обновите расширение и повторите попытку." }, origin, cancellationToken);
+			return;
+		}
+		Cookie[] cookies;
+		try
+		{
+			cookies = (await _exportSessionAsync(account.Id))
+				.Where(IsSafeCookie)
+				.Take(500)
+				.ToArray();
+		}
+		catch (InvalidOperationException ex)
+		{
+			await WriteResponseAsync(stream, 400, new { error = ex.Message }, origin, cancellationToken);
+			return;
+		}
+		if (cookies.Length == 0)
+		{
+			await WriteResponseAsync(stream, 400, new { error = "В выбранном аккаунте PW Hub не найдены поддерживаемые cookies PW." }, origin, cancellationToken);
+			return;
+		}
+		await WriteResponseAsync(stream, 200, new
+		{
+			ok = true,
+			accountId = account.Id,
+			accountName = account.Name,
+			cookies
 		}, origin, cancellationToken);
 	}
 
@@ -562,6 +613,11 @@ public sealed class BrowserSessionBridge : IDisposable
 		public string? AccountId { get; set; }
 
 		public Cookie[]? Cookies { get; set; }
+	}
+
+	private sealed class ExportRequest
+	{
+		public string? AccountId { get; set; }
 	}
 
 	private sealed class BridgeSettings

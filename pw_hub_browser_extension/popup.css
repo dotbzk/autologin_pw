@@ -116,6 +116,10 @@ button.primary {
   background: #087eaa;
 }
 
+button.primary.export {
+  background: #2366a8;
+}
+
 button.secondary {
   background: #102d42;
 }

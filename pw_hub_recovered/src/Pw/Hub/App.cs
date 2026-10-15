@@ -175,6 +175,9 @@ public class App : System.Windows.Application
 				() => mainWindow.AccountPage?.AccountManager?.CurrentAccount,
 				(Cookie[] cookies) => mainWindow.Dispatcher
 					.InvokeAsync(() => mainWindow.AccountPage.AccountManager.ImportBrowserSessionAsync(cookies))
+					.Task.Unwrap(),
+				(string accountId) => mainWindow.Dispatcher
+					.InvokeAsync(() => mainWindow.AccountPage.AccountManager.ExportBrowserSessionAsync(accountId))
 					.Task.Unwrap());
 			bridge.Start();
 			_browserSessionBridge = bridge;
@@ -218,7 +221,7 @@ public class App : System.Windows.Application
 			System.Windows.Clipboard.SetText(pairing.Code);
 			string extensionPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "PwHubBrowserExtension"));
 			System.Windows.MessageBox.Show(
-				$"Выбранный аккаунт: {pairing.AccountName}\n\nКод подключения: {pairing.Code}\n\nКод скопирован в буфер обмена и действует 5 минут. Откройте расширение PW Hub Session Import, вставьте код и нажмите «Подключить».\n\nПапка расширения:\n{extensionPath}",
+				$"Выбранный аккаунт: {pairing.AccountName}\n\nКод подключения: {pairing.Code}\n\nКод скопирован в буфер обмена и действует 5 минут. Откройте расширение «Обмен сессиями PW Hub», вставьте код и нажмите «Подключить».\n\nПапка расширения:\n{extensionPath}",
 				"Подключение расширения браузера",
 				MessageBoxButton.OK,
 				MessageBoxImage.Information);

@@ -386,6 +386,34 @@ public class AccountManager(IBrowser browser) : IAccountManager
 		}
 	}
 
+	public async Task<Cookie[]> ExportBrowserSessionAsync(string accountId)
+	{
+		await _semaphoreSlim.WaitAsync();
+		try
+		{
+			if (CurrentAccount == null)
+			{
+				throw new InvalidOperationException("Перед экспортом браузерной сессии выберите аккаунт в PW Hub.");
+			}
+			if (!string.Equals(CurrentAccount.Id, accountId, StringComparison.Ordinal))
+			{
+				throw new InvalidOperationException("Выбранный аккаунт PW Hub изменился. Обновите расширение и повторите попытку.");
+			}
+			Cookie[] cookies = (await browser.GetCookiesAsync())
+				.Where((Cookie cookie) => IsAllowedCookieDomain(cookie.Domain))
+				.ToArray();
+			if (cookies.Length == 0)
+			{
+				throw new InvalidOperationException("В выбранном аккаунте PW Hub не найдены cookies авторизации PW.");
+			}
+			return cookies;
+		}
+		finally
+		{
+			_semaphoreSlim.Release();
+		}
+	}
+
 	public async Task SaveCurrentSessionAsync()
 	{
 		await _semaphoreSlim.WaitAsync();

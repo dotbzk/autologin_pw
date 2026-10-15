@@ -62,7 +62,7 @@ The recovered legacy self-updater is intentionally disabled. PW Account Hub
 updates are checked and installed only by Game Tools Hub, avoiding a second
 PowerShell updater and duplicate elevation prompts.
 
-## Browser isolation and session import
+## Browser isolation and session transfer
 
 `WebCoreBrowser` supports two modes:
 
@@ -75,8 +75,8 @@ account ID. These folders live under
 and are not deleted when switching accounts. Existing JSON cookie files are used
 only to initialize a new persistent profile and remain available as a backup.
 
-The browser extension in `../pw_hub_browser_extension` can import an authorized
-PW Online session from Chrome or Edge. `BrowserSessionBridge` accepts requests
-only on the IPv4 loopback interface, requires one-time pairing and a persistent
-random access token, limits request sizes, and rejects cookies outside
-`pwonline.ru` and `pw.mail.ru`.
+The browser extension in `../pw_hub_browser_extension` can transfer an authorized
+PW Online session between Chrome or Edge and the selected PW Hub account.
+`BrowserSessionBridge` accepts requests only on the IPv4 loopback interface,
+requires one-time pairing and a persistent random access token, limits request
+sizes, and rejects cookies outside `pwonline.ru` and `pw.mail.ru`.

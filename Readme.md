@@ -175,7 +175,7 @@ writable, the fallback is
 `%LOCALAPPDATA%\GameToolsHub\PwHub\logs\startup-error.log`. Game Tools Hub also
 shows these paths when it detects an early PW Account Hub exit.
 
-## Import a PW Online browser session
+## Transfer a PW Online browser session
 
 PW Account Hub uses a persistent, isolated WebView2 profile for each account.
 Cookies, DOM storage and other browser state remain available across account
@@ -184,8 +184,8 @@ switches and application restarts. Profiles are stored under
 updates.
 
 The release bundle includes the `PwHubBrowserExtension` directory. Load this
-directory as an unpacked extension in Chrome or Edge to import an account session
-opened through Game Center without entering its password:
+directory as an unpacked extension in Chrome or Edge to transfer an account
+session in either direction:
 
 1. Open `chrome://extensions` or `edge://extensions`.
 2. Enable **Developer mode**, click **Load unpacked**, and select
@@ -193,12 +193,15 @@ opened through Game Center without entering its password:
 3. Select the target account in PW Account Hub.
 4. Open the PW Hub tray menu and click **Connect browser extension**.
 5. Paste the displayed six-digit code into the extension and click **Connect**.
-6. Use Game Center to open the authorized PW Online page in Chrome or Edge.
-7. Open the extension and click **Import Current PW Session**.
+6. To import into PW Hub, open the authorized PW Online page in Chrome or Edge
+   and click **Browser → PW Hub**.
+7. To export from PW Hub, select the source account, click **PW Hub → browser**,
+   and confirm replacement of matching PW Online cookies. The extension opens
+   `https://pwonline.ru/` after the transfer.
 
-The bridge listens only on `127.0.0.1`, requires a paired random token and accepts
+The bridge listens only on `127.0.0.1`, requires a paired random token and transfers
 cookies only for `pwonline.ru` and `pw.mail.ru`. It does not request passwords or
-cookies belonging to unrelated websites.
+read or modify cookies belonging to unrelated websites.
 
 ## Configure accounts
 

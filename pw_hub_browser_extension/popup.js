@@ -6,6 +6,7 @@ const connectedSection = document.getElementById("connected");
 const pairingCode = document.getElementById("pairingCode");
 const connectButton = document.getElementById("connectButton");
 const importButton = document.getElementById("importButton");
+const exportButton = document.getElementById("exportButton");
 const refreshButton = document.getElementById("refreshButton");
 const disconnectButton = document.getElementById("disconnectButton");
 const accountName = document.getElementById("accountName");
@@ -68,6 +69,7 @@ async function refreshStatus() {
     accountName.textContent = status.accountName || "Аккаунт не выбран";
     selectedAccountId = status.accountId || "";
     importButton.disabled = !status.ready;
+    exportButton.disabled = !status.ready;
     setStatus(status.message || "Подключено к PW Hub.", status.ready ? "success" : "");
   } catch (error) {
     if (String(error.message).includes("не подключено") || String(error.message).includes("not connected")) {
@@ -84,6 +86,20 @@ function getCookies(details) {
         reject(new Error(chrome.runtime.lastError.message));
       } else {
         resolve(cookies);
+      }
+    });
+  });
+}
+
+function setCookie(details) {
+  return new Promise((resolve, reject) => {
+    chrome.cookies.set(details, (cookie) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else if (!cookie) {
+        reject(new Error("Браузер не подтвердил сохранение cookie."));
+      } else {
+        resolve(cookie);
       }
     });
   });
@@ -129,6 +145,51 @@ async function collectPwCookies() {
   return [...unique.values()];
 }
 
+function fromPwHubSameSite(value, isSecure) {
+  if (value === 1) return "lax";
+  if (value === 2) return "strict";
+  return isSecure ? "no_restriction" : "unspecified";
+}
+
+function toBrowserCookie(cookie) {
+  const sourceDomain = String(cookie.domain || "").trim();
+  const host = sourceDomain.replace(/^\./, "").toLowerCase();
+  if (!host) {
+    throw new Error("PW Hub вернул cookie без домена.");
+  }
+  const path = String(cookie.path || "/").startsWith("/")
+    ? String(cookie.path || "/")
+    : `/${cookie.path}`;
+  const details = {
+    url: `https://${host}${path}`,
+    name: String(cookie.name || ""),
+    value: String(cookie.value ?? ""),
+    path,
+    secure: Boolean(cookie.isSecure),
+    httpOnly: Boolean(cookie.isHttpOnly),
+    sameSite: fromPwHubSameSite(cookie.sameSite, Boolean(cookie.isSecure))
+  };
+  if (sourceDomain.startsWith(".")) {
+    details.domain = sourceDomain;
+  }
+  if (!cookie.isSession) {
+    const expirationDate = Date.parse(cookie.expires) / 1000;
+    if (Number.isFinite(expirationDate) && expirationDate > Date.now() / 1000) {
+      details.expirationDate = expirationDate;
+    }
+  }
+  return details;
+}
+
+async function installPwCookies(cookies) {
+  let installed = 0;
+  for (const cookie of cookies) {
+    await setCookie(toBrowserCookie(cookie));
+    installed += 1;
+  }
+  return installed;
+}
+
 connectButton.addEventListener("click", async () => {
   const code = pairingCode.value.trim();
   if (!/^\d{6}$/.test(code)) {
@@ -154,6 +215,7 @@ connectButton.addEventListener("click", async () => {
 
 importButton.addEventListener("click", async () => {
   importButton.disabled = true;
+  exportButton.disabled = true;
   setStatus("Чтение текущей сессии PW Online…");
   try {
     const cookies = await collectPwCookies();
@@ -170,7 +232,38 @@ importButton.addEventListener("click", async () => {
   } catch (error) {
     setStatus(`Ошибка импорта: ${error.message}`, "error");
   } finally {
-    importButton.disabled = false;
+    importButton.disabled = !selectedAccountId;
+    exportButton.disabled = !selectedAccountId;
+  }
+});
+
+exportButton.addEventListener("click", async () => {
+  const confirmed = window.confirm(
+    `Экспортировать сессию аккаунта «${accountName.textContent}» в этот профиль браузера? Совпадающие cookies PW Online будут заменены.`
+  );
+  if (!confirmed) return;
+  exportButton.disabled = true;
+  importButton.disabled = true;
+  setStatus("Получение сессии из PW Hub…");
+  try {
+    const result = await request("/export", {
+      method: "POST",
+      body: { accountId: selectedAccountId },
+      timeout: 45000
+    });
+    const cookies = Array.isArray(result.cookies) ? result.cookies : [];
+    if (!cookies.length) {
+      throw new Error("PW Hub не вернул cookies PW Online.");
+    }
+    const installed = await installPwCookies(cookies);
+    accountName.textContent = result.accountName;
+    setStatus(`Сессия аккаунта ${result.accountName} экспортирована (${installed} cookies).`, "success");
+    await chrome.tabs.create({ url: "https://pwonline.ru/" });
+  } catch (error) {
+    setStatus(`Ошибка экспорта: ${error.message}`, "error");
+  } finally {
+    importButton.disabled = !selectedAccountId;
+    exportButton.disabled = !selectedAccountId;
   }
 });
 
