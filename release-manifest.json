@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "releaseVersion": "1.0.9",
+  "releaseVersion": "1.0.10",
   "components": {
     "gameToolsHub": {
       "displayName": "Game Tools Hub",
