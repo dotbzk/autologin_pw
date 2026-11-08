@@ -1,5 +1,5 @@
 {
-  "version": "1.0.11",
+  "version": "1.0.12",
   "changes": [
     "Recovered PW Account Hub automatically after an embedded WebView2 browser process crash and added detailed diagnostics.",
     "Added secure two-way PW Online session transfer between PW Account Hub and Chrome or Edge.",
