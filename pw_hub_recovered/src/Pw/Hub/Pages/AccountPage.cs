@@ -54,7 +54,20 @@ public class AccountPage : UserControl, IWebViewHost, INotifyPropertyChanged, IC
 
 	private bool _contentLoaded;
 
-	public bool IsCoreInitialized => Wv?.CoreWebView2?.CookieManager != null;
+	public bool IsCoreInitialized
+	{
+		get
+		{
+			try
+			{
+				return Wv?.CoreWebView2?.CookieManager != null;
+			}
+			catch (InvalidOperationException)
+			{
+				return false;
+			}
+		}
+	}
 
 	public bool IsNoAccountOverlayVisible
 	{

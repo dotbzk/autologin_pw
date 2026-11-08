@@ -72,7 +72,12 @@ PowerShell updater and duplicate elevation prompts.
 Normal account switching uses a stable `SeparateProfile` folder derived from the
 account ID. These folders live under
 `%LOCALAPPDATA%\GameToolsHub\PwHub\Profiles`, retain complete WebView2 site data
-and are not deleted when switching accounts. Existing JSON cookie files are used
+and are not deleted when switching accounts. `WebCoreBrowser` listens for a
+WebView2 process failure and replaces the invalid control while retaining the
+active profile and allowed page. It records structured failure and recovery
+diagnostics in the normal JSONL log, including the process kind, reason, exit
+code, Runtime version and crash-report directory, without account data or URLs.
+Existing JSON cookie files are used
 only to initialize a new persistent profile and remain available as a backup.
 
 The browser extension in `../pw_hub_browser_extension` can transfer an authorized
