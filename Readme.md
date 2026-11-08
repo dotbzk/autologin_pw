@@ -181,7 +181,11 @@ PW Account Hub uses a persistent, isolated WebView2 profile for each account.
 Cookies, DOM storage and other browser state remain available across account
 switches and application restarts. Profiles are stored under
 `%LOCALAPPDATA%\GameToolsHub\PwHub\Profiles` and are not removed by application
-updates.
+updates. If the WebView2 browser process crashes, PW Account Hub replaces the
+invalid browser control automatically and reopens the current allowed page with
+the same account profile. The PW Hub JSONL log records the failed process kind,
+reason, exit code, WebView2 Runtime version, crash-report directory and each
+recovery attempt without recording account names, IDs, cookies or page URLs.
 
 The release bundle includes the `PwHubBrowserExtension` directory. Load this
 directory as an unpacked extension in Chrome or Edge to transfer an account

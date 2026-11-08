@@ -625,21 +625,28 @@ public class MainWindow : Window, IComponentConnector
 			{
 				return;
 			}
-		}
-		catch
-		{
-		}
-		if (NavigationTree.SelectedItem is Account account)
-		{
-			if (AccountPage.AccountManager.CurrentAccount?.Id != account.Id)
+			if (NavigationTree.SelectedItem is Account account)
 			{
-				await AccountPage.AccountManager.ChangeAccountAsync(account.Id);
+				if (AccountPage.AccountManager.CurrentAccount?.Id != account.Id)
+				{
+					await AccountPage.AccountManager.ChangeAccountAsync(account.Id);
+				}
+			}
+			else if (NavigationTree.SelectedItem is Squad item && NavigationTree.ItemContainerGenerator.ContainerFromItem(item) is TreeViewItem treeViewItem)
+			{
+				treeViewItem.BringIntoView();
+				CollapseSiblings(treeViewItem);
 			}
 		}
-		else if (NavigationTree.SelectedItem is Squad item && NavigationTree.ItemContainerGenerator.ContainerFromItem(item) is TreeViewItem treeViewItem)
+		catch (Exception)
 		{
-			treeViewItem.BringIntoView();
-			CollapseSiblings(treeViewItem);
+			try
+			{
+				StatusBarText.Text = "Не удалось переключить аккаунт. Перезапустите PW Account Hub.";
+			}
+			catch
+			{
+			}
 		}
 	}
 

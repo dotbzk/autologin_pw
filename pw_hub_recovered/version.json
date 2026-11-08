@@ -1,6 +1,7 @@
 {
-  "version": "1.0.9",
+  "version": "1.0.10",
   "changes": [
+    "Recovered the embedded browser automatically after a WebView2 process crash and added detailed failure diagnostics.",
     "Added secure two-way PW Online session transfer between PW Account Hub and Chrome or Edge.",
     "Restored the Russian interface, dialogs, messages, logs, editor descriptions, bundled script panels, and browser-session connection flow.",
     "Removed the runtime English localization layer from recovered WPF resources."

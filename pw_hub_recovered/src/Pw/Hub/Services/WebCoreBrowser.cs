@@ -5,21 +5,26 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
 using Pw.Hub.Abstractions;
+using Pw.Hub.Infrastructure.Logging;
 using Pw.Hub.Models;
 
 namespace Pw.Hub.Services;
 
 public class WebCoreBrowser : IBrowser
 {
+	private static readonly ILogger _log = Log.For<WebCoreBrowser>();
+
 	private WebView2 _webView;
 
 	private readonly IWebViewHost _host;
@@ -29,6 +34,14 @@ public class WebCoreBrowser : IBrowser
 	private string _userDataDir;
 
 	private bool _profileIsPersistent;
+
+	private readonly SemaphoreSlim _recoveryGate = new SemaphoreSlim(1, 1);
+
+	private BrowserSessionIsolationMode _activeMode;
+
+	private CoreWebView2 _subscribedCore;
+
+	private bool _browserProcessFailed;
 
 	public bool CurrentProfileWasCreated { get; private set; }
 
@@ -65,6 +78,7 @@ public class WebCoreBrowser : IBrowser
 	{
 		_host = host;
 		_mode = mode;
+		_activeMode = mode;
 		_webView = host.Current;
 	}
 
@@ -72,26 +86,72 @@ public class WebCoreBrowser : IBrowser
 	{
 		if (_webView.Dispatcher.CheckAccess())
 		{
-			return await func();
+			return await ExecuteWithBrowserRecoveryAsync(func);
 		}
-		return await _webView.Dispatcher.InvokeAsync(func, DispatcherPriority.Normal).Task.Unwrap();
+		return await _webView.Dispatcher.InvokeAsync(
+			() => ExecuteWithBrowserRecoveryAsync(func), DispatcherPriority.Normal).Task.Unwrap();
 	}
 
 	private async Task OnUiAsync(Func<Task> func)
 	{
 		if (_webView.Dispatcher.CheckAccess())
 		{
-			await func();
+			await ExecuteWithBrowserRecoveryAsync(func);
 		}
 		else
 		{
-			await _webView.Dispatcher.InvokeAsync(func, DispatcherPriority.Normal).Task;
+			await _webView.Dispatcher.InvokeAsync(
+				() => ExecuteWithBrowserRecoveryAsync(func), DispatcherPriority.Normal).Task.Unwrap();
+		}
+	}
+
+	private async Task<T> ExecuteWithBrowserRecoveryAsync<T>(Func<Task<T>> func)
+	{
+		try
+		{
+			return await func();
+		}
+		catch (InvalidOperationException ex) when (IsBrowserProcessFailure(ex))
+		{
+			LogInvalidControlDetected(ex);
+			_browserProcessFailed = true;
+			await RecoverBrowserAsync();
+			return await func();
+		}
+	}
+
+	private async Task ExecuteWithBrowserRecoveryAsync(Func<Task> func)
+	{
+		try
+		{
+			await func();
+		}
+		catch (InvalidOperationException ex) when (IsBrowserProcessFailure(ex))
+		{
+			LogInvalidControlDetected(ex);
+			_browserProcessFailed = true;
+			await RecoverBrowserAsync();
+			await func();
 		}
 	}
 
 	private async Task EnsureCoreAndSetBackgroundAsync()
 	{
-		await _webView.EnsureCoreWebView2Async();
+		if (_browserProcessFailed)
+		{
+			await RecoverBrowserAsync();
+		}
+		try
+		{
+			await _webView.EnsureCoreWebView2Async();
+			SubscribeToProcessFailed();
+		}
+		catch (InvalidOperationException ex) when (IsBrowserProcessFailure(ex))
+		{
+			LogInvalidControlDetected(ex);
+			_browserProcessFailed = true;
+			await RecoverBrowserAsync();
+		}
 		try
 		{
 			_webView.DefaultBackgroundColor = Color.FromArgb(255, 30, 30, 30);
@@ -99,6 +159,230 @@ public class WebCoreBrowser : IBrowser
 		catch
 		{
 		}
+	}
+
+	private static bool IsBrowserProcessFailure(InvalidOperationException ex)
+	{
+		string message = ex?.Message ?? string.Empty;
+		return message.Contains("browser process crashed", StringComparison.OrdinalIgnoreCase)
+			|| message.Contains("WebView control is no longer valid", StringComparison.OrdinalIgnoreCase);
+	}
+
+	private void SubscribeToProcessFailed()
+	{
+		CoreWebView2 core = _webView?.CoreWebView2;
+		if (core == null || ReferenceEquals(core, _subscribedCore))
+		{
+			return;
+		}
+		try
+		{
+			if (_subscribedCore != null)
+			{
+				_subscribedCore.ProcessFailed -= CoreWebView2OnProcessFailed;
+			}
+		}
+		catch
+		{
+		}
+		_subscribedCore = core;
+		core.ProcessFailed += CoreWebView2OnProcessFailed;
+	}
+
+	private void CoreWebView2OnProcessFailed(object sender, CoreWebView2ProcessFailedEventArgs e)
+	{
+		if (ReferenceEquals(sender, _subscribedCore))
+		{
+			_browserProcessFailed = true;
+			LogProcessFailure(sender as CoreWebView2, e);
+		}
+	}
+
+	private void LogProcessFailure(CoreWebView2 core, CoreWebView2ProcessFailedEventArgs e)
+	{
+		try
+		{
+			Dictionary<string, object> context = new Dictionary<string, object>
+			{
+				{ "режимСессии", _activeMode.ToString() },
+				{ "постоянныйПрофиль", _profileIsPersistent },
+				{ "папкаПрофиляНазначена", !string.IsNullOrWhiteSpace(_userDataDir) },
+				{ "версияОС", Environment.OSVersion.VersionString },
+				{ "архитектураОС", RuntimeInformation.OSArchitecture.ToString() },
+				{ "архитектураПроцесса", RuntimeInformation.ProcessArchitecture.ToString() },
+				{ "версияDotNet", RuntimeInformation.FrameworkDescription },
+				{ "версияPwHub", typeof(WebCoreBrowser).Assembly.GetName().Version?.ToString() ?? "неизвестно" },
+				{ "рабочийНаборПроцессаБайт", Environment.WorkingSet },
+				{ "управляемаяПамятьБайт", GC.GetTotalMemory(forceFullCollection: false) }
+			};
+			TryAddContext(context, "видСбоя", () => e.ProcessFailedKind.ToString());
+			TryAddContext(context, "причина", () => e.Reason.ToString());
+			TryAddContext(context, "кодЗавершения", () => e.ExitCode);
+			TryAddContext(context, "описаниеПроцесса", () => e.ProcessDescription);
+			TryAddContext(context, "модульПроверкиЦелостности", () =>
+			{
+				string path = e.FailureSourceModulePath;
+				return string.IsNullOrWhiteSpace(path) ? string.Empty : Path.GetFileName(path);
+			});
+			TryAddContext(context, "версияWebView2", () => core?.Environment?.BrowserVersionString);
+			TryAddContext(context, "папкаОтчетовОСбоях", () => core?.Environment?.FailureReportFolderPath);
+			_log.Error("Процесс WebView2 завершился со сбоем", null, context);
+		}
+		catch
+		{
+		}
+	}
+
+	private static void TryAddContext(Dictionary<string, object> context, string key, Func<object> valueFactory)
+	{
+		try
+		{
+			object value = valueFactory();
+			if (value != null && (!(value is string text) || !string.IsNullOrWhiteSpace(text)))
+			{
+				context[key] = value;
+			}
+		}
+		catch
+		{
+		}
+	}
+
+	private void LogInvalidControlDetected(InvalidOperationException ex)
+	{
+		try
+		{
+			_log.Warn("Обнаружен недействительный контрол WebView2; запускается восстановление", new Dictionary<string, object>
+			{
+				{ "типИсключения", ex.GetType().FullName ?? ex.GetType().Name },
+				{ "сообщение", ex.Message },
+				{ "режимСессии", _activeMode.ToString() },
+				{ "постоянныйПрофиль", _profileIsPersistent }
+			});
+		}
+		catch
+		{
+		}
+	}
+
+	private async Task RecoverBrowserAsync()
+	{
+		await _recoveryGate.WaitAsync();
+		try
+		{
+			if (!_browserProcessFailed)
+			{
+				return;
+			}
+			Uri previousUri = Source;
+			try
+			{
+				_log.Info("Начато восстановление WebView2", new Dictionary<string, object>
+				{
+					{ "режимСессии", _activeMode.ToString() },
+					{ "постоянныйПрофиль", _profileIsPersistent },
+					{ "папкаПрофиляНазначена", !string.IsNullOrWhiteSpace(_userDataDir) }
+				});
+			}
+			catch
+			{
+			}
+			Exception lastError = null;
+			for (int attempt = 1; attempt <= 3; attempt++)
+			{
+				WebView2 replacement = new WebView2
+				{
+					CreationProperties = CreateRecoveryProperties()
+				};
+				try
+				{
+					replacement.DefaultBackgroundColor = Color.FromArgb(255, 30, 30, 30);
+					await _host.ReplaceAsync(replacement);
+					_webView = replacement;
+					await replacement.EnsureCoreWebView2Async();
+					SubscribeToProcessFailed();
+					_browserProcessFailed = false;
+					try
+					{
+						Dictionary<string, object> recoveryContext = new Dictionary<string, object>
+						{
+							{ "попытка", attempt },
+							{ "режимСессии", _activeMode.ToString() },
+							{ "постоянныйПрофиль", _profileIsPersistent }
+						};
+						TryAddContext(recoveryContext, "версияWebView2", () => replacement.CoreWebView2.Environment.BrowserVersionString);
+						TryAddContext(recoveryContext, "папкаОтчетовОСбоях", () => replacement.CoreWebView2.Environment.FailureReportFolderPath);
+						_log.Info("WebView2 успешно восстановлен", recoveryContext);
+					}
+					catch
+					{
+					}
+					if (previousUri != null && PwNavigationPolicy.IsAllowedUrl(previousUri.ToString()))
+					{
+						replacement.CoreWebView2.Navigate(previousUri.ToString());
+					}
+					return;
+				}
+				catch (Exception ex)
+				{
+					lastError = ex;
+					try
+					{
+						_log.Warn("Попытка восстановления WebView2 завершилась ошибкой", new Dictionary<string, object>
+						{
+							{ "попытка", attempt },
+							{ "всегоПопыток", 3 },
+							{ "типИсключения", ex.GetType().FullName ?? ex.GetType().Name },
+							{ "сообщение", ex.Message }
+						});
+					}
+					catch
+					{
+					}
+					try
+					{
+						replacement.Dispose();
+					}
+					catch
+					{
+					}
+					if (attempt < 3)
+					{
+						await Task.Delay(attempt * 250);
+					}
+				}
+			}
+			try
+			{
+				_log.Error("Не удалось восстановить WebView2 после трех попыток", lastError, new Dictionary<string, object>
+				{
+					{ "режимСессии", _activeMode.ToString() },
+					{ "постоянныйПрофиль", _profileIsPersistent }
+				});
+			}
+			catch
+			{
+			}
+			throw new InvalidOperationException("Не удалось восстановить встроенный браузер после сбоя процесса WebView2.", lastError);
+		}
+		finally
+		{
+			_recoveryGate.Release();
+		}
+	}
+
+	private CoreWebView2CreationProperties CreateRecoveryProperties()
+	{
+		CoreWebView2CreationProperties properties = new CoreWebView2CreationProperties();
+		if (_activeMode == BrowserSessionIsolationMode.SeparateProfile && !string.IsNullOrWhiteSpace(_userDataDir))
+		{
+			properties.UserDataFolder = _userDataDir;
+		}
+		else if (_activeMode == BrowserSessionIsolationMode.InPrivate)
+		{
+			properties.IsInPrivateModeEnabled = true;
+		}
+		return properties;
 	}
 
 	public Task<string> ExecuteScriptAsync(string script)
@@ -260,9 +544,17 @@ public class WebCoreBrowser : IBrowser
 			}
 			newWv.Source = previousUri;
 			_webView = newWv;
+			_activeMode = effMode;
 			_userDataDir = ((effMode == BrowserSessionIsolationMode.SeparateProfile) ? newDir : null);
 			_profileIsPersistent = effMode == BrowserSessionIsolationMode.SeparateProfile
 				&& !string.IsNullOrWhiteSpace(persistentProfileId);
+			try
+			{
+				SubscribeToProcessFailed();
+			}
+			catch
+			{
+			}
 			bool finalized = false;
 			try
 			{
