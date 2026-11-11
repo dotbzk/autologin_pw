@@ -1,6 +1,7 @@
 {
-  "version": "1.0.12",
+  "version": "1.0.13",
   "changes": [
+    "Fixed Game Launcher Bot Settings saving, coordinate tests, and pre-launch memory cleanup feedback.",
     "Recovered PW Account Hub automatically after an embedded WebView2 browser process crash and added detailed diagnostics.",
     "Added secure two-way PW Online session transfer between PW Account Hub and Chrome or Edge.",
     "Added window and taskbar icons for Game Tools Hub and the updater.",

@@ -300,7 +300,8 @@ small text in the VK Play header.
 | `purge_standby_list` | Attempts to purge the Windows standby memory list |
 
 The main window also has a **Clean memory before each client** checkbox. It
-updates `MEMORY_CLEANUP.enabled` in `config.ini`.
+updates `MEMORY_CLEANUP.enabled` in `config.ini`. Each enabled pre-launch cleanup
+writes its result to the normal application log before the Play button is clicked.
 
 The cleaner is implemented in `src/memory_cleanup.py` and can be used
 separately:
@@ -333,6 +334,8 @@ termination of GameLauncherBot, open and close the application to start it again
 All delay values are specified in seconds. Increase them if VK Play or the game does not have enough time to react.
 
 Settings can be edited manually or through the **Settings** button in the application.
+The **Save** action writes the displayed values atomically and clears the unsaved
+state only after validation and writing succeed.
 In **Settings**, use **Select screen area** to drag an OCR region over a screenshot,
 or use the corresponding **Select ... on screen** button to choose a click or scroll
 point. Press Escape to cancel. All coordinate fields remain editable by hand.

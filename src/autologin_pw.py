@@ -577,6 +577,10 @@ class GameLauncher:
             self.debug(f"Memory cleanup completed: {result.summary()}")
             if result.errors:
                 self.log(f"⚠️ Memory cleanup partial: {'; '.join(result.errors)}")
+            elif result.warnings:
+                self.log(f"⚠️ Memory cleanup completed with limitations: {result.summary()}")
+            else:
+                self.log(f"✅ Memory cleanup completed: {result.summary()}")
         else:
             self.log(f"⚠️ Memory cleanup skipped: {'; '.join(result.errors)}")
 

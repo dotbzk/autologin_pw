@@ -383,7 +383,7 @@ ApplicationWindow {
                 Layout.preferredHeight: 27
                 text: "Clean memory before each client"
                 checked: backend.memoryCleanupEnabled
-                onToggled: if (checked !== backend.memoryCleanupEnabled) backend.setMemoryCleanupEnabled(checked)
+                onClicked: if (checked !== backend.memoryCleanupEnabled) backend.setMemoryCleanupEnabled(checked)
             }
 
             Text { text: "LOG"; color: root.textMuted; font.pixelSize: 11; font.bold: true }
@@ -625,7 +625,19 @@ ApplicationWindow {
         }
         function settingRows() {
             let rows = []
-            for (let i = 0; i < settingsModel.count; ++i) rows.push(settingsModel.get(i))
+            for (let i = 0; i < settingsModel.count; ++i) {
+                let row = settingsModel.get(i)
+                rows.push({
+                    kind: row.kind,
+                    section: row.section,
+                    key: row.key,
+                    label: row.label,
+                    value: row.value,
+                    pickKind: row.pickKind,
+                    pickName: row.pickName,
+                    testKind: row.testKind
+                })
+            }
             return rows
         }
         function testSetting(kind) {
@@ -717,14 +729,14 @@ ApplicationWindow {
                                 visible: settingRow.kind === "value"
                                 Layout.fillWidth: true
                                 text: settingRow.value
-                                onTextChanged: settingsPopup.updateValue(settingRow.index, text)
+                                onTextEdited: settingsPopup.updateValue(settingRow.index, text)
                             }
                             StyledCheckBox {
                                 visible: settingRow.kind === "boolean"
                                 Layout.fillWidth: true
                                 text: settingRow.label
                                 checked: settingRow.value === true
-                                onToggled: settingsPopup.updateValue(settingRow.index, checked)
+                                onClicked: settingsPopup.updateValue(settingRow.index, checked)
                             }
                             GlowButton {
                                 visible: settingRow.pickKind !== ""
@@ -759,6 +771,7 @@ ApplicationWindow {
                     onClicked: settingsPopup.requestClose()
                 }
                 GlowButton {
+                    objectName: "saveSettingsButton"
                     text: "SAVE"
                     enabled: !backend.verificationBusy
                     onClicked: {
@@ -964,7 +977,7 @@ ApplicationWindow {
         function onSettingPicked(section, key, value) {
             for (let i = 0; i < settingsModel.count; ++i) {
                 let row = settingsModel.get(i)
-                if (row.section === section && row.key === key) settingsModel.setProperty(i, "value", value)
+                if (row.section === section && row.key === key) settingsPopup.updateValue(i, value)
             }
         }
         function onScreenPickingChanged(active) {
