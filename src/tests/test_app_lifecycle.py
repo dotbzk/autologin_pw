@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ.setdefault("QT_QUICK_CONTROLS_STYLE", "Basic")
 
-from PySide6.QtCore import QCoreApplication, QEvent, QMetaObject, QUrl
+from PySide6.QtCore import Q_ARG, QCoreApplication, QEvent, QMetaObject, QUrl
 from PySide6.QtGui import QImage
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtWidgets import QApplication
@@ -174,13 +174,20 @@ class=tank
     def test_settings_expose_boolean_controls_and_save(self):
         rows = self.backend.settingsData()
         auto = next(row for row in rows if row.get("section") == "UPDATES" and row.get("key") == "auto_check")
+        cleanup = next(
+            row for row in rows
+            if row.get("section") == "MEMORY_CLEANUP" and row.get("key") == "enabled"
+        )
         self.assertEqual(auto["kind"], "boolean")
         auto["value"] = False
+        cleanup["value"] = True
         with patch.object(self.backend, "screen_bounds", return_value=(0, 0, 100, 100)):
             self.assertTrue(self.backend.saveSettings(rows))
         config = configparser.ConfigParser()
         config.read(self.root / "configs/config.ini")
         self.assertFalse(config.getboolean("UPDATES", "auto_check"))
+        self.assertTrue(config.getboolean("MEMORY_CLEANUP", "enabled"))
+        self.assertTrue(self.backend.memoryCleanupEnabled)
 
     def test_settings_expose_coordinate_verification_actions(self):
         rows = self.backend.settingsData()
@@ -463,7 +470,7 @@ class QmlSmokeTests(unittest.TestCase):
         names = {
             "groupCombo", "accountsList", "selectAllButton", "unselectAllButton",
             "settingsMenuPopup", "advancedSettingsButton", "manageGroupsButton",
-            "settingsButton", "updateButton",
+            "settingsButton", "saveSettingsButton", "updateButton",
             "memoryCleanupCheckBox", "logArea", "progressBar", "runButton",
             "stopButton", "debugButton", "minimizeButton", "closeButton",
             "accountSearchPopup", "accountSearchField",
@@ -484,6 +491,14 @@ class QmlSmokeTests(unittest.TestCase):
         QT_APP.processEvents()
         self.assertFalse(any(account["selected"] for account in backend.accounts))
         self.assertTrue(backend.debugEnabled)
+        backend._write_config = Mock()
+        memory_cleanup = root.findChild(object, "memoryCleanupCheckBox")
+        self.assertFalse(backend.memoryCleanupEnabled)
+        QMetaObject.invokeMethod(memory_cleanup, "click")
+        QT_APP.processEvents()
+        self.assertTrue(backend.memoryCleanupEnabled)
+        backend._write_config.assert_called_once()
+        backend._write_config.reset_mock()
         accounts_list = root.findChild(object, "accountsList")
         accounts_list.setProperty("contentY", 24)
         QT_APP.processEvents()
@@ -508,6 +523,26 @@ class QmlSmokeTests(unittest.TestCase):
         QMetaObject.invokeMethod(root.findChild(object, "advancedSettingsButton"), "click")
         QT_APP.processEvents()
         self.assertTrue(settings.property("visible"))
+        backend.screen_bounds = Mock(return_value=(0, 0, 10000, 10000))
+        settings.setProperty("dirty", True)
+        QMetaObject.invokeMethod(root.findChild(object, "saveSettingsButton"), "click")
+        QT_APP.processEvents()
+        backend._write_config.assert_called_once()
+        self.assertFalse(settings.property("dirty"))
+        self.assertTrue(alert.property("visible"))
+        QMetaObject.invokeMethod(alert, "close")
+        QT_APP.processEvents()
+        worker = Mock()
+        with patch.object(ui_backend.sys, "platform", "win32"), \
+                patch.object(ui_backend, "Thread", return_value=worker):
+            QMetaObject.invokeMethod(settings, "testSetting", Q_ARG("QVariant", "play"))
+            QT_APP.processEvents()
+        worker.start.assert_called_once()
+        self.assertTrue(backend.verificationBusy)
+        backend._show_verification_result("Play Button Test", "Done", "info")
+        QT_APP.processEvents()
+        QMetaObject.invokeMethod(alert, "close")
+        QT_APP.processEvents()
         settings.setProperty("dirty", True)
         QMetaObject.invokeMethod(settings, "requestClose")
         QT_APP.processEvents()

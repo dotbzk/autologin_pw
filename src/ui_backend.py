@@ -520,6 +520,13 @@ class AppBackend(QObject):
         values = {}
         for item in _variant(items):
             item = _variant(item)
+            if not isinstance(item, dict) and hasattr(item, "property"):
+                item = {
+                    key: item.property(key)
+                    for key in ("kind", "section", "key", "value")
+                }
+            if not isinstance(item, dict):
+                raise TypeError("Settings contain an unsupported row type")
             if item.get("kind") == "header":
                 continue
             value = item["value"]
@@ -531,15 +538,15 @@ class AppBackend(QObject):
     @Slot("QVariantList", result=bool)
     def saveSettings(self, items):
         config = read_config_with_fallback(self.config_path)
-        values = self._settings_values(items)
         try:
+            values = self._settings_values(items)
             validate_screen_entries(values, self.screen_bounds())
             for (section, key), value in values.items():
                 if not config.has_section(section):
                     config.add_section(section)
                 config[section][key] = value
             self._write_config(config)
-        except (OSError, ValueError, configparser.Error) as exc:
+        except (KeyError, TypeError, OSError, ValueError, configparser.Error) as exc:
             self.alertRequested.emit("Settings", str(exc), "error")
             return False
         self._memory_cleanup_enabled = config.getboolean("MEMORY_CLEANUP", "enabled", fallback=False)

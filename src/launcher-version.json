@@ -1,6 +1,9 @@
 {
-  "version": "1.0.5",
+  "version": "1.0.6",
   "changes": [
+    "Fixed Settings saving and coordinate TEST actions with current PySide6 builds.",
+    "Prevented saved Settings from being marked as unsaved again by late QML binding updates.",
+    "Restored pre-launch memory cleanup persistence and added visible completion logging.",
     "Added the application icon to the updater window and its Windows taskbar entry.",
     "Bundled the updater icon resource for reliable use during installation."
   ]

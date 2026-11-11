@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "releaseVersion": "1.0.12",
+  "releaseVersion": "1.0.13",
   "components": {
     "gameToolsHub": {
       "displayName": "Game Tools Hub",
@@ -9,7 +9,7 @@
     },
     "gameLauncherBot": {
       "displayName": "Game Launcher Bot",
-      "version": "1.0.5",
+      "version": "1.0.6",
       "executable": "GameLauncherBot.exe"
     },
     "pwHub": {
